@@ -10,7 +10,7 @@ gem 'aws-sdk', '~> 1.0'
 gem 'figaro'
 gem 'bcrypt-ruby', :require => 'bcrypt'
 
-group :development do
+group :development, :test do
   gem 'sqlite3'
   gem 'rspec-rails', '~> 2.0'
   gem 'factory_girl_rails'
