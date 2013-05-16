@@ -8,6 +8,7 @@ gem 'rails', '3.2.13'
 gem 'rails-api'
 gem 'aws-sdk', '~> 1.0'
 gem 'figaro'
+gem 'bcrypt-ruby', :require => 'bcrypt'
 
 group :development do
   gem 'sqlite3'
