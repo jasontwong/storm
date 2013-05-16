@@ -11,7 +11,7 @@ gem 'figaro'
 
 group :development do
   gem 'sqlite3'
-  gem 'rspec-rails'
+  gem 'rspec-rails', '~> 2.0'
 end
 
 # To use ActiveModel has_secure_password
