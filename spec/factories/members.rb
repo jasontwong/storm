@@ -8,4 +8,8 @@ FactoryGirl.define do
     f.password { Faker::Lorem.word }
     f.active 1
   end
+
+  factory :invalid_member, parent: :member do |f|
+    f.email nil
+  end
 end
