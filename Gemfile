@@ -13,6 +13,7 @@ gem 'bcrypt-ruby', :require => 'bcrypt'
 group :development do
   gem 'sqlite3'
   gem 'rspec-rails', '~> 2.0'
+  gem 'factory_girl_rails'
 end
 
 # To use ActiveModel has_secure_password
