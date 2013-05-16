@@ -12,6 +12,7 @@ class Member < ActiveRecord::Base
     user = {
       action: action,
       user: data,
+      time: Time.now.to_i,
     }
     sqs = AWS::SQS.new(:region => ENV['AWS_REGION'])
     queue = sqs.queues.create('member')
