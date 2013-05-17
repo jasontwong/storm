@@ -1,6 +1,7 @@
 class Member < ActiveRecord::Base
   include ActiveModel::Validations
-  # attr_accessible :title, :body
+  attr_accessible :email, :password, :active, :salt, :fb_username, :fb_password
+
   has_many :member_attributes
 
   validates :email, :uniqueness => true, :presence => true, :email => true
