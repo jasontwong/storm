@@ -3,6 +3,7 @@ require 'faker'
 
 FactoryGirl.define do
   factory :store do
+    company_id 1
     name { Faker::Lorem.word }
     address1 { Faker::Address.street_address }
     address2 { Faker::Address.secondary_address }
@@ -14,5 +15,9 @@ FactoryGirl.define do
     latitude { Faker::Address.latitude }
     longitude { Faker::Address.longitude }
     company
+  end
+
+  factory :invalid_store, parent: :store do
+    name nil
   end
 end
