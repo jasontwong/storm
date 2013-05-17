@@ -57,4 +57,12 @@ describe MembersController do
       it 'sends update info to SQS'
     end
   end
+
+  describe 'DELETE #destroy' do
+    before :each do
+      @Member = FactoryGirl.create(:member)
+    end
+
+    it 'sends delete message to SQS'
+  end
 end
