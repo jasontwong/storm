@@ -1,4 +1,6 @@
 DataApi::Application.routes.draw do
+  resources :companies, except: [:new, :edit]
+
   resources :members, except: [:new, :edit]
 
   # The priority is based upon order of creation:
