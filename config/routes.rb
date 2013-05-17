@@ -1,4 +1,6 @@
 DataApi::Application.routes.draw do
+  resources :stores, except: [:new, :edit]
+
   resources :companies, except: [:new, :edit]
 
   resources :members, except: [:new, :edit]
