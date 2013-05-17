@@ -7,23 +7,54 @@ describe MembersController do
       get :index
       assigns(:members).should eq([member])
     end
-    it 'returns json encoded version' do
+    it 'returns status ok' do
       get :index
       response.status.should == 200
     end
   end
 
   describe 'GET #show' do
-    it 'assigns the requested member to @member'
-    it 'returns json encoded version'
+    it 'assigns the requested member to @member' do
+      member = FactoryGirl.create(:member)
+      get :show, id: member
+      assigns(:member).should eq(member)
+    end
+    it 'returns status ok' do
+      get :show, id: FactoryGirl.create(:member)
+      response.status.should == 200
+    end
   end
 
   describe 'POST #create' do
     context 'with valid attribtues' do
-      it 'creates a new user in the database'
-      it 'returns json encoded version'
+      it 'creates a new member' do
+        expect{
+          post :create, member: FactoryGirl.attributes_for(:member)
+        }.to change(Member, :count).by(1)
+      end
+      it 'returns created status' do
+        post :create, member: FactoryGirl.attributes_for(:member)
+        response.status.should == 201
+      end
+    end
+    context 'with invalid attributes' do
+      it 'does not create a new member' do
+        expect{
+          post :create, member: FactoryGirl.attributes_for(:invalid_member)
+        }.to_not change(Member, :count)
+      end
     end
   end
-  it 'sends an update command'
-  it 'sends a delete command'
+
+  # have to figure out a way to test since this works with SQS
+  describe 'PUT #update' do
+    before :each do
+      @member = FactoryGirl.create(:member)
+    end
+
+    context 'with valid attributes' do
+      it 'locates requested member'
+      it 'sends update info to SQS'
+    end
+  end
 end
