@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130520202535) do
+ActiveRecord::Schema.define(:version => 20130520204401) do
 
   create_table "companies", :force => true do |t|
     t.string   "name"
@@ -75,6 +75,16 @@ ActiveRecord::Schema.define(:version => 20130520202535) do
     t.string   "longitude"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
+  end
+
+  create_table "survey_questions", :force => true do |t|
+    t.integer  "survey_id"
+    t.string   "question"
+    t.string   "answer_type"
+    t.string   "answer_meta"
+    t.boolean  "active"
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
   end
 
   create_table "surveys", :force => true do |t|

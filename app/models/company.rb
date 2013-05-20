@@ -5,6 +5,7 @@ class Company < ActiveRecord::Base
   has_many :products
   has_many :rewards
   has_many :surveys
+  has_many :survey_questions, :through => :surveys
 
   validates :name, presence: true
 end
