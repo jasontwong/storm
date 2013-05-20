@@ -3,6 +3,7 @@ class Company < ActiveRecord::Base
 
   has_many :stores
   has_many :products
+  has_many :rewards
 
   validates :name, presence: true
 end
