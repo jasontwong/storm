@@ -2,6 +2,7 @@ class Survey < ActiveRecord::Base
   attr_accessible :company_id, :default, :description, :title
 
   belongs_to :company
+  has_and_belongs_to_many :stores
   has_many :survey_questions
 
   validates :company_id, presence: true
