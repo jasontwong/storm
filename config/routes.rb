@@ -1,4 +1,6 @@
 DataApi::Application.routes.draw do
+  resources :codes, except: [:new, :edit]
+
   resources :surveys, except: [:new, :edit]
 
   resources :rewards, except: [:new, :edit]
