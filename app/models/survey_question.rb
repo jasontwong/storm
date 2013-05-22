@@ -3,6 +3,7 @@ class SurveyQuestion < ActiveRecord::Base
 
   belongs_to :survey, inverse_of: :survey_questions
   has_and_belongs_to_many :products
+  has_and_belongs_to_many :survery_question_categories
 
   validates :answer_type, presence: true
   validates :question, presence: true
