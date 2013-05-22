@@ -12,6 +12,6 @@ class Survey < ActiveRecord::Base
   after_initialize :init
 
   def init
-    self.default = false
+    self.default = false if self.default.nil?
   end
 end
