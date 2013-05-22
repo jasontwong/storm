@@ -11,6 +11,6 @@ class Reward < ActiveRecord::Base
   validates :uses_left, presence: true
 
   def init
-    self.uses_left = -1
+    self.uses_left = -1 ? self.uses_left.nil?
   end
 end
