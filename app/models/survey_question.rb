@@ -1,5 +1,5 @@
 class SurveyQuestion < ActiveRecord::Base
-  attr_accessible :answer_meta, :answer_type, :question, :company_id, :active, :dynamic
+  attr_accessible :answer_meta, :answer_type, :question, :company_id, :active, :dynamic, :dynamic_meta
 
   belongs_to :company, inverse_of: :survey_questions
   has_and_belongs_to_many :products
@@ -7,6 +7,7 @@ class SurveyQuestion < ActiveRecord::Base
   has_and_belongs_to_many :survey_question_categories
 
   serialize :answer_meta, Hash
+  serialize :dynamic_meta, Hash
 
   validates :answer_type, presence: true
   validates :question, presence: true
