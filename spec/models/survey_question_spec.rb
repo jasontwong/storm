@@ -29,6 +29,6 @@ describe SurveyQuestion do
     FactoryGirl.create(:survey_question).answer_meta.should be_a(Hash)
   end
   it 'requires dynamic_meta to be a Hash' do
-    FactoryGirl.create(:survey_question).dynamic_meta.should be_a(Hash)
+    FactoryGirl.create(:survey_question).dynamic_meta.should be_a(Array)
   end
 end
