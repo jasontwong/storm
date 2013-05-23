@@ -8,6 +8,7 @@ FactoryGirl.define do
     answer_type { Faker::Lorem.word }
     answer_meta nil
     active false
+    dynamic false
 
     company
   end
