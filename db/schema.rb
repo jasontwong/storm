@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130523194630) do
+ActiveRecord::Schema.define(:version => 20130523194852) do
 
   create_table "codes", :force => true do |t|
     t.string   "qr"
@@ -138,7 +138,7 @@ ActiveRecord::Schema.define(:version => 20130523194630) do
 
   create_table "survey_questions_survey_question_categories", :id => false, :force => true do |t|
     t.integer "survey_question_id"
-    t.integer "usrvey_question_category_id"
+    t.integer "survey_question_category_id"
   end
 
   create_table "surveys", :force => true do |t|
