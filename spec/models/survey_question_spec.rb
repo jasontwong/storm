@@ -4,8 +4,8 @@ describe SurveyQuestion do
   it 'has a valid factory' do
     FactoryGirl.build(:survey_question).should be_valid
   end
-  it 'requires a survey' do
-    FactoryGirl.build(:survey_question, survey: nil).should_not be_valid
+  it 'requires a company' do
+    FactoryGirl.build(:survey_question, company: nil).should_not be_valid
   end
   it 'requires a question' do
     FactoryGirl.build(:survey_question, question: nil).should_not be_valid

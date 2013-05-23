@@ -3,7 +3,7 @@ class Survey < ActiveRecord::Base
 
   belongs_to :company, inverse_of: :surveys
   has_and_belongs_to_many :stores
-  has_many :survey_questions, inverse_of: :survey
+  has_and_belongs_to_many :survey_questions
 
   validates :company_id, presence: true
   validates :default, :inclusion => { :in => [true, false] }

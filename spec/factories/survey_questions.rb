@@ -3,12 +3,12 @@ require 'faker'
 
 FactoryGirl.define do
   factory :survey_question do
-    survey_id 1
+    company_id 1
     question { Faker::Lorem.sentence }
     answer_type { Faker::Lorem.word }
     answer_meta nil
     active false
 
-    survey
+    company
   end
 end
