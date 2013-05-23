@@ -9,7 +9,7 @@ FactoryGirl.define do
     answer_meta { { foo: Faker::Lorem.word } }
     active false
     dynamic false
-    dynamic_meta { { hello: Faker::Lorem.word } }
+    dynamic_meta { [{ model: Faker::Lorem.word, attibute: Faker::Lorem.word }] }
 
     company
   end

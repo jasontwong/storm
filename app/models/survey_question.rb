@@ -7,7 +7,7 @@ class SurveyQuestion < ActiveRecord::Base
   has_and_belongs_to_many :survey_question_categories
 
   serialize :answer_meta, Hash
-  serialize :dynamic_meta, Hash
+  serialize :dynamic_meta, Array
 
   validates :answer_type, presence: true
   validates :question, presence: true
