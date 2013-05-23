@@ -3,6 +3,7 @@ class Code < ActiveRecord::Base
 
   has_many :orders, inverse_of: :code
   has_many :order_details, inverse_of: :code
+  has_many :member_answers, inverse_of: :code
 
   validates :qr, presence: true
   validates :active, inclusion: { in: [ true, false ] }
