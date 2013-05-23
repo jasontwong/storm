@@ -3,6 +3,7 @@ class Store < ActiveRecord::Base
 
   belongs_to :company, inverse_of: :stores
   has_and_belongs_to_many :surveys
+  has_many :surveys, inverse_of: :store
   has_many :survey_questions, through: :surveys
   has_many :orders, inverse_of: :store
 
