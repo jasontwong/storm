@@ -6,6 +6,8 @@ class SurveyQuestion < ActiveRecord::Base
   has_and_belongs_to_many :surveys
   has_and_belongs_to_many :survey_question_categories
 
+  serialize :answer_meta, Hash
+
   validates :answer_type, presence: true
   validates :question, presence: true
   validates :company_id, presence: true
