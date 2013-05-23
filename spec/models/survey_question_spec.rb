@@ -19,4 +19,10 @@ describe SurveyQuestion do
     FactoryGirl.build(:survey_question, active: 1).should be_valid
     FactoryGirl.build(:survey_question, active: 0).should be_valid
   end
+  it 'require active to be false if not true' do
+    FactoryGirl.build(:survey_question, dynamic: 5).dynamic.should be_false
+    FactoryGirl.build(:survey_question, dynamic: 'a').dynamic.should be_false
+    FactoryGirl.build(:survey_question, dynamic: 1).should be_valid
+    FactoryGirl.build(:survey_question, dynamic: 0).should be_valid
+  end
 end
