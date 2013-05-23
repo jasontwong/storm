@@ -3,12 +3,12 @@ require 'faker'
 
 FactoryGirl.define do
   factory :survey do
-    company_id 1
+    store_id 1
     title { Faker::Lorem.word }
     description { Faker::Lorem.sentence }
     default false
 
-    company
+    store
   end
 
   factory :invalid_survey, parent: :survey do
