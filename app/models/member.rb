@@ -4,6 +4,7 @@ class Member < ActiveRecord::Base
 
   has_many :member_attributes, inverse_of: :member
   has_many :orders, inverse_of: :member
+  has_many :member_points, inverse_of: :member
 
   validates :email, :uniqueness => true, :presence => true, :email => true
   validates :active, :inclusion => { :in => [true, false] }

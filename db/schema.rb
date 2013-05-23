@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130523204731) do
+ActiveRecord::Schema.define(:version => 20130523215617) do
 
   create_table "codes", :force => true do |t|
     t.string   "qr"
@@ -36,6 +36,16 @@ ActiveRecord::Schema.define(:version => 20130523204731) do
     t.integer "member_id"
     t.string  "name"
     t.string  "value"
+  end
+
+  create_table "member_points", :force => true do |t|
+    t.integer  "member_id"
+    t.integer  "company_id"
+    t.decimal  "points"
+    t.decimal  "total_points"
+    t.datetime "last_earned"
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
   end
 
   create_table "members", :force => true do |t|
