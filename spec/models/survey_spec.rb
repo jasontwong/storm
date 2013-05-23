@@ -7,8 +7,8 @@ describe Survey do
   it 'requires a title' do
     FactoryGirl.build(:survey, title: nil).should_not be_valid
   end
-  it 'requires a company' do
-    FactoryGirl.build(:survey, company: nil).should_not be_valid
+  it 'requires a store' do
+    FactoryGirl.build(:survey, store: nil).should_not be_valid
   end
   it 'require default to be false if not true' do
     FactoryGirl.build(:survey, default: 5).default.should be_false
