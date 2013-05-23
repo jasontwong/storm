@@ -5,6 +5,7 @@ class Company < ActiveRecord::Base
   has_many :products, inverse_of: :company
   has_many :rewards, inverse_of: :company
   has_many :surveys, inverse_of: :company
+  has_many :orders, inverse_of: :company
   has_many :survey_questions, :through => :surveys
 
   validates :name, presence: true
