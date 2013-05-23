@@ -1,5 +1,5 @@
 class Code < ActiveRecord::Base
-  attr_accessible :qr, :used, :active
+  attr_accessible :qr, :used, :active, :last_used_time
 
   has_many :orders, inverse_of: :code
   has_many :order_details, inverse_of: :code
