@@ -6,6 +6,7 @@ FactoryGirl.define do
     qr { Faker::Lorem.word }
     used 0
     active true
+    last_used_time { Time.now.to_i }
   end
 
   factory :invalid_code, parent: :code do
