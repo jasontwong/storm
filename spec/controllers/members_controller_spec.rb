@@ -53,23 +53,59 @@ describe MembersController do
     end
   end
 
-  # have to figure out a way to test since this works with SQS
   describe 'PUT #update' do
     before :each do
       @member = FactoryGirl.create(:member)
     end
 
     context 'with valid attributes' do
-      it 'locates requested member'
-      it 'sends update info to SQS'
+      it 'locates requested member' do
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member)
+        assigns(:member).should eq(@member)
+      end
+      it 'changes the member attributes' do
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member, fb_username: 'foobar', fb_password: 'foobaz')
+        @member.reload
+        @member.fb_username.should eq('foobar')
+        @member.fb_password.should eq('foobaz')
+      end
+    end
+
+    context 'with invalid attributes' do
+      it 'locates requested member' do
+        put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
+        assigns(:member).should eq(@member)
+      end
+      it 'does not change member attributes' do
+        put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
+        @member.reload
+        @member.fb_username.should eq(@member.fb_username)
+        @member.fb_password.should_not eq('foobaz')
+      end
+    end
+
+    context 'with extra attributes' do
+      it 'creates a new member with extra attributes' do
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member), attrs: { foo: 'bar' }
+        assigns(:member).should eq(@member)
+        @member.member_attributes[0].name.should eq('foo')
+        @member.member_attributes[0].value.should eq('bar')
+      end
     end
   end
 
   describe 'DELETE #destroy' do
     before :each do
-      @Member = FactoryGirl.create(:member)
+      @member = FactoryGirl.create(:member)
     end
 
-    it 'sends delete message to SQS'
+    it 'deletes the member' do
+      expect{
+        delete :destroy, id: @member
+      }.to change(Member, :count).by(0)
+      @member.reload
+      @member.active.should be_false
+    end
   end
+
 end
