@@ -2,6 +2,7 @@ class Reward < ActiveRecord::Base
   attr_accessible :company_id, :cost, :description, :expires, :starts, :title, :uses_left
 
   belongs_to :company, inverse_of: :rewards
+  has_many :member_rewards, inverse_of: :reward
 
   after_initialize :init
 

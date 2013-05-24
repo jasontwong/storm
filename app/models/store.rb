@@ -6,6 +6,7 @@ class Store < ActiveRecord::Base
   has_many :surveys, inverse_of: :store
   has_many :survey_questions, through: :surveys
   has_many :orders, inverse_of: :store
+  has_many :member_rewards, inverse_of: :store
 
   validates :address1, presence: true
   validates :city, presence: true
