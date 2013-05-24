@@ -5,7 +5,7 @@ describe Member do
     FactoryGirl.build(:member).should be_valid
   end
   it 'requires an email' do
-    FactoryGirl.build(:member, email: nil).should_not be_valid
+    FactoryGirl.build(:member, email: nil).should be_valid
   end
   it 'requires email to be unique' do
     member1 = FactoryGirl.create(:member)

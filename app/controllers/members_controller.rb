@@ -21,7 +21,7 @@ class MembersController < ApplicationController
     @member = Member.new(params[:member])
     @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
-    if @member.save
+    if !@member.email.nil? && @member.save
       render json: @member, status: :created, location: @member
     else
       render json: @member.errors, status: :unprocessable_entity
@@ -34,7 +34,7 @@ class MembersController < ApplicationController
     @member = Member.find(params[:id])
     @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
-    if @member.update_attributes(params[:member])
+    if !@member.email.nil? && @member.update_attributes(params[:member])
       head :no_content
     else
       render json: @member.errors, status: :unprocessable_entity

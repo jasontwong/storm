@@ -1,6 +1,6 @@
 class Member < ActiveRecord::Base
   include ActiveModel::Validations
-  attr_accessible :email, :password, :active, :salt, :fb_username, :fb_password
+  attr_accessible :email, :password, :active, :salt, :fb_username, :fb_password, :other_id
 
   has_many :member_attributes, inverse_of: :member
   has_many :orders, inverse_of: :member
@@ -8,7 +8,7 @@ class Member < ActiveRecord::Base
   has_many :member_answers, inverse_of: :member
   has_many :member_rewards, inverse_of: :member
 
-  validates :email, :uniqueness => true, :presence => true, :email => true
+  validates :email, :uniqueness => true, :email => true
   validates :active, :inclusion => { :in => [true, false] }
 
   def parse_attrs(attrs)
