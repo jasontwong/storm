@@ -19,8 +19,9 @@ class MembersController < ApplicationController
   # POST /members.json
   def create
     @member = Member.new(params[:member])
+    @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
-    if @member.save
+    if !@member.email.nil? && @member.save
       render json: @member, status: :created, location: @member
     else
       render json: @member.errors, status: :unprocessable_entity
@@ -31,8 +32,9 @@ class MembersController < ApplicationController
   # PATCH/PUT /members/1.json
   def update
     @member = Member.find(params[:id])
+    @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
-    if @member.update_attributes(params[:member])
+    if !@member.email.nil? && @member.update_attributes(params[:member])
       head :no_content
     else
       render json: @member.errors, status: :unprocessable_entity
@@ -42,8 +44,13 @@ class MembersController < ApplicationController
   # DELETE /members/1
   # DELETE /members/1.json
   def destroy
-    @member = Member.message('delete', params[:member])
+    @member = Member.find(params[:id])
+    @member.active = false
 
-    head :no_content
+    if @member.save
+      head :no_content
+    else
+      render json: @member.errors, status: :unprocessable_entity
+    end
   end
 end

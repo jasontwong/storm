@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130524173123) do
+ActiveRecord::Schema.define(:version => 20130524195312) do
 
   create_table "codes", :force => true do |t|
     t.string   "qr"
@@ -83,6 +83,7 @@ ActiveRecord::Schema.define(:version => 20130524173123) do
     t.boolean  "active",      :default => true
     t.datetime "created_at",                    :null => false
     t.datetime "updated_at",                    :null => false
+    t.string   "other_id"
   end
 
   create_table "order_details", :force => true do |t|
