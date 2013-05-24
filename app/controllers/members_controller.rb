@@ -30,9 +30,9 @@ class MembersController < ApplicationController
   # PATCH/PUT /members/1
   # PATCH/PUT /members/1.json
   def update
-    @member = Member.message('update', params[:member])
+    @member = Member.find(params[:id])
 
-    if @member[:errors].nil?
+    if @member.update_attributes(params[:member])
       head :no_content
     else
       render json: @member.errors, status: :unprocessable_entity
