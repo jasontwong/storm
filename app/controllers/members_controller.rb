@@ -19,6 +19,7 @@ class MembersController < ApplicationController
   # POST /members.json
   def create
     @member = Member.new(params[:member])
+    @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
     if @member.save
       render json: @member, status: :created, location: @member
@@ -31,6 +32,7 @@ class MembersController < ApplicationController
   # PATCH/PUT /members/1.json
   def update
     @member = Member.find(params[:id])
+    @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
     if @member.update_attributes(params[:member])
       head :no_content
@@ -42,7 +44,8 @@ class MembersController < ApplicationController
   # DELETE /members/1
   # DELETE /members/1.json
   def destroy
-    @member = Member.message('delete', params[:member])
+    @member = Member.find(params[:id])
+    @member.destroy
 
     head :no_content
   end
