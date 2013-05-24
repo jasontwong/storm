@@ -45,8 +45,12 @@ class MembersController < ApplicationController
   # DELETE /members/1.json
   def destroy
     @member = Member.find(params[:id])
-    @member.destroy
+    @member.active = false
 
-    head :no_content
+    if @member.save
+      head :no_content
+    else
+      render json: @member.errors, status: :unprocessable_entity
+    end
   end
 end
