@@ -10,4 +10,19 @@ class Member < ActiveRecord::Base
 
   validates :email, :uniqueness => true, :presence => true, :email => true
   validates :active, :inclusion => { :in => [true, false] }
+
+  def parse_attrs(attrs)
+    unless self.member_attributes.nil?
+      self.member_attributes.each do |attr|
+        key = attr.name.to_sym
+        val = data[key]
+        unless val.nil?
+          attr.value = val
+          data.delete(key)
+        end
+      end
+    end
+
+    attrs.each { |name, val| self.member_attributes.build({ name: name, value: val }) }
+  end
 end

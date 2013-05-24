@@ -44,6 +44,13 @@ describe MembersController do
         }.to_not change(Member, :count)
       end
     end
+    context 'with extra attributes' do
+      it 'creates a new member with extra attributes' do
+        expect {
+          post :create, member: FactoryGirl.attributes_for(:member), attrs: { foo: 'bar', hello: 'world' }
+        }.to change(MemberAttribute, :count).by(2)
+      end
+    end
   end
 
   # have to figure out a way to test since this works with SQS
