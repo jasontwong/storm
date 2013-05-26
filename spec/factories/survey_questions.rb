@@ -13,4 +13,8 @@ FactoryGirl.define do
 
     company
   end
+
+  factory :invalid_survey_question, parent: :survey_question do
+    question nil
+  end
 end

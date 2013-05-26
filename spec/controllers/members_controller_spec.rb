@@ -99,7 +99,7 @@ describe MembersController do
       @member = FactoryGirl.create(:member)
     end
 
-    it 'deletes the member' do
+    it 'makes the member inactive' do
       expect{
         delete :destroy, id: @member
       }.to change(Member, :count).by(0)

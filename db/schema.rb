@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130524195312) do
+ActiveRecord::Schema.define(:version => 20130526204626) do
 
   create_table "codes", :force => true do |t|
     t.string   "qr"
@@ -164,6 +164,11 @@ ActiveRecord::Schema.define(:version => 20130524195312) do
     t.datetime "updated_at", :null => false
   end
 
+  create_table "survey_question_categories_survey_questions", :id => false, :force => true do |t|
+    t.integer "survey_question_category_id"
+    t.integer "survey_question_id"
+  end
+
   create_table "survey_questions", :force => true do |t|
     t.string   "question"
     t.string   "answer_type"
@@ -179,6 +184,11 @@ ActiveRecord::Schema.define(:version => 20130524195312) do
   create_table "survey_questions_survey_question_categories", :id => false, :force => true do |t|
     t.integer "survey_question_id"
     t.integer "survey_question_category_id"
+  end
+
+  create_table "survey_questions_surveys", :id => false, :force => true do |t|
+    t.integer "survey_question_id"
+    t.integer "survey_id"
   end
 
   create_table "surveys", :force => true do |t|
