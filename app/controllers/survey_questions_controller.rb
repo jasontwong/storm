@@ -43,8 +43,12 @@ class SurveyQuestionsController < ApplicationController
   # DELETE /survey_questions/1.json
   def destroy
     @survey_question = SurveyQuestion.find(params[:id])
-    @survey_question.destroy
+    @survey_question.active = false
 
-    head :no_content
+    if @survey_question.save
+      head :no_content
+    else
+      render json: @survey_question.errors, status: :unprocessable_entity
+    end
   end
 end
