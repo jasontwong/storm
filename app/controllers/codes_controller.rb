@@ -43,8 +43,12 @@ class CodesController < ApplicationController
   # DELETE /codes/1.json
   def destroy
     @code = Code.find(params[:id])
-    @code.destroy
+    @code.active = false
 
-    head :no_content
+    if @code.save
+      head :no_content
+    else
+      render json: @code.errors, status: :unprocessable_entity
+    end
   end
 end

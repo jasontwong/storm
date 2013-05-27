@@ -84,10 +84,12 @@ describe CodesController do
       @code = FactoryGirl.create(:code)
     end
 
-    it 'deletes the code' do
+    it 'changes the code so that active becomes false' do
       expect{
         delete :destroy, id: @code
-      }.to change(Code, :count).by(-1)
+      }.to change(Code, :count).by(0)
+      @code.reload
+      @code.active.should be_false
     end
   end
 
