@@ -23,6 +23,6 @@ class Member < ActiveRecord::Base
       end
     end
 
-    attrs.each { |name, val| self.member_attributes.build({ name: name, value: val }) }
+    attrs.each { |name, val| MemberAttribute.new({ name: name, value: val, member_id: self.id }).save }
   end
 end
