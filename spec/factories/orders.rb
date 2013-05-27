@@ -15,11 +15,16 @@ FactoryGirl.define do
 
     company
     store
-    code
     member
+    code
   end
 
   factory :invalid_order, parent: :order do
-    survey_worth nil
+    code_id nil
+  end
+
+  factory :real_order, parent: :order do
+    member_id nil
+    code_id nil
   end
 end

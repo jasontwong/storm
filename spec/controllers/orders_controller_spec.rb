@@ -37,6 +37,11 @@ describe OrdersController do
         post :create, order: FactoryGirl.attributes_for(:order)
         response.status.should == 201
       end
+      it 'creates a related qr code' do
+        expect{
+          post :create, order: FactoryGirl.attributes_for(:real_order), qr: 'abc123'
+        }.to change(Code, :count).by(1)
+      end
     end
     context 'with invalid attributes' do
       it 'does not create a new order' do

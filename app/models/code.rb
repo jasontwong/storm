@@ -1,7 +1,7 @@
 class Code < ActiveRecord::Base
   attr_accessible :qr, :used, :active, :last_used_time
 
-  has_many :orders, inverse_of: :code
+  has_one :order, inverse_of: :code
   has_many :order_details, inverse_of: :code
   has_many :member_answers, inverse_of: :code
 

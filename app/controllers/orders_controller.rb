@@ -19,6 +19,8 @@ class OrdersController < ApplicationController
   # POST /orders.json
   def create
     @order = Order.new(params[:order])
+    code = Code.new(qr: params[:qr], active: true)
+    @order.code = code if code.save
 
     if @order.save
       render json: @order, status: :created, location: @order
