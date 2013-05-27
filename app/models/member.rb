@@ -25,4 +25,17 @@ class Member < ActiveRecord::Base
 
     attrs.each { |name, val| MemberAttribute.new({ name: name, value: val, member_id: self.id }).save }
   end
+
+  def parse_answers(answers)
+    answers.each do |answer|
+      member_answer = MemberAnswer.where(member_id: self.id, code_id: answer[:code_id], question: answer[:question]).last
+      if member_answer.nil?
+        member_answer = MemberAnswer.new(answer)
+        member_answer.member = self
+        member_answer.save
+      else
+        member_answer.update_attributes(answer)
+      end
+    end
+  end
 end

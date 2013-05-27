@@ -33,6 +33,7 @@ class MembersController < ApplicationController
   def update
     @member = Member.find(params[:id])
     @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
+    @member.parse_answers(params[:answers]) unless params[:answers].nil?
 
     if !@member.email.nil? && @member.update_attributes(params[:member])
       head :no_content
