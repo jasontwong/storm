@@ -12,6 +12,18 @@ describe RewardsController do
       get :index
       response.status.should == 200
     end
+    it 'populates an array of rewards for a specific company' do
+      company_id = 37
+      FactoryGirl.create(:reward, company_id: company_id)
+      FactoryGirl.create(:reward, company_id: company_id)
+      FactoryGirl.create(:reward, company_id: company_id)
+      FactoryGirl.create(:reward, company_id: company_id)
+      FactoryGirl.create(:reward, company_id: company_id)
+      FactoryGirl.create(:reward)
+      FactoryGirl.create(:reward)
+      get :index, company_id: company_id
+      assigns(:rewards).length.should == 5
+    end
   end
 
   describe 'GET #show' do

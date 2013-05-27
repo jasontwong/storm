@@ -2,7 +2,10 @@ class RewardsController < ApplicationController
   # GET /rewards
   # GET /rewards.json
   def index
-    @rewards = Reward.all
+    unless params[:company_id].nil?
+      @rewards = Reward.where(company_id: params[:company_id])
+    end
+    @rewards ||= Reward.all
 
     render json: @rewards
   end
