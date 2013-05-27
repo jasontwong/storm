@@ -8,7 +8,7 @@ class Member < ActiveRecord::Base
   has_many :member_answers, inverse_of: :member
   has_many :member_rewards, inverse_of: :member
 
-  validates :email, :uniqueness => true, :email => true
+  validates :email, :email => true
   validates :active, :inclusion => { :in => [true, false] }
 
   def parse_attrs(attrs)
