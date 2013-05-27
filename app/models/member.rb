@@ -38,4 +38,18 @@ class Member < ActiveRecord::Base
       end
     end
   end
+
+  def parse_points(points, company)
+    member_points = MemberPoints.where(member_id: self.id, company_id: company).last
+    if member_points.nil?
+      member_points = MemberPoints.new(company_id: company)
+      member_points.member = self
+    end
+    member_points.points += points
+    if points > 0
+      member_points.total_points += points
+      member_points.last_earned = Time.now
+    end
+    member_points.save
+  end
 end

@@ -106,6 +106,29 @@ describe MembersController do
         }.to change(MemberAnswer, :count).by(4)
       end
     end
+
+    context 'with points' do
+      it 'can increase member points for a company' do
+        num_points = 5
+        points = FactoryGirl.create(:member_point, member: @member)
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member), points: num_points, company_id: points.company_id
+        latest_points = MemberPoints.where(member_id: @member.id, company_id: points.company_id).last
+        new_points = points.points + num_points
+        new_points.should == latest_points.points
+        new_points = points.total_points + num_points
+        new_points.should == latest_points.total_points
+      end
+      it 'can decrease member points for a company without decreasing total points' do
+        num_points = -5
+        points = FactoryGirl.create(:member_point, member: @member)
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member), points: num_points, company_id: points.company_id
+        latest_points = MemberPoints.where(member_id: @member.id, company_id: points.company_id).last
+        new_points = points.points + num_points
+        new_points.should == latest_points.points
+        new_points = points.total_points
+        new_points.should == latest_points.total_points
+      end
+    end
   end
 
   describe 'DELETE #destroy' do
