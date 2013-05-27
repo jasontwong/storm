@@ -92,6 +92,20 @@ describe MembersController do
         @member.member_attributes[0].value.should eq('bar')
       end
     end
+
+    context 'with survey answers' do
+      it 'updates a member with answers to a survey' do
+        answers = [
+          FactoryGirl.attributes_for(:member_answer),
+          FactoryGirl.attributes_for(:member_answer),
+          FactoryGirl.attributes_for(:member_answer),
+          FactoryGirl.attributes_for(:member_answer),
+        ]
+        expect{
+          put :update, id: @member, member: FactoryGirl.attributes_for(:member), answers: answers
+        }.to change(MemberAnswer, :count).by(4)
+      end
+    end
   end
 
   describe 'DELETE #destroy' do
