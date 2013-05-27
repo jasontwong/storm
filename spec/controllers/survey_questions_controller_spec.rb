@@ -12,6 +12,19 @@ describe SurveyQuestionsController do
       get :index
       response.status.should == 200
     end
+    it 'populates an array of survey_questions based on the qr code' do
+      order = FactoryGirl.create(:order)
+      questions = [
+        FactoryGirl.create(:survey_question),
+        FactoryGirl.create(:survey_question),
+        FactoryGirl.create(:survey_question),
+        FactoryGirl.create(:survey_question),
+      ]
+      FactoryGirl.create(:survey_question)
+      survey = FactoryGirl.create(:survey, store: order.store, survey_questions: questions)
+      get :index, qr: order.code.qr
+      assigns(:survey_questions).length.should == 4
+    end
   end
 
   describe 'GET #show' do

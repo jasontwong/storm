@@ -2,7 +2,13 @@ class SurveyQuestionsController < ApplicationController
   # GET /survey_questions
   # GET /survey_questions.json
   def index
-    @survey_questions = SurveyQuestion.all
+    if params[:qr]
+      code = Code.where(qr: params[:code]).last
+      order = Order.where(code_id: code.id).last
+      survey = Survey.where(store_id: order.store_id).last
+      @survey_questions = survey.survey_questions
+    end
+    @survey_questions ||= SurveyQuestion.all
 
     render json: @survey_questions
   end
