@@ -19,9 +19,9 @@ class MembersController < ApplicationController
   # POST /members.json
   def create
     @member = Member.new(params[:member])
-    @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
 
     if !@member.email.nil? && @member.save
+      @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
       render json: @member, status: :created, location: @member
     else
       render json: @member.errors, status: :unprocessable_entity
