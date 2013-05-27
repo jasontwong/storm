@@ -85,7 +85,7 @@ describe MembersController do
     end
 
     context 'with extra attributes' do
-      it 'creates a new member with extra attributes' do
+      it 'updates a member with extra attributes' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member), attrs: { foo: 'bar' }
         assigns(:member).should eq(@member)
         @member.member_attributes[0].name.should eq('foo')
