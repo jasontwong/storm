@@ -23,6 +23,7 @@ class OrdersController < ApplicationController
     @order.code = code if code.save
 
     if @order.save
+      @order.save_details(params[:details]) unless params[:details].nil?
       render json: @order, status: :created, location: @order
     else
       render json: @order.errors, status: :unprocessable_entity

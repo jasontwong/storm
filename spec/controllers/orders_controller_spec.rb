@@ -42,6 +42,14 @@ describe OrdersController do
           post :create, order: FactoryGirl.attributes_for(:real_order), qr: 'abc123'
         }.to change(Code, :count).by(1)
       end
+      it 'creates a details as needed' do
+        expect{
+          details = [
+            { name: 'Product 1', price: '5.75', quantity: 1 }
+          ]
+          post :create, order: FactoryGirl.attributes_for(:order), qr: 'abc123', details: details
+        }.to change(OrderDetail, :count).by(1)
+      end
     end
     context 'with invalid attributes' do
       it 'does not create a new order' do
