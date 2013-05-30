@@ -145,4 +145,50 @@ describe MembersController do
     end
   end
 
+  # member rewards section
+  
+  describe 'GET #reward_index' do
+    it 'retrieves the rewards for a single member' do
+      member = FactoryGirl.create(:member)
+      reward = FactoryGirl.create(:member_reward, member: member)
+      member.member_rewards << reward
+      get :reward_index, id: member.id
+      assigns(:member_rewards).should eq([reward])
+    end
+  end
+
+  describe 'POST #reward_create' do
+    before :each do
+      @member = FactoryGirl.create(:member)
+    end
+
+    context 'with valid attributes' do
+      it 'creates a new reward for a single member' do
+        expect{
+          reward = FactoryGirl.create(:reward)
+          post :reward_create, id: @member.id, reward_id: reward.id
+        }.to change(MemberReward, :count).by(1)
+      end
+    end
+  end
+
+  describe 'PUT #reward_update' do
+    before :each do
+      @member_reward = FactoryGirl.create(:member_reward)
+    end
+
+    context 'with valid attributes' do
+      it 'locates a reward for a single member' do
+        put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward)
+        assigns(:member_reward).should eq(@member_reward)
+      end
+      it 'changes reward attributes for a single member' do
+        put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward, printed: 5, scanned: 55)
+        @member_reward.reload
+        @member_reward.printed == 5
+        @member_reward.scanned == 55
+      end
+    end
+  end
+
 end
