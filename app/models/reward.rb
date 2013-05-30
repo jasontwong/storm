@@ -14,4 +14,14 @@ class Reward < ActiveRecord::Base
   def init
     self.uses_left = -1 if self.uses_left.nil?
   end
+
+  def expired?
+    now = Time.now
+    return true if self.uses_left == 0
+    unless self.starts.nil?
+      return true if self.starts > now
+      return self.expires < now if !self.expires.nil?
+    end
+    return false
+  end
 end

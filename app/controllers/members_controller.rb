@@ -58,4 +58,47 @@ class MembersController < ApplicationController
       render json: @member.errors, status: :unprocessable_entity
     end
   end
+
+  # GET /members/1/reward
+  # GET /members/1/reward.json
+  def reward_index
+    @member_rewards = MemberReward.where(member_id: params[:id])
+
+    render json: @member_rewards
+  end
+
+  # POST /members/1/reward
+  # POST /members/1/reward.json
+  def reward_create
+    member = Member.find(params[:id])
+    @member_reward = MemberReward.new(redeemed: false)
+    @member_reward.reward = Reward.find(params[:reward_id])
+    @member_reward.member = member
+    if @member_reward.reward.nil? 
+      render json: ["that reward doesn't exist"], status: :unprocessable_entity
+    elsif @member_reward.reward.expired? 
+      render json: ["that reward is expired"], status: :unprocessable_entity
+    elsif @member_reward.save
+      render json: @member_reward, status: :created, location: @member_reward
+    else
+      render json: @member_reward.errors, status: :unprocessable_entity
+    end
+  end
+
+  # PUT/PATCH /members/1/reward/1
+  # PUT/PATCH /members/1/reward/1.json
+  def reward_update
+    member = Member.find(params[:member_id])
+    @member_reward = MemberReward.find(params[:id])
+    if @member_reward.redeemed_time.nil?
+      @member_reward.rewarded_time = Time.now
+      if @member_reward.update_attributes(params[:member_reward])
+        render json: @member_reward, status: :created, location: @member_reward
+      else
+        render json: @member_reward.errors, status: :unprocessable_entity
+      end
+    else
+      render json: ["that reward has already been rewarded"], status: :unprocessable_entity
+    end
+  end
 end

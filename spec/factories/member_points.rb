@@ -6,7 +6,7 @@ FactoryGirl.define do
     member_id 1
     company_id 1
     points { FactoryGirl.generate(:rand_d) }
-    total_points { FactoryGirl.generate(:rand_d) }
+    total_points { points + 5 }
     last_earned { Time.now }
 
     member

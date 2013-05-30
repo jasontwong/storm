@@ -15,6 +15,11 @@ DataApi::Application.routes.draw do
 
   resources :companies, except: [:new, :edit]
 
+  # custom routes because we don't need to expose everything about member rewards
+  get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
+  post 'members/:id/rewards' => 'members#reward_create'
+  put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
+
   resources :members, except: [:new, :edit]
 
   # The priority is based upon order of creation:
