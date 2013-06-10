@@ -1,6 +1,11 @@
 require 'spec_helper'
 
 describe MembersController do
+  before :each do
+    @token = FactoryGirl.create(:api_key)
+    request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
+  end
+
   describe 'GET #index' do
     it 'populates an array of members' do
       member = FactoryGirl.create(:member)
