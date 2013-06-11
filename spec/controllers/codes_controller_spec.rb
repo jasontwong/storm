@@ -97,4 +97,12 @@ describe CodesController do
     end
   end
 
+  describe 'parse receipts' do
+    it 'parses a receipt with 3 columns' do
+      receipt = Receipt.new(File.read(Rails.root.join('extras/receipts/3col.txt')))
+      order = receipt.parse_data(3)
+      order[:items].length.should == 2
+    end
+  end
+
 end
