@@ -25,6 +25,7 @@ class CodesController < ApplicationController
     else
       render json: @code.errors, status: :unprocessable_entity
     end
+
   end
 
   # PATCH/PUT /codes/1
