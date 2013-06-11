@@ -4,6 +4,7 @@ class Receipt < String
       items: [],
     }
 
+    # TODO make this more efficient
     lines = self.split("\n")
     lines.delete_if { |line| /\d+\.\d{2}/.match(line).nil? }
     is_item = true
