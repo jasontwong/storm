@@ -97,6 +97,7 @@ describe CodesController do
     end
   end
 
+  # TODO Take this functionality out of the API and into worker thread
   describe 'parse receipts' do
     it 'parses a receipt with 3 columns' do
       receipt = Receipt.new(File.read(Rails.root.join('extras/receipts/3col.txt')))
