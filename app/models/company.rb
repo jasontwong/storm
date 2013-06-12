@@ -7,6 +7,7 @@ class Company < ActiveRecord::Base
   has_many :orders, inverse_of: :company
   has_many :survey_questions, inverse_of: :company
   has_many :member_points, inverse_of: :company
+  has_many :clients, inverse_of: :company
 
   validates :name, presence: true
 
