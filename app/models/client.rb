@@ -3,6 +3,7 @@ class Client < ActiveRecord::Base
   attr_accessible :active, :client_group_id, :company_id, :email, :name, :password, :salt
 
   has_one :company, inverse_of: :clients
+  has_one :client_group, inverse_of: :clients
 
   validates :email, email: true, presence: true, uniqueness: true
   validates :company_id, presence: true
