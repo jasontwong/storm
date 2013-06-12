@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130612170728) do
+ActiveRecord::Schema.define(:version => 20130612171757) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -36,6 +36,11 @@ ActiveRecord::Schema.define(:version => 20130612170728) do
     t.datetime "updated_at", :null => false
   end
 
+  create_table "client_permissions_clients", :id => false, :force => true do |t|
+    t.integer "client_id"
+    t.integer "client_permission_id"
+  end
+
   create_table "clients", :force => true do |t|
     t.integer  "company_id"
     t.string   "email"
@@ -46,11 +51,6 @@ ActiveRecord::Schema.define(:version => 20130612170728) do
     t.boolean  "active"
     t.datetime "created_at",      :null => false
     t.datetime "updated_at",      :null => false
-  end
-
-  create_table "clients_client_permissions", :id => false, :force => true do |t|
-    t.integer "client_id"
-    t.integer "client_permission_id"
   end
 
   create_table "codes", :force => true do |t|
