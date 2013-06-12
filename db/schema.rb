@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130612170126) do
+ActiveRecord::Schema.define(:version => 20130612170728) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -221,11 +221,6 @@ ActiveRecord::Schema.define(:version => 20130612170126) do
     t.string   "dynamic_meta"
   end
 
-  create_table "survey_questions_survey_question_categories", :id => false, :force => true do |t|
-    t.integer "survey_question_id"
-    t.integer "survey_question_category_id"
-  end
-
   create_table "survey_questions_surveys", :id => false, :force => true do |t|
     t.integer "survey_question_id"
     t.integer "survey_id"
@@ -238,11 +233,6 @@ ActiveRecord::Schema.define(:version => 20130612170126) do
     t.boolean  "default"
     t.datetime "created_at",  :null => false
     t.datetime "updated_at",  :null => false
-  end
-
-  create_table "surveys_survey_questions", :id => false, :force => true do |t|
-    t.integer "survey_id"
-    t.integer "survey_question_id"
   end
 
 end
