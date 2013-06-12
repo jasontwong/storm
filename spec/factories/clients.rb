@@ -10,6 +10,9 @@ FactoryGirl.define do
     name { Faker::Name.name }
     salt { Faker::Lorem.word }
     active false
+
+    company
+    client_group
   end
 
   factory :invalid_client, parent: :client do

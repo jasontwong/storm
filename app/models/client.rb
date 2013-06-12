@@ -2,8 +2,8 @@ class Client < ActiveRecord::Base
   include ActiveModel::Validations
   attr_accessible :active, :client_group_id, :company_id, :email, :name, :password, :salt
 
-  has_one :company, inverse_of: :clients
-  has_one :client_group, inverse_of: :clients
+  belongs_to :company, inverse_of: :clients
+  belongs_to :client_group, inverse_of: :clients
 
   validates :email, email: true, presence: true, uniqueness: true
   validates :company_id, presence: true
