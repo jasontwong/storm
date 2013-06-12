@@ -43,8 +43,12 @@ class ClientsController < ApplicationController
   # DELETE /clients/1.json
   def destroy
     @client = Client.find(params[:id])
-    @client.destroy
+    @client.active = false
 
-    head :no_content
+    if @client.save
+      head :no_content
+    else
+      render json: @client.errors, status: :unprocessable_entity
+    end
   end
 end

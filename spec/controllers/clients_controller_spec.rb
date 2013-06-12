@@ -88,10 +88,12 @@ describe ClientsController do
       @client = FactoryGirl.create(:client)
     end
 
-    it 'deletes the client' do
+    it 'makes the client inactive' do
       expect{
         delete :destroy, id: @client
-      }.to change(Client, :count).by(-1)
+      }.to change(Member, :count).by(0)
+      @client.reload
+      @client.active.should be_false
     end
   end
 
