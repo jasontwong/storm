@@ -9,6 +9,8 @@ class Company < ActiveRecord::Base
   has_many :member_points, inverse_of: :company
   has_many :clients, inverse_of: :company
 
+  serialize :logo, Hash
+
   validates :name, presence: true
 
   after_initialize :init
