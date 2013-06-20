@@ -16,6 +16,9 @@ end
 # Companies
 # Surveys
 
+ApiKey.delete_all
+ApiKey.create!(access_token: 'apikey')
+
 20.times do
   company = Company.create!(
     name: Faker::Company.name,
@@ -24,6 +27,7 @@ end
       small: 'smallimage',
       bg: 'bgimage',
     },
+    description: Faker::Lorem.sentence,
     location: Faker::Address.street_address(true),
     phone: Faker::PhoneNumber.phone_number,
     survey_question_limit: 6,
@@ -45,6 +49,12 @@ end
       name: 'Product ' + num.to_s,
       price: random_num(true),
       company_id: company.id,
+    )
+    Reward.create!(
+      company_id: company.id,
+      cost: random_num,
+      description: Faker::Lorem.sentence,
+      title: Faker::Lorem.word,
     )
   end
 end
