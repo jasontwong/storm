@@ -58,3 +58,28 @@ ApiKey.create!(access_token: 'apikey')
     )
   end
 end
+
+20.times do
+  member = Member.create!(
+    email: Faker::Internet.email,
+    salt: Faker::Lorem.word,
+    other_id: Faker::Lorem.word,
+    active: true,
+  )
+  password = Digest::SHA256.new
+  password.update member.other_id
+  member.password = BCrypt::Password.create(password.hexdigest + member.salt)
+
+  Company.all.each do |company|
+    points = random_num
+    MemberPoints.create!(
+      company_id: company.id,
+      last_earned: Time.now.utc,
+      member_id: member.id,
+      points: points,
+      total_points: points + random_num,
+    )
+  end
+
+  member.save
+end
