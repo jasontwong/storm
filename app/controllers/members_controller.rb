@@ -12,7 +12,9 @@ class MembersController < ApplicationController
   def show
     @member = Member.find(params[:id])
 
-    render json: @member
+    params[:include] = [] unless params[:include].is_a? Array
+    
+    render json: @member.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /members
