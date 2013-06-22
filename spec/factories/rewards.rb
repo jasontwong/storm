@@ -11,6 +11,7 @@ FactoryGirl.define do
     starts { FactoryGirl.generate(:rand).month.ago }
     expires { FactoryGirl.generate(:rand).month.from_now }
     uses_left { FactoryGirl.generate(:rand) }
+    images { { Faker::Lorem.word => Faker::Lorem.word } }
 
     company
   end
