@@ -5,7 +5,7 @@ FactoryGirl.define do
   factory :company do
     name { Faker::Lorem.word }
     description { Faker::Lorem.word }
-    logo { Faker::Lorem.word }
+    logo {{ Faker::Lorem.word => Faker::Lorem.word }}
     location { Faker::Lorem.word }
     phone { Faker::Lorem.word }
   end

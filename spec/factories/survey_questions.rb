@@ -6,10 +6,10 @@ FactoryGirl.define do
     company_id 1
     question { Faker::Lorem.sentence }
     answer_type { Faker::Lorem.word }
-    answer_meta { { foo: Faker::Lorem.word } }
+    answer_meta { { Faker::Lorem.word => Faker::Lorem.word } }
     active false
     dynamic false
-    dynamic_meta { [{ model: Faker::Lorem.word, attibute: Faker::Lorem.word }] }
+    dynamic_meta { [{ Faker::Lorem.word => Faker::Lorem.word, Faker::Lorem.word => Faker::Lorem.word }] }
 
     company
   end

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130612171757) do
+ActiveRecord::Schema.define(:version => 20130622185319) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -65,11 +65,11 @@ ActiveRecord::Schema.define(:version => 20130612171757) do
   create_table "companies", :force => true do |t|
     t.string   "name"
     t.string   "description"
-    t.string   "logo"
+    t.text     "logo",                  :limit => 255
     t.string   "location"
     t.string   "phone"
-    t.datetime "created_at",            :null => false
-    t.datetime "updated_at",            :null => false
+    t.datetime "created_at",                           :null => false
+    t.datetime "updated_at",                           :null => false
     t.integer  "survey_question_limit"
   end
 
@@ -173,8 +173,9 @@ ActiveRecord::Schema.define(:version => 20130612171757) do
     t.datetime "starts"
     t.datetime "expires"
     t.integer  "uses_left"
-    t.datetime "created_at",  :null => false
-    t.datetime "updated_at",  :null => false
+    t.datetime "created_at",                 :null => false
+    t.datetime "updated_at",                 :null => false
+    t.text     "images",      :limit => 255
   end
 
   create_table "stores", :force => true do |t|
@@ -212,13 +213,13 @@ ActiveRecord::Schema.define(:version => 20130612171757) do
   create_table "survey_questions", :force => true do |t|
     t.string   "question"
     t.string   "answer_type"
-    t.string   "answer_meta"
+    t.text     "answer_meta",  :limit => 255
     t.boolean  "active"
-    t.datetime "created_at",   :null => false
-    t.datetime "updated_at",   :null => false
+    t.datetime "created_at",                  :null => false
+    t.datetime "updated_at",                  :null => false
     t.integer  "company_id"
     t.boolean  "dynamic"
-    t.string   "dynamic_meta"
+    t.text     "dynamic_meta", :limit => 255
   end
 
   create_table "survey_questions_surveys", :id => false, :force => true do |t|
