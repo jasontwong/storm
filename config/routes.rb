@@ -17,10 +17,11 @@ DataApi::Application.routes.draw do
 
   resources :companies, except: [:new, :edit]
 
-  # custom routes because we don't need to expose everything about member rewards
+  # custom routes
   get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
   post 'members/:id/rewards' => 'members#reward_create'
   put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
+  post 'members/verify' => 'members#verify'
 
   resources :members, except: [:new, :edit]
 

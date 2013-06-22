@@ -59,6 +59,25 @@ class MembersController < ApplicationController
     end
   end
 
+  # POST /members/verify
+  # POST /members/verify.json
+  def verify
+    members = Member.where(email: params[:email]).limit(1)
+    if members.length == 1
+      @member = members[0]
+      password = params[:password] + @member.salt
+
+      if password == BCrypt::Password.new(@member.password)
+        render json: @member
+      else
+        render json: { member: 'Bad Password' }, status: :not_acceptable
+      end
+    else
+      render json: { member: 'Not Found' }, status: :not_acceptable
+    end
+
+  end
+
   # GET /members/1/reward
   # GET /members/1/reward.json
   def reward_index

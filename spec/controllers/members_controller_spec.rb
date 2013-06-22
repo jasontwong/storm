@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'bcrypt'
 
 describe MembersController do
   before :each do
@@ -147,6 +148,39 @@ describe MembersController do
       }.to change(Member, :count).by(0)
       @member.reload
       @member.active.should be_false
+    end
+  end
+
+  # member verify section
+  
+  describe 'POST #verify' do
+    before :each do
+      @member = FactoryGirl.create(:member)
+      @password = Digest::SHA256.new
+      @password.update 'password'
+      @member.password = BCrypt::Password.create(@password.hexdigest + @member.salt)
+      @member.save
+    end
+
+    context 'valid password' do
+      it 'returns member info' do
+        post :verify, email: @member.email, password: @password
+        assigns(:member).should eq(@member)
+      end
+    end
+
+    context 'invalid password' do
+      it 'returns an error' do
+        post :verify, email: @member.email, password: 'wrong password'
+        response.status.should == 406
+      end
+    end
+
+    context 'invalid email' do
+      it 'returns an error' do
+        post :verify, email: 'foobar', password: @password
+        response.status.should == 406
+      end
     end
   end
 
