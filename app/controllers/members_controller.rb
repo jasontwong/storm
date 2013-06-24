@@ -80,21 +80,18 @@ class MembersController < ApplicationController
 
   end
 
-  # GET /members/1/reward
-  # GET /members/1/reward.json
+  # GET /members/1/rewards
+  # GET /members/1/rewards.json
   def reward_index
     @member_rewards = MemberReward.where(member_id: params[:id])
 
     render json: @member_rewards
   end
 
-  # POST /members/1/reward
-  # POST /members/1/reward.json
+  # POST /members/1/rewards
+  # POST /members/1/rewards.json
   def reward_create
-    member = Member.find(params[:id])
-    @member_reward = MemberReward.new(redeemed: false)
-    @member_reward.reward = Reward.find(params[:reward_id])
-    @member_reward.member = member
+    @member_reward = MemberReward.new(params[:member_reward])
     if @member_reward.reward.nil? 
       render json: ["that reward doesn't exist"], status: :unprocessable_entity
     elsif @member_reward.reward.expired? 
@@ -106,8 +103,8 @@ class MembersController < ApplicationController
     end
   end
 
-  # PUT/PATCH /members/1/reward/1
-  # PUT/PATCH /members/1/reward/1.json
+  # PUT/PATCH /members/1/rewards/1
+  # PUT/PATCH /members/1/rewards/1.json
   def reward_update
     member = Member.find(params[:member_id])
     @member_reward = MemberReward.find(params[:id])
