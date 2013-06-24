@@ -1,4 +1,8 @@
 class MemberReward < ActiveRecord::Base
+  ALPHA = 1
+  ALPHANUMERIC = 2
+  NUMERIC = 3
+  BAR = 4
   attr_accessible :bcode, :code, :printed, :redeemed, :redeemed_time, :reward_id, :scanned, :store_id, :member_id
 
   belongs_to :member, inverse_of: :member_rewards
@@ -14,5 +18,15 @@ class MemberReward < ActiveRecord::Base
   def init
     self.printed = 0 if self.printed.nil?
     self.scanned = 0 if self.scanned.nil?
+  end
+
+  def generate_code (type, complexity=5)
+    case type
+    when ALPHA # letters only
+    when ALPHANUMERIC # letters and numbers
+      self.code = SecureRandom.hex.upcase[0..complexity-1]
+    when NUMERIC # numbers only
+    when BAR # bar code
+    end
   end
 end
