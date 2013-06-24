@@ -198,14 +198,17 @@ describe MembersController do
 
   describe 'POST #reward_create' do
     before :each do
-      @member = FactoryGirl.create(:member)
+      @member_reward = FactoryGirl.attributes_for(:member_reward)
     end
 
     context 'with valid attributes' do
       it 'creates a new reward for a single member' do
         expect{
           reward = FactoryGirl.create(:reward)
-          post :reward_create, id: @member.id, reward_id: reward.id
+          member = FactoryGirl.create(:member)
+          @member_reward[:member_id] = member.id
+          @member_reward[:reward_id] = reward.id
+          post :reward_create, id: member.id, member_reward: @member_reward
         }.to change(MemberReward, :count).by(1)
       end
     end
