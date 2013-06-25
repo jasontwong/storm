@@ -4,7 +4,9 @@ class CompaniesController < ApplicationController
   def index
     @companies = Company.all
 
-    render json: @companies
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @companies.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /companies/1
@@ -12,7 +14,9 @@ class CompaniesController < ApplicationController
   def show
     @company = Company.find(params[:id])
 
-    render json: @company
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @company.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /companies
