@@ -21,6 +21,10 @@ class MembersController < ApplicationController
   # POST /members.json
   def create
     @member = Member.new(params[:member])
+    @member.salt = SecureRandom.hex
+    password = Digest::SHA256.new
+    password.update @member.password + @member.salt
+    @member.password = password.hexdigest
 
     if !@member.email.nil? && @member.save
       @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
@@ -67,15 +71,17 @@ class MembersController < ApplicationController
     members = Member.where(email: params[:email]).limit(1)
     if members.length == 1
       @member = members[0]
-      password = params[:password] + @member.salt
+      password = Digest::SHA256.new
+      password.update params[:password] + @member.salt
+      
 
-      if password == BCrypt::Password.new(@member.password)
+      if password.hexdigest == @member.password
         render json: @member
       else
-        render json: { member: 'Bad Password' }, status: :not_acceptable
+        render json: { member: 'Bad Password' }, status: :unprocessable_entity
       end
     else
-      render json: { member: 'Not Found' }, status: :not_acceptable
+      render json: { member: 'Not Found' }, status: :unprocessable_entity
     end
 
   end
