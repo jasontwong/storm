@@ -74,7 +74,6 @@ class MembersController < ApplicationController
       password = Digest::SHA256.new
       password.update params[:password] + @member.salt
       
-
       if password.hexdigest == @member.password
         render json: @member
       else
