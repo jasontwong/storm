@@ -14,4 +14,10 @@ class SurveyQuestion < ActiveRecord::Base
   validates :company_id, presence: true
   validates :active, :inclusion => { :in => [true, false] }
   validates :dynamic, :inclusion => { :in => [true, false] }
+
+  def self.by_code(code)
+    # TODO create algorithm to give the right questions
+    return self.where(company_id: 1).limit(5)
+  end
+
 end
