@@ -68,7 +68,9 @@ end
   )
   password = Digest::SHA256.new
   password.update member.other_id
-  member.password = BCrypt::Password.create(password.hexdigest + member.salt)
+  new_password = Digest::SHA256.new
+  new_password.update password.hexdigest + member.salt
+  member.password = new_password.hexdigest
 
   Company.all.each do |company|
     points = random_num
