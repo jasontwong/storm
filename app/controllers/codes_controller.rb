@@ -52,4 +52,32 @@ class CodesController < ApplicationController
       render json: @code.errors, status: :unprocessable_entity
     end
   end
+
+  # POST /codes/qrcode
+  # POST /codes/qrcode.json
+  def scan
+    codes = Code.where(qr: params[:qr]).limit(1)
+    if codes.length == 1
+      @code = codes[0]
+      @code.used += 1
+      @code.last_used_time = Time.now
+
+      if @code.active
+        @code.active = false
+        if @code.save
+          head :no_content
+        else
+          render json: @code.errors, status: :unprocessable_entity
+        end
+      else
+        if @code.save
+          render json: [ { code: "Already used" } ], status: :unprocessable_entity
+        else
+          render json: @code.errors, status: :unprocessable_entity
+        end
+      end
+    else
+      render json: [ { code: "Not Found" } ], status: :unprocessable_entity
+    end
+  end
 end
