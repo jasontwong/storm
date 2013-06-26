@@ -107,6 +107,35 @@ end
       points: points,
       total_points: points + random_num,
     )
+    company.stores.each do |store|
+      10.times do
+        code = Code.create!(
+          qr: Faker::Lorem.word,
+          active: true,
+        )
+        order = Order.create!(
+          code_id: code.id,
+          company_id: company.id,
+          store_id: store.id,
+          amount: random_num(true),
+          survey_worth: random_num(true),
+          checkin_worth: random_num(true),
+          server: Faker::Name.name,
+        )
+        2.times do
+          product = company.products.order("RANDOM()").first
+          OrderDetail.create!(
+            order_id: order.id,
+            product_id: product.id,
+            name: product.name,
+            quantity: random_num,
+            discount: random_num(true),
+            code_id: code.id,
+            price: random_num(true),
+          )
+        end
+      end
+    end
   end
 
   member.save
