@@ -32,8 +32,8 @@ ApiKey.create!(access_token: 'apikey')
     phone: Faker::PhoneNumber.phone_number,
     survey_question_limit: 6,
   )
-  20.times do |num|
-    Store.create!(
+  10.times do |num|
+    store = Store.create!(
       address1: Faker::Address.street_address,
       city: Faker::Address.city,
       company_id: company.id,
@@ -45,6 +45,32 @@ ApiKey.create!(access_token: 'apikey')
       state: Faker::Address.state,
       zip: Faker::Address.zip_code,
     )
+    5.times do |num_a|
+      survey = Survey.create!(
+        title: "Survey Type " + num_a.to_s,
+        store_id: store.id,
+        description: Faker::Lorem.sentence,
+        default: false,
+      )
+      10.times do |num_b|
+        type = "slider"
+        meta = { min: 0, max: 10 }
+        if random_num % 2
+          type = "switch"
+          meta = { left: "No", right: "Yes" }
+        end
+        survey.survey_questions << SurveyQuestion.create!(
+          question: "Question " + num_b.to_s + ": " + Faker::Lorem.sentence,
+          answer_type: type,
+          answer_meta: meta,
+          active: true,
+          company_id: company.id,
+          dynamic: false,
+          dynamic_meta: [],
+        )
+      end
+      survey.save
+    end
     Product.create!(
       name: 'Product ' + num.to_s,
       price: random_num(true),
@@ -59,7 +85,7 @@ ApiKey.create!(access_token: 'apikey')
   end
 end
 
-20.times do
+10.times do
   member = Member.create!(
     email: Faker::Internet.email,
     salt: Faker::Lorem.word,
