@@ -19,7 +19,7 @@ end
 ApiKey.delete_all
 ApiKey.create!(access_token: 'apikey')
 
-20.times do
+5.times do
   company = Company.create!(
     name: Faker::Company.name,
     logo: { 
@@ -32,7 +32,7 @@ ApiKey.create!(access_token: 'apikey')
     phone: Faker::PhoneNumber.phone_number,
     survey_question_limit: 6,
   )
-  10.times do |num|
+  5.times do |num|
     store = Store.create!(
       address1: Faker::Address.street_address,
       city: Faker::Address.city,
@@ -123,7 +123,7 @@ end
           server: Faker::Name.name,
         )
         2.times do
-          product = company.products.order("RANDOM()").first
+          product = company.products.offset(rand(company.products.count)).first
           OrderDetail.create!(
             order_id: order.id,
             product_id: product.id,
