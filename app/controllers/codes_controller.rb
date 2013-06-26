@@ -65,7 +65,7 @@ class CodesController < ApplicationController
       if @code.active
         @code.active = false
         if @code.save
-          head :no_content
+          render json: SurveyQuestion.by_code(@code)
         else
           render json: @code.errors, status: :unprocessable_entity
         end
