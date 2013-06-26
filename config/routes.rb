@@ -22,7 +22,7 @@ DataApi::Application.routes.draw do
   post 'members/:id/rewards' => 'members#reward_create'
   put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
   post 'members/verify' => 'members#verify'
-  post 'codes/:qr' => 'codes#scan'
+  post 'codes/scan' => 'codes#scan'
 
   resources :members, except: [:new, :edit]
 
