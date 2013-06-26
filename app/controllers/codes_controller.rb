@@ -53,8 +53,8 @@ class CodesController < ApplicationController
     end
   end
 
-  # POST /codes/qrcode
-  # POST /codes/qrcode.json
+  # POST /codes/scan
+  # POST /codes/scan.json
   def scan
     codes = Code.where(qr: params[:qr]).limit(1)
     if codes.length == 1
