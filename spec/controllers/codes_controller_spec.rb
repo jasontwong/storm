@@ -106,4 +106,20 @@ describe CodesController do
     end
   end
 
+  describe 'POST #scan' do
+    before :each do
+      @code = FactoryGirl.create(:code)
+    end
+    context 'with valid attributes' do
+      it 'locates requested code' do
+        post :scan, qr: @code.qr
+        assigns(:code).should eq(@code)
+        used = @code.used
+        @code.reload
+        @code.active.should be_false
+        @code.used.should == used + 1
+      end
+    end
+  end
+
 end
