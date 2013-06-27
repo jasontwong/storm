@@ -31,6 +31,7 @@ ApiKey.create!(access_token: 'apikey')
     location: Faker::Address.street_address(true),
     phone: Faker::PhoneNumber.phone_number,
     survey_question_limit: 6,
+    html: '<!DOCTYPE html><html><head></head><body></body><p style="text-align:center;">Yella <strong>bold</strong> <em>italic</em>!</p><p style="text-align:center;width:100%;">{QR}</p><div style="float:left;width:20%;">float left</div><div style="float:right;width:20%;">float right</div><div style="clear:both;">Cleared</div><div><p>Mongoose:</p><hr /><img src="http://www.enchantedlearning.com/ygifs/Yellowmongoose_bw.GIF" /></div><div><ul><li>A list item</li><li style="color:red;">Print red?</li><li><ul><li>A nested list item</li></ul></li></ul></div><table><tbody><tr><td>Support table cells?</td><td>Support table cells?</td></tr></tbody></table></html>',
   )
   5.times do |num|
     store = Store.create!(

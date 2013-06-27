@@ -1,5 +1,5 @@
 class Company < ActiveRecord::Base
-  attr_accessible :description, :location, :logo, :name, :phone, :survey_question_limit
+  attr_accessible :description, :location, :logo, :name, :phone, :survey_question_limit, :html
 
   has_many :stores, inverse_of: :company
   has_many :products, inverse_of: :company
