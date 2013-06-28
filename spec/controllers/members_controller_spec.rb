@@ -172,14 +172,14 @@ describe MembersController do
     context 'invalid password' do
       it 'returns an error' do
         post :verify, email: @member.email, password: 'wrong password'
-        response.status.should == 406
+        response.status.should == 422
       end
     end
 
     context 'invalid email' do
       it 'returns an error' do
         post :verify, email: 'foobar', password: @password
-        response.status.should == 406
+        response.status.should == 422
       end
     end
   end
@@ -230,6 +230,19 @@ describe MembersController do
         @member_reward.printed == 5
         @member_reward.scanned == 55
       end
+    end
+  end
+
+  # member points section
+  
+  describe 'GET #point_index' do
+    it 'retrieves the points for a single member' do
+      member = FactoryGirl.create(:member)
+      company = FactoryGirl.create(:company)
+      point = FactoryGirl.create(:member_point, member: member, company: company)
+      member.member_points << point
+      get :point_index, id: member.id, company_id: company.id
+      assigns(:member_points).should eq([point])
     end
   end
 
