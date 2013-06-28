@@ -28,19 +28,19 @@ ApiKey.create!(access_token: 'apikey')
       bg: 'bgimage',
       colors: {
         header: {
-          r: rand_num,
-          g: rand_num,
-          b: rand_num,
+          r: random_num,
+          g: random_num,
+          b: random_num,
         },
         points: {
-          r: rand_num,
-          g: rand_num,
-          b: rand_num,
+          r: random_num,
+          g: random_num,
+          b: random_num,
         },
         reward: {
-          r: rand_num,
-          g: rand_num,
-          b: rand_num,
+          r: random_num,
+          g: random_num,
+          b: random_num,
         },
       },
     },
