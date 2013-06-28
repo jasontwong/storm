@@ -18,6 +18,7 @@ DataApi::Application.routes.draw do
   resources :companies, except: [:new, :edit]
 
   # custom routes
+  get 'members/:id/points' => 'members#point_index', as: :member_points
   get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
   post 'members/:id/rewards' => 'members#reward_create'
   put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
