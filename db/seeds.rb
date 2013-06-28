@@ -26,6 +26,23 @@ ApiKey.create!(access_token: 'apikey')
       large: 'bigimage', 
       small: 'smallimage',
       bg: 'bgimage',
+      colors: {
+        header: {
+          r: rand_num,
+          g: rand_num,
+          b: rand_num,
+        },
+        points: {
+          r: rand_num,
+          g: rand_num,
+          b: rand_num,
+        },
+        reward: {
+          r: rand_num,
+          g: rand_num,
+          b: rand_num,
+        },
+      },
     },
     description: Faker::Lorem.sentence,
     location: Faker::Address.street_address(true),
