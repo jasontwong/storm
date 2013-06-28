@@ -125,4 +125,20 @@ class MembersController < ApplicationController
       render json: ["that reward has already been rewarded"], status: :unprocessable_entity
     end
   end
+  
+  # GET /members/1/points
+  # GET /members/1/points.json
+  def point_index
+    where = {
+      member_id: params[:id]
+    }
+    unless params[:company_id].nil?
+      where[:company_id] = params[:company_id]
+    end
+
+    @member_points = MemberPoints.where(where)
+
+    render json: @member_points
+  end
+
 end
