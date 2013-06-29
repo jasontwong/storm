@@ -73,7 +73,7 @@ ApiKey.create!(access_token: 'apikey')
       10.times do |num_b|
         type = "slider"
         meta = { min: 0, max: 10 }
-        if random_num % 2
+        if random_num % 2 == 0
           type = "switch"
           meta = { left: "No", right: "Yes" }
         end
