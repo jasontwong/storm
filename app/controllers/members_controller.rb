@@ -97,12 +97,13 @@ class MembersController < ApplicationController
   # POST /members/1/rewards.json
   def reward_create
     @member_reward = MemberReward.new(params[:member_reward])
-    @member_reward.generate_code(MemberReward::ALPHANUMERIC, 5)
     if @member_reward.reward.nil? 
       render json: ["that reward doesn't exist"], status: :unprocessable_entity
     elsif @member_reward.reward.expired? 
       render json: ["that reward is expired"], status: :unprocessable_entity
     elsif @member_reward.save
+      # Look up the reward/company and figure out if it needs code or bcode
+      # @member_reward.generate_code(MemberReward::ALPHANUMERIC, 5)
       render json: @member_reward, status: :created, location: @member_reward
     else
       render json: @member_reward.errors, status: :unprocessable_entity
