@@ -3,7 +3,7 @@ class SurveyQuestionsController < ApplicationController
   # GET /survey_questions.json
   def index
     if params[:qr]
-      code = Code.where(qr: params[:code]).last
+      code = Code.where(qr: params[:qr]).last
       order = Order.where(code_id: code.id).last
       survey = Survey.where(store_id: order.store_id).last
       @survey_questions = survey.survey_questions
