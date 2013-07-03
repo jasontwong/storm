@@ -85,6 +85,28 @@ class MembersController < ApplicationController
 
   end
 
+  # PUT /members/pass_reset
+  # PUT /members/pass_reset.json
+  def pass_reset
+    members = Member.where(email: params[:email]).limit(1)
+    if members.length == 1
+      @member = members[0]
+      password = Digest::SHA256.new
+      password.update @member.to_json + @member.salt
+      @member.temp_pass = password.hexdigest
+      @member.temp_pass_expiration = Time.now + 1.day
+      
+      if @member.save
+        render json: @member
+      else
+        render json: @member.errors, status: :unprocessable_entity
+      end
+    else
+      render json: { member: 'Not Found' }, status: :unprocessable_entity
+    end
+
+  end
+
   # GET /members/1/rewards
   # GET /members/1/rewards.json
   def reward_index
