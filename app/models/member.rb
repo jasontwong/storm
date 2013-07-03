@@ -1,6 +1,6 @@
 class Member < ActiveRecord::Base
   include ActiveModel::Validations
-  attr_accessible :email, :password, :active, :salt, :fb_username, :fb_password, :other_id
+  attr_accessible :email, :password, :active, :salt, :fb_username, :fb_password, :other_id, :temp_pass, :temp_pass_expiration
 
   has_many :member_attributes, inverse_of: :member
   has_many :orders, inverse_of: :member
