@@ -184,6 +184,33 @@ describe MembersController do
     end
   end
 
+  # member pass_reset section
+  
+  describe 'PUT #pass_reset' do
+    before :each do
+      @member = FactoryGirl.create(:member)
+    end
+
+    context 'valid email' do
+      it 'returns member info' do
+        put :pass_reset, email: @member.email
+        @member.reload
+        @member.temp_pass.should_not be_blank
+        @member.temp_pass_expiration.should_not be_blank
+      end
+    end
+
+    context 'invalid email' do
+      it 'returns an error' do
+        put :pass_reset, email: 'foobar'
+        @member.reload
+        @member.temp_pass.should be_blank
+        @member.temp_pass_expiration.should be_blank
+        response.status.should == 422
+      end
+    end
+  end
+
   # member rewards section
   
   describe 'GET #reward_index' do
