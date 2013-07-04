@@ -130,6 +130,7 @@ end
         code = Code.create!(
           qr: Faker::Lorem.word,
           active: true,
+          store_id: store.id,
         )
         order = Order.create!(
           code_id: code.id,

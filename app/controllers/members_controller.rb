@@ -94,7 +94,7 @@ class MembersController < ApplicationController
       password = Digest::SHA256.new
       password.update @member.to_json + @member.salt
       @member.temp_pass = password.hexdigest
-      @member.temp_pass_expiration = Time.now + 1.day
+      @member.temp_pass_expiration = Time.now.utc + 1.day
       
       if @member.save
         render json: @member
@@ -138,7 +138,7 @@ class MembersController < ApplicationController
     member = Member.find(params[:member_id])
     @member_reward = MemberReward.find(params[:id])
     if @member_reward.redeemed_time.nil?
-      @member_reward.redeemed_time = Time.now
+      @member_reward.redeemed_time = Time.now.utc
       if @member_reward.update_attributes(params[:member_reward])
         render json: @member_reward, status: :created, location: @member_reward
       else
