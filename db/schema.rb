@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130703143047) do
+ActiveRecord::Schema.define(:version => 20130704005527) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(:version => 20130703143047) do
     t.boolean  "active"
     t.datetime "last_used_time"
     t.text     "text"
+    t.integer  "store_id"
   end
 
   create_table "companies", :force => true do |t|
