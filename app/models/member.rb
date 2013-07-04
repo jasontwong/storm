@@ -48,7 +48,7 @@ class Member < ActiveRecord::Base
     member_points.points += points
     if points > 0
       member_points.total_points += points
-      member_points.last_earned = Time.now
+      member_points.last_earned = Time.now.utc
     end
     member_points.save
   end

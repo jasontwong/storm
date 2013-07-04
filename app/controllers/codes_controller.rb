@@ -60,7 +60,7 @@ class CodesController < ApplicationController
     if codes.length == 1
       @code = codes[0]
       @code.used += 1
-      @code.last_used_time = Time.now
+      @code.last_used_time = Time.now.utc
 
       if @code.active
         @code.active = false

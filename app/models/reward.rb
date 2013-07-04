@@ -18,7 +18,7 @@ class Reward < ActiveRecord::Base
   end
 
   def expired?
-    now = Time.now
+    now = Time.now.utc
     return true if self.uses_left == 0
     unless self.starts.nil?
       return true if self.starts > now
