@@ -7,6 +7,8 @@ FactoryGirl.define do
     order_id 1
     company_id 1
     store_id 1
+    completed false
+    completed_time nil
 
     code
     member
