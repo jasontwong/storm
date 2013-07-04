@@ -19,4 +19,10 @@ describe MemberSurvey do
   it 'requires a store' do
     FactoryGirl.build(:member_survey, store: nil).should_not be_valid
   end
+  it 'require completed to be false if not true' do
+    FactoryGirl.build(:member_survey, completed: 5).completed.should be_false
+    FactoryGirl.build(:member_survey, completed: 'a').completed.should be_false
+    FactoryGirl.build(:member_survey, completed: 1).should be_valid
+    FactoryGirl.build(:member_survey, completed: 0).should be_valid
+  end
 end
