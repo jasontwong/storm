@@ -2,6 +2,7 @@ class SurveyQuestion < ActiveRecord::Base
   attr_accessible :answer_meta, :answer_type, :question, :company_id, :active, :dynamic, :dynamic_meta
 
   belongs_to :company, inverse_of: :survey_questions
+  has_many :member_survey_answers, inverse_of: :survey_question
   has_and_belongs_to_many :products
   has_and_belongs_to_many :surveys
   has_and_belongs_to_many :survey_question_categories

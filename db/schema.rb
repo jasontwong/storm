@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130704020554) do
+ActiveRecord::Schema.define(:version => 20130704193011) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -121,8 +121,9 @@ ActiveRecord::Schema.define(:version => 20130704020554) do
     t.integer  "member_survey_id"
     t.string   "question"
     t.string   "answer"
-    t.datetime "created_at",       :null => false
-    t.datetime "updated_at",       :null => false
+    t.datetime "created_at",         :null => false
+    t.datetime "updated_at",         :null => false
+    t.integer  "survey_question_id"
   end
 
   create_table "member_surveys", :force => true do |t|
