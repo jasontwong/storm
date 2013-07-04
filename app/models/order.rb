@@ -6,6 +6,7 @@ class Order < ActiveRecord::Base
   belongs_to :store, inverse_of: :orders
   belongs_to :member, inverse_of: :orders
   has_many :order_details, inverse_of: :order
+  has_one :member_survey, inverse_of: :order
 
   validates :amount, presence: true
   validates :code_id, presence: true

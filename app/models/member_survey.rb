@@ -1,11 +1,11 @@
 class MemberSurvey < ActiveRecord::Base
   attr_accessible :code_id, :company_id, :member_id, :order_id, :store_id
 
-  belongs_to :code
-  belongs_to :company
-  belongs_to :member
-  belongs_to :order
-  belongs_to :store
+  belongs_to :code, inverse_of: :member_surveys
+  belongs_to :company, inverse_of: :member_surveys
+  belongs_to :member, inverse_of: :member_surveys
+  belongs_to :order, inverse_of: :member_survey
+  belongs_to :store, inverse_of: :member_surveys
 
   validates :code_id, presence: true
   validates :company_id, presence: true
