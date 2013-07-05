@@ -137,15 +137,10 @@ class MembersController < ApplicationController
   def reward_update
     member = Member.find(params[:member_id])
     @member_reward = MemberReward.find(params[:id])
-    if @member_reward.redeemed_time.nil?
-      @member_reward.redeemed_time = Time.now.utc
-      if @member_reward.update_attributes(params[:member_reward])
-        render json: @member_reward, status: :created, location: @member_reward
-      else
-        render json: @member_reward.errors, status: :unprocessable_entity
-      end
+    if @member_reward.update_attributes(params[:member_reward])
+      render json: @member_reward, status: :created, location: @member_reward
     else
-      render json: ["that reward has already been rewarded"], status: :unprocessable_entity
+      render json: @member_reward.errors, status: :unprocessable_entity
     end
   end
   
@@ -157,9 +152,10 @@ class MembersController < ApplicationController
     }
     unless params[:company_id].nil?
       where[:company_id] = params[:company_id]
+      @member_points = MemberPoints.where(where).first
     end
 
-    @member_points = MemberPoints.where(where)
+    @member_points ||= MemberPoints.where(where)
 
     render json: @member_points
   end
