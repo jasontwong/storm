@@ -1,4 +1,6 @@
 DataApi::Application.routes.draw do
+  resources :member_survey_answers, except: [:new, :edit, :create, :destroy]
+
   resources :clients, except: [:new, :edit]
 
   resources :survey_questions, except: [:new, :edit]
