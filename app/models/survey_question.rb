@@ -16,9 +16,14 @@ class SurveyQuestion < ActiveRecord::Base
   validates :active, :inclusion => { :in => [true, false] }
   validates :dynamic, :inclusion => { :in => [true, false] }
 
-  def self.by_code(code)
-    # TODO create algorithm to give the right questions
-    return self.where(company_id: 1).limit(5)
+  def build_question(code)
+    question = self.question
+    if self.dynamic
+      # TODO this is for dynamic questions
+    end
+
+    return question
+
   end
 
 end

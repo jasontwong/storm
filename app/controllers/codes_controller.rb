@@ -65,7 +65,8 @@ class CodesController < ApplicationController
       if @code.active
         @code.active = false
         if @code.save
-          render json: SurveyQuestion.by_code(@code)
+          survey = MemberSurvey.create_from_code(@code, params[:member_id])
+          render json: survey
         else
           render json: @code.errors, status: :unprocessable_entity
         end
