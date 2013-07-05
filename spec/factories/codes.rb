@@ -7,6 +7,8 @@ FactoryGirl.define do
     used 0
     active true
     last_used_time { Time.now.to_i }
+
+    store
   end
 
   factory :invalid_code, parent: :code do

@@ -24,7 +24,7 @@ class MemberSurvey < ActiveRecord::Base
       store_id: code.store_id,
     )
     questions = []
-    code.surveys.each do |suvery|
+    code.surveys.each do |survey|
       if survey.default
         survey.survey_questions.each do |question|
           if questions.length <= code.store.company.survey_question_limit
@@ -36,10 +36,16 @@ class MemberSurvey < ActiveRecord::Base
           else
             break
           end
+
         end
+
         break
       end
+
     end
+
+    return survey
+
   end
 
 end
