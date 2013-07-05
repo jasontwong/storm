@@ -254,8 +254,8 @@ describe MembersController do
       it 'changes reward attributes for a single member' do
         put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward, printed: 5, scanned: 55)
         @member_reward.reload
-        @member_reward.printed == 5
-        @member_reward.scanned == 55
+        @member_reward.printed.should == 5
+        @member_reward.scanned.should == 55
       end
     end
   end
@@ -263,13 +263,22 @@ describe MembersController do
   # member points section
   
   describe 'GET #point_index' do
+    before :each do
+      @member = FactoryGirl.create(:member)
+    end
+
     it 'retrieves the points for a single member' do
-      member = FactoryGirl.create(:member)
-      company = FactoryGirl.create(:company)
-      point = FactoryGirl.create(:member_point, member: member, company: company)
-      member.member_points << point
-      get :point_index, id: member.id, company_id: company.id
+      point = FactoryGirl.create(:member_point, member: @member)
+      @member.member_points << point
+      get :point_index, id: @member.id
       assigns(:member_points).should eq([point])
+    end
+    it 'retrieves the points for a single member and company' do
+      company = FactoryGirl.create(:company)
+      point = FactoryGirl.create(:member_point, member: @member, company: company)
+      @member.member_points << point
+      get :point_index, id: @member.id, company_id: company.id
+      assigns(:member_points).should eq(point)
     end
   end
 

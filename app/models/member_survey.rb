@@ -16,32 +16,40 @@ class MemberSurvey < ActiveRecord::Base
   validates :completed, :inclusion => { :in => [true, false] }
 
   def self.create_from_code(code, member_id)
+    store = code.store
+    company = store.company
     survey = MemberSurvey.create!(
       code_id: code.id,
-      company_id: code.store.company.id,
+      company_id: company.id,
       member_id: member_id,
       order_id: code.order.id,
       store_id: code.store_id,
+      completed: false,
     )
     questions = []
-    code.surveys.each do |survey|
-      if survey.default
-        survey.survey_questions.each do |question|
-          if questions.length <= code.store.company.survey_question_limit
-            questions << MemberSurveyAnswer.create!(
-              member_survey_id: member_survey.id,
-              survey_question_id: question.id,
-              question: question.build_question,
-            )
-          else
-            break
-          end
+    store_survey = nil
 
-        end
-
+    store.surveys.each do |s|
+      store_survey ||= s
+      if s.default
+        store_survey = s
         break
-      end
 
+      end
+    end
+
+    store_survey.survey_questions.each do |question|
+      if questions.length < company.survey_question_limit
+        questions << MemberSurveyAnswer.create!(
+          member_survey_id: survey.id,
+          survey_question_id: question.id,
+          question: question.build_question(code),
+        )
+
+      else
+        break
+
+      end
     end
 
     return survey
