@@ -128,7 +128,7 @@ end
     company.stores.each do |store|
       10.times do
         code = Code.create!(
-          qr: Faker::Lorem.characters,
+          qr: Faker::Lorem.characters(32),
           active: true,
           store_id: store.id,
         )
