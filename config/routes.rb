@@ -25,6 +25,7 @@ DataApi::Application.routes.draw do
   post 'members/:id/rewards' => 'members#reward_create'
   put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
   post 'members/verify' => 'members#verify'
+  post 'members/fb_verify' => 'members#fb_verify'
   put 'members/pass_reset' => 'members#pass_reset'
   post 'codes/scan' => 'codes#scan'
 
