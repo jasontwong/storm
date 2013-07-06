@@ -85,6 +85,18 @@ class MembersController < ApplicationController
 
   end
 
+  # POST /members/fb_verify
+  # POST /members/fb_verify.json
+  def fb_verify
+    @member = Member.where(email: params[:email], fb_id: params[:fb_id]).first
+    if @member
+      render json: @member
+    else
+      render json: { member: 'Not Found' }, status: :unprocessable_entity
+    end
+
+  end
+
   # PUT /members/pass_reset
   # PUT /members/pass_reset.json
   def pass_reset

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130704193011) do
+ActiveRecord::Schema.define(:version => 20130705224116) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -150,6 +150,7 @@ ActiveRecord::Schema.define(:version => 20130704193011) do
     t.string   "other_id"
     t.string   "temp_pass"
     t.date     "temp_pass_expiration"
+    t.integer  "fb_id"
   end
 
   create_table "order_details", :force => true do |t|
