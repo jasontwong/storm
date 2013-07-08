@@ -1,5 +1,5 @@
 class MemberSurvey < ActiveRecord::Base
-  attr_accessible :code_id, :company_id, :member_id, :order_id, :store_id, :completed, :completed_time
+  attr_accessible :code_id, :company_id, :member_id, :order_id, :store_id, :completed, :completed_time, :comments
 
   belongs_to :code, inverse_of: :member_surveys
   belongs_to :company, inverse_of: :member_surveys
