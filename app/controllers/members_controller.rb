@@ -164,7 +164,7 @@ class MembersController < ApplicationController
     }
     unless params[:company_id].nil?
       where[:company_id] = params[:company_id]
-      @member_points = MemberPoints.where(where).first
+      @member_points = MemberPoints.where(where).first_or_create
     end
 
     @member_points ||= MemberPoints.where(where)
