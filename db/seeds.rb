@@ -192,19 +192,11 @@ when 'production'
     html: '<!DOCTYPE html><html><head></head><body></body><p style="text-align:center;">Yella <strong>bold</strong> <em>italic</em>!</p><p style="text-align:center;width:100%;">{QR}</p><div style="float:left;width:20%;">float left</div><div style="float:right;width:20%;">float right</div><div style="clear:both;">Cleared</div><div><p>Mongoose:</p><hr /><img src="http://www.enchantedlearning.com/ygifs/Yellowmongoose_bw.GIF" /></div><div><ul><li>A list item</li><li style="color:red;">Print red?</li><li><ul><li>A nested list item</li></ul></li></ul></div><table><tbody><tr><td>Support table cells?</td><td>Support table cells?</td></tr></tbody></table></html>',
   )
 
-  # get some real data for the following
-
-  store = Store.create!(
-    address1: Faker::Address.street_address,
-    city: Faker::Address.city,
-    company_id: company.id,
-    country: Faker::Address.country,
-    latitude: Faker::Address.latitude,
-    longitude: Faker::Address.longitude,
-    name: 'Store 1',
-    phone: Faker::PhoneNumber.phone_number,
-    state: Faker::Address.state,
-    zip: Faker::Address.zip_code,
+  Member.create!(
+    email: 'demo@yellarewards.com',
+    password: '9bd1af900487a49d69af173ea3fb3c48c63003a8',
+    salt: 'b444a',
+    active: 1,
   )
 
   Reward.create!(
@@ -250,4 +242,3 @@ when 'production'
   )
 
 end
-
