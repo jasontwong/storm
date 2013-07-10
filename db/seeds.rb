@@ -168,8 +168,8 @@ when 'production'
   company = Company.create!(
     name: 'Panda Express',
     logo: { 
-      main: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/pandaLogo@2x.png',
-      header: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/panda@2x.png',
+      header: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/pandaLogo@2x.png',
+      main: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/panda@2x.png',
       bg: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/background-fade_pink@2x.png',
       colors: {
         header: {
