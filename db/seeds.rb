@@ -169,6 +169,7 @@ when 'production'
     name: 'Panda Express',
     logo: { 
       main: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/pandaLogo@2x.png',
+      header: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/panda@2x.png',
       bg: 'https://s3-us-west-2.amazonaws.com/com.yella.company/panda/background-fade_pink@2x.png',
       colors: {
         header: {
@@ -194,8 +195,8 @@ when 'production'
 
   Member.create!(
     email: 'demo@yellarewards.com',
-    password: '9bd1af900487a49d69af173ea3fb3c48c63003a8',
-    salt: 'b444a',
+    password: 'ce2bc2aa31bd7252320db63c3396c887cdf6fbf771eae9f8e0e3185da6023192',
+    salt: '01d030f7df5c6dc11f77f810ce9c8a37',
     active: 1,
   )
 
