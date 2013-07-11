@@ -5,16 +5,15 @@
 #
 #   cities = City.create([{ name: 'Chicago' }, { name: 'Copenhagen' }])
 #   Mayor.create(name: 'Emanuel', city: cities.first)
-require 'faker'
-
-def random_num (decimal = false)
-  round = decimal ? 2 : 0
-  lambda { |min, max| rand * (max - min) + min }.call(100, 1).round(round)
-end
 
 case Rails.env
 when 'development'
   # test seed
+  require 'faker'
+  def random_num (decimal = false)
+    round = decimal ? 2 : 0
+    lambda { |min, max| rand * (max - min) + min }.call(100, 1).round(round)
+  end
 
   ApiKey.delete_all
   ApiKey.create!(access_token: 'apikey')
