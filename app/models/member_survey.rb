@@ -25,9 +25,11 @@ class MemberSurvey < ActiveRecord::Base
     store = code.store
     company = store.company
     worth = 0
+
     if company.worth_type == Company::WORTH_TYPE_FLAT
-      worth = company.worth_type[:worth]
+      worth = company.worth_meta[:worth]
     end
+
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
