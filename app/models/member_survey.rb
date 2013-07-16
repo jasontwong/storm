@@ -1,5 +1,5 @@
 class MemberSurvey < ActiveRecord::Base
-  attr_accessible :code_id, :company_id, :member_id, :order_id, :store_id, :completed, :completed_time, :comments
+  attr_accessible :code_id, :company_id, :member_id, :order_id, :store_id, :completed, :completed_time, :comments, :worth
 
   belongs_to :code, inverse_of: :member_surveys
   belongs_to :company, inverse_of: :member_surveys
@@ -15,16 +15,27 @@ class MemberSurvey < ActiveRecord::Base
   validates :store_id, presence: true
   validates :completed, :inclusion => { :in => [true, false] }
 
+  after_initialize :init
+
+  def init
+    self.worth ||= 0
+  end
+
   def self.create_from_code(code, member_id)
     store = code.store
     company = store.company
+    worth = 0
+    if company.worth_type == Company::WORTH_TYPE_FLAT
+      worth = company.worth_type[:worth]
+    end
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
       member_id: member_id,
       order_id: code.order.id,
-      store_id: code.store_id,
+      store_id: store.id,
       completed: false,
+      worth: worth,
     )
     questions = []
     store_survey = nil
