@@ -24,13 +24,18 @@ class MemberSurvey < ActiveRecord::Base
   def self.create_from_code(code, member_id)
     store = code.store
     company = store.company
+    worth = 0
+    if company.worth_type == Company::WORTH_TYPE_FLAT
+      worth = company.worth_type[:worth]
+    end
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
       member_id: member_id,
       order_id: code.order.id,
-      store_id: code.store_id,
+      store_id: store.id,
       completed: false,
+      worth: worth,
     )
     questions = []
     store_survey = nil
