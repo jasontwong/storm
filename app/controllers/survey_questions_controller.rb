@@ -2,15 +2,11 @@ class SurveyQuestionsController < ApplicationController
   # GET /survey_questions
   # GET /survey_questions.json
   def index
-    if params[:qr]
-      code = Code.where(qr: params[:qr]).last
-      order = Order.where(code_id: code.id).last
-      survey = Survey.where(store_id: order.store_id).last
-      @survey_questions = survey.survey_questions
-    end
     @survey_questions ||= SurveyQuestion.all
 
-    render json: @survey_questions
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey_questions.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /survey_questions/1
@@ -18,7 +14,9 @@ class SurveyQuestionsController < ApplicationController
   def show
     @survey_question = SurveyQuestion.find(params[:id])
 
-    render json: @survey_question
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey_question.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /survey_questions
