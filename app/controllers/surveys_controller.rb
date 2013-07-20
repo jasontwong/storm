@@ -24,6 +24,9 @@ class SurveysController < ApplicationController
   def create
     @survey = Survey.new(params[:survey])
 
+    @survey.survey_questions = SurveyQuestion.where(id: params[:question_ids]) if params[:question_ids].present?
+    @survey.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
+
     if @survey.save
       render json: @survey, status: :created, location: @survey
     else
@@ -35,6 +38,9 @@ class SurveysController < ApplicationController
   # PATCH/PUT /surveys/1.json
   def update
     @survey = Survey.find(params[:id])
+
+    @survey.survey_questions = SurveyQuestion.where(id: params[:question_ids]) if params[:question_ids].present?
+    @survey.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @survey.update_attributes(params[:survey])
       head :no_content

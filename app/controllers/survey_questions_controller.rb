@@ -28,6 +28,8 @@ class SurveyQuestionsController < ApplicationController
   def create
     @survey_question = SurveyQuestion.new(params[:survey_question])
 
+    @survey_question.survey_question_categories = SurveyQuestionCategory.where(id: params[:category_ids]) if params[:category_ids].present?
+
     if @survey_question.save
       render json: @survey_question, status: :created, location: @survey_question
     else
@@ -40,9 +42,7 @@ class SurveyQuestionsController < ApplicationController
   def update
     @survey_question = SurveyQuestion.find(params[:id])
 
-    categories = []
-    params[:category_ids].each { |cat_id| categories << SurveyQuestionCategory.find(cat_id) }
-    @survey_question.survey_question_categories = categories
+    @survey_question.survey_question_categories = SurveyQuestionCategory.where(id: params[:category_ids]) if params[:category_ids].present?
 
     if @survey_question.update_attributes(params[:survey_question])
       head :no_content
