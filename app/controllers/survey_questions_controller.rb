@@ -36,6 +36,10 @@ class SurveyQuestionsController < ApplicationController
   def update
     @survey_question = SurveyQuestion.find(params[:id])
 
+    categories = []
+    params[:category_ids].each { |cat_id| categories << SurveyQuestionCategory.find(cat_id) }
+    @survey_question.survey_question_categories = categories
+
     if @survey_question.update_attributes(params[:survey_question])
       head :no_content
     else
