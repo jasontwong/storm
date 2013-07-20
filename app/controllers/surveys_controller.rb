@@ -4,7 +4,9 @@ class SurveysController < ApplicationController
   def index
     @surveys = Survey.all
 
-    render json: @surveys
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @surveys.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /surveys/1
@@ -12,7 +14,9 @@ class SurveysController < ApplicationController
   def show
     @survey = Survey.find(params[:id])
 
-    render json: @survey
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /surveys

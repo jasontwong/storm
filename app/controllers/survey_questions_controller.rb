@@ -2,6 +2,10 @@ class SurveyQuestionsController < ApplicationController
   # GET /survey_questions
   # GET /survey_questions.json
   def index
+    if params[:company_id]
+      @survey_questions = SurveyQuestion.where(company_id: params[:company_id].to_i)
+    end
+
     @survey_questions ||= SurveyQuestion.all
 
     params[:include] = [] unless params[:include].is_a? Array
