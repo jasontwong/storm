@@ -47,8 +47,8 @@ class MemberSurvey < ActiveRecord::Base
       if s.default
         store_survey = s
         break
-
       end
+
     end
 
     store_survey.survey_questions.each do |question|

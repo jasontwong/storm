@@ -23,7 +23,7 @@ class CodesController < ApplicationController
     if @code.save
       store = Store.find(@code.store_id);
       order = Order.create!(
-        amount: 34.00,
+        amount: 0,
         survey_worth: 0,
         code_id: @code.id,
         store_id: store.id,

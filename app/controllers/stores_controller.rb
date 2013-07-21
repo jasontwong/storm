@@ -4,7 +4,9 @@ class StoresController < ApplicationController
   def index
     @stores = Store.all
 
-    render json: @stores
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @stores.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /stores/1
@@ -12,13 +14,17 @@ class StoresController < ApplicationController
   def show
     @store = Store.find(params[:id])
 
-    render json: @store
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @store.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /stores
   # POST /stores.json
   def create
     @store = Store.new(params[:store])
+
+    @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
     if @store.save
       render json: @store, status: :created, location: @store
@@ -31,6 +37,8 @@ class StoresController < ApplicationController
   # PATCH/PUT /stores/1.json
   def update
     @store = Store.find(params[:id])
+
+    @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
     if @store.update_attributes(params[:store])
       head :no_content
