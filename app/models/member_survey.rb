@@ -40,16 +40,13 @@ class MemberSurvey < ActiveRecord::Base
       worth: worth,
     )
     questions = []
-    store_survey = nil
 
     store.surveys.each do |s|
       store_survey ||= s
-      if s.default
-        store_survey = s
-        break
-      end
-
+      break
     end
+
+    store_survey ||= company.surveys.first
 
     store_survey.survey_questions.each do |question|
       if questions.length < company.survey_question_limit
@@ -58,10 +55,8 @@ class MemberSurvey < ActiveRecord::Base
           survey_question_id: question.id,
           question: question.build_question(code),
         )
-
       else
         break
-
       end
     end
 

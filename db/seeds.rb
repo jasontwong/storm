@@ -62,32 +62,30 @@ when 'development'
         state: Faker::Address.state,
         zip: Faker::Address.zip_code,
       )
-      5.times do |num_a|
-        survey = Survey.create!(
-          title: "Survey Type " + num_a.to_s,
-          store_id: store.id,
-          description: Faker::Lorem.sentence,
-          default: false,
-        )
-        10.times do |num_b|
-          type = "slider"
-          meta = { min: 0, max: 10 }
-          if random_num % 2 == 0
-            type = "switch"
-            meta = { left: "No", right: "Yes" }
-          end
-          survey.survey_questions << SurveyQuestion.create!(
-            question: "Question " + num_b.to_s + ": " + Faker::Lorem.sentence,
-            answer_type: type,
-            answer_meta: meta,
-            active: true,
-            company_id: company.id,
-            dynamic: false,
-            dynamic_meta: [],
-          )
+      survey = Survey.create!(
+        title: "Survey " + num.to_s,
+        company_id: company.id,
+        description: Faker::Lorem.sentence,
+        default: false,
+      )
+      10.times do |num_b|
+        type = "slider"
+        meta = { min: 0, max: 10 }
+        if random_num % 2 == 0
+          type = "switch"
+          meta = { left: "No", right: "Yes" }
         end
-        survey.save
+        survey.survey_questions << SurveyQuestion.create!(
+          question: "Question " + num_b.to_s + ": " + Faker::Lorem.sentence,
+          answer_type: type,
+          answer_meta: meta,
+          active: true,
+          company_id: company.id,
+          dynamic: false,
+          dynamic_meta: [],
+        )
       end
+      survey.save
       Product.create!(
         name: 'Product ' + num.to_s,
         price: random_num(true),
