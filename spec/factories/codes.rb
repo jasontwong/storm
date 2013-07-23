@@ -7,6 +7,7 @@ FactoryGirl.define do
     used 0
     active true
     last_used_time { Time.now.to_i }
+    store_id 1
 
     store
   end

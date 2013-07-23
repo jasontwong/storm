@@ -150,7 +150,7 @@ class MembersController < ApplicationController
     member = Member.find(params[:member_id])
     @member_reward = MemberReward.find(params[:id])
     if @member_reward.update_attributes(params[:member_reward])
-      render json: @member_reward, status: :created, location: @member_reward
+      head :no_content
     else
       render json: @member_reward.errors, status: :unprocessable_entity
     end

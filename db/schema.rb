@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130708215134) do
+ActiveRecord::Schema.define(:version => 20130723163533) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -74,6 +74,8 @@ ActiveRecord::Schema.define(:version => 20130708215134) do
     t.datetime "updated_at",                           :null => false
     t.integer  "survey_question_limit"
     t.text     "html"
+    t.integer  "worth_type",            :limit => 1
+    t.text     "worth_meta"
   end
 
   create_table "member_answers", :force => true do |t|
@@ -137,6 +139,7 @@ ActiveRecord::Schema.define(:version => 20130708215134) do
     t.boolean  "completed"
     t.datetime "completed_time"
     t.string   "comments"
+    t.decimal  "worth"
   end
 
   create_table "members", :force => true do |t|
@@ -145,13 +148,13 @@ ActiveRecord::Schema.define(:version => 20130708215134) do
     t.string   "salt"
     t.string   "fb_username"
     t.string   "fb_password"
-    t.boolean  "active",               :default => true
-    t.datetime "created_at",                             :null => false
-    t.datetime "updated_at",                             :null => false
+    t.boolean  "active",                            :default => true
+    t.datetime "created_at",                                          :null => false
+    t.datetime "updated_at",                                          :null => false
     t.string   "other_id"
     t.string   "temp_pass"
     t.date     "temp_pass_expiration"
-    t.integer  "fb_id"
+    t.integer  "fb_id",                :limit => 8
   end
 
   create_table "order_details", :force => true do |t|
@@ -256,7 +259,7 @@ ActiveRecord::Schema.define(:version => 20130708215134) do
   end
 
   create_table "surveys", :force => true do |t|
-    t.integer  "store_id"
+    t.integer  "company_id"
     t.string   "title"
     t.string   "description"
     t.boolean  "default"

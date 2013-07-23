@@ -34,12 +34,11 @@ describe CodesController do
     context 'with valid attributes' do
       it 'creates a new code' do
         expect{
-          post :create, code: FactoryGirl.attributes_for(:code)
+          store = FactoryGirl.create(:store)
+          code = FactoryGirl.attributes_for(:code)
+          code[:store_id] = store[:id]
+          post :create, code: code
         }.to change(Code, :count).by(1)
-      end
-      it 'returns created status' do
-        post :create, code: FactoryGirl.attributes_for(:code)
-        response.status.should == 201
       end
     end
     context 'with invalid attributes' do
@@ -108,11 +107,17 @@ describe CodesController do
 
   describe 'POST #scan' do
     before :each do
-      @code = FactoryGirl.create(:code)
+      company = FactoryGirl.create(:company)
+      survey = FactoryGirl.create(:survey, company: company)
+      survey_question = FactoryGirl.create(:survey_question, company: company)
+      store = FactoryGirl.create(:store, company: company)
+      @code = FactoryGirl.create(:code, store: store)
+      @member = FactoryGirl.create(:member)
+      order = FactoryGirl.create(:order, code_id: @code.id)
     end
     context 'with valid attributes' do
       it 'locates requested code' do
-        post :scan, qr: @code.qr
+        post :scan, qr: @code.qr, member_id: @member.id
         assigns(:code).should eq(@code)
         used = @code.used
         @code.reload

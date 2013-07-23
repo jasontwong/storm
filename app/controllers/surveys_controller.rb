@@ -4,7 +4,9 @@ class SurveysController < ApplicationController
   def index
     @surveys = Survey.all
 
-    render json: @surveys
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @surveys.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /surveys/1
@@ -12,13 +14,18 @@ class SurveysController < ApplicationController
   def show
     @survey = Survey.find(params[:id])
 
-    render json: @survey
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /surveys
   # POST /surveys.json
   def create
     @survey = Survey.new(params[:survey])
+
+    @survey.survey_questions = SurveyQuestion.where(id: params[:question_ids]) if params[:question_ids].present?
+    @survey.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @survey.save
       render json: @survey, status: :created, location: @survey
@@ -31,6 +38,9 @@ class SurveysController < ApplicationController
   # PATCH/PUT /surveys/1.json
   def update
     @survey = Survey.find(params[:id])
+
+    @survey.survey_questions = SurveyQuestion.where(id: params[:question_ids]) if params[:question_ids].present?
+    @survey.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @survey.update_attributes(params[:survey])
       head :no_content

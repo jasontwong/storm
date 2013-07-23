@@ -21,6 +21,14 @@ class CodesController < ApplicationController
     @code = Code.new(params[:code])
 
     if @code.save
+      store = Store.find(@code.store_id);
+      order = Order.create!(
+        amount: 0,
+        survey_worth: 0,
+        code_id: @code.id,
+        store_id: store.id,
+        company_id: store.company.id,
+      )
       render json: @code, status: :created, location: @code
     else
       render json: @code.errors, status: :unprocessable_entity

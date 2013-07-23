@@ -2,15 +2,15 @@ class SurveyQuestionsController < ApplicationController
   # GET /survey_questions
   # GET /survey_questions.json
   def index
-    if params[:qr]
-      code = Code.where(qr: params[:qr]).last
-      order = Order.where(code_id: code.id).last
-      survey = Survey.where(store_id: order.store_id).last
-      @survey_questions = survey.survey_questions
+    if params[:company_id]
+      @survey_questions = SurveyQuestion.where(company_id: params[:company_id].to_i)
     end
+
     @survey_questions ||= SurveyQuestion.all
 
-    render json: @survey_questions
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey_questions.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /survey_questions/1
@@ -18,13 +18,17 @@ class SurveyQuestionsController < ApplicationController
   def show
     @survey_question = SurveyQuestion.find(params[:id])
 
-    render json: @survey_question
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @survey_question.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /survey_questions
   # POST /survey_questions.json
   def create
     @survey_question = SurveyQuestion.new(params[:survey_question])
+
+    @survey_question.survey_question_categories = SurveyQuestionCategory.where(id: params[:category_ids]) if params[:category_ids].present?
 
     if @survey_question.save
       render json: @survey_question, status: :created, location: @survey_question
@@ -37,6 +41,8 @@ class SurveyQuestionsController < ApplicationController
   # PATCH/PUT /survey_questions/1.json
   def update
     @survey_question = SurveyQuestion.find(params[:id])
+
+    @survey_question.survey_question_categories = SurveyQuestionCategory.where(id: params[:category_ids]) if params[:category_ids].present?
 
     if @survey_question.update_attributes(params[:survey_question])
       head :no_content
