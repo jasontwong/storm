@@ -26,6 +26,7 @@ class Store < ActiveRecord::Base
     lines = text.split("\n")
     lines.delete_if { |line| /\d+\.\d{2}/.match(line).nil? }
     is_item = true
+    subtotal = 0
 
     case self.receipt_type
     when Store::RECEIPT_TYPE_WENDYS_1
@@ -35,14 +36,19 @@ class Store < ActiveRecord::Base
       end
       lines.each do |line| 
         item = line.strip().split(/\s{2,}/)
+        price = item[1][/\d+\.\d{2}/].to_f
         OrderDetail.create!(
           quantity: item[0][/^\d+\s/].strip().to_i,
           name: item[0].sub(/^\d+/, '').strip(),
-          price: item[1][/\d+\.\d{2}/].to_f,
+          price: price,
           order_id: order.id,
           code_id: order.code.id,
         )
+        subtotal += price
       end
+
+      order.survey_worth = subtotal
+      order.save
     else
       lines.keep_if do |line| 
         is_item = false if line.downcase.include? 'subtotal'
