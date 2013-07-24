@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130723163533) do
+ActiveRecord::Schema.define(:version => 20130724161108) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -221,8 +221,9 @@ ActiveRecord::Schema.define(:version => 20130723163533) do
     t.string   "phone"
     t.string   "latitude"
     t.string   "longitude"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
+    t.integer  "receipt_type"
   end
 
   create_table "stores_surveys", :id => false, :force => true do |t|

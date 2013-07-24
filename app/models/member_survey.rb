@@ -24,17 +24,21 @@ class MemberSurvey < ActiveRecord::Base
   def self.create_from_code(code, member_id)
     store = code.store
     company = store.company
+    order = code.order
     worth = 0
 
-    if company.worth_type == Company::WORTH_TYPE_FLAT
+    case company.worth_type
+    when Company::WORTH_TYPE_FLAT
       worth = company.worth_meta[:worth]
+    when Company::WORTH_TYPE_PRICE
+      worth = order.survey_worth
     end
 
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
       member_id: member_id,
-      order_id: code.order.id,
+      order_id: order.id,
       store_id: store.id,
       completed: false,
       worth: worth,
