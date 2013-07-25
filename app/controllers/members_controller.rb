@@ -41,8 +41,7 @@ class MembersController < ApplicationController
     @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
     @member.parse_answers(params[:answers]) unless params[:answers].nil?
     if !params[:points].nil? && !params[:company_id].nil?
-      # TODO this should convert to decimal, not integer
-      @member.parse_points(params[:points].to_i, params[:company_id])
+      @member.parse_points(params[:points].to_f, params[:company_id])
     end
 
     if !@member.email.nil? && @member.update_attributes(params[:member])
