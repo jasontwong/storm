@@ -4,7 +4,7 @@ class ApplicationController < ActionController::API
   before_filter :authenticate_token
 
   rescue_from ActiveRecord::RecordNotFound do |e|
-    render json: e.inspect.to_s, status: 404
+    render json: 'Record Not Found', status: :not_found
   end
 
   private
