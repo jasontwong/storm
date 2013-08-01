@@ -2,10 +2,10 @@ class ChangelogsController < ApplicationController
   # GET /changelogs
   # GET /changelogs.json
   def index
-    @changelogs = Changelog.order('modified_at ASC')
+    @changelogs = Changelog.order('updated_at ASC')
 
     if params[:date]
-      @changelogs = @changelogs.where('modified_at > ?', params[:date])
+      @changelogs = @changelogs.where('updated_at > ?', params[:date])
     else
       @changelogs = @changelogs.all
     end
