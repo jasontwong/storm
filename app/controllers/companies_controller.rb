@@ -65,7 +65,7 @@ class CompaniesController < ApplicationController
       model: 'Company', 
       model_id: @company.id,
     ).first_or_create!
-    log.model_action = 'delete'
+    log.model_action = 'destroy'
     log.save
 
     head :no_content
