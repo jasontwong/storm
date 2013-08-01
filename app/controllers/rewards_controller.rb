@@ -24,6 +24,12 @@ class RewardsController < ApplicationController
     @reward = Reward.new(params[:reward])
 
     if @reward.save
+      log = Changelog.where(
+        model: 'Reward', 
+        model_id: @reward.id,
+      ).first_or_create!
+      log.model_action = 'create'
+      log.save
       render json: @reward, status: :created, location: @reward
     else
       render json: @reward.errors, status: :unprocessable_entity
@@ -36,6 +42,12 @@ class RewardsController < ApplicationController
     @reward = Reward.find(params[:id])
 
     if @reward.update_attributes(params[:reward])
+      log = Changelog.where(
+        model: 'Reward', 
+        model_id: @reward.id,
+      ).first_or_create!
+      log.model_action = 'update'
+      log.save
       head :no_content
     else
       render json: @reward.errors, status: :unprocessable_entity
@@ -47,6 +59,13 @@ class RewardsController < ApplicationController
   def destroy
     @reward = Reward.find(params[:id])
     @reward.destroy
+
+    log = Changelog.where(
+      model: 'Reward', 
+      model_id: @reward.id,
+    ).first_or_create!
+    log.model_action = 'destroy'
+    log.save
 
     head :no_content
   end
