@@ -1,5 +1,5 @@
 class Changelog < ActiveRecord::Base
-  attr_accessible :meta, :model, :type
+  attr_accessible :meta, :model, :type, :model_id
 
   serialize :meta, Hash
 
