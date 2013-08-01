@@ -11,12 +11,20 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130729182320) do
+ActiveRecord::Schema.define(:version => 20130801151424) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
     t.datetime "created_at",   :null => false
     t.datetime "updated_at",   :null => false
+  end
+
+  create_table "changelogs", :force => true do |t|
+    t.string   "type"
+    t.string   "model"
+    t.text     "meta"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
   end
 
   create_table "client_groups", :force => true do |t|
