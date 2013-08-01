@@ -25,6 +25,12 @@ class CompaniesController < ApplicationController
     @company = Company.new(params[:company])
 
     if @company.save
+      log = Changelog.where(
+        model: 'Company', 
+        model_id: @company.id,
+      ).first_or_create!
+      log.model_action = 'create'
+      log.save
       render json: @company, status: :created, location: @company
     else
       render json: @company.errors, status: :unprocessable_entity
@@ -37,6 +43,12 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
 
     if @company.update_attributes(params[:company])
+      log = Changelog.where(
+        model: 'Company', 
+        model_id: @company.id,
+      ).first_or_create!
+      log.model_action = 'update'
+      log.save
       head :no_content
     else
       render json: @company.errors, status: :unprocessable_entity
@@ -48,6 +60,13 @@ class CompaniesController < ApplicationController
   def destroy
     @company = Company.find(params[:id])
     @company.destroy
+
+    log = Changelog.where(
+      model: 'Company', 
+      model_id: @company.id,
+    ).first_or_create!
+    log.model_action = 'delete'
+    log.save
 
     head :no_content
   end
