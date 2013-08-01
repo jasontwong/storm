@@ -27,6 +27,12 @@ class StoresController < ApplicationController
     @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
     if @store.save
+      log = Changelog.where(
+        model: 'Store', 
+        model_id: @store.id,
+      ).first_or_create!
+      log.model_action = 'create'
+      log.save
       render json: @store, status: :created, location: @store
     else
       render json: @store.errors, status: :unprocessable_entity
@@ -41,6 +47,12 @@ class StoresController < ApplicationController
     @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
     if @store.update_attributes(params[:store])
+      log = Changelog.where(
+        model: 'Store', 
+        model_id: @store.id,
+      ).first_or_create!
+      log.model_action = 'update'
+      log.save
       head :no_content
     else
       render json: @store.errors, status: :unprocessable_entity
@@ -52,6 +64,13 @@ class StoresController < ApplicationController
   def destroy
     @store = Store.find(params[:id])
     @store.destroy
+
+    log = Changelog.where(
+      model: 'Store', 
+      model_id: @store.id,
+    ).first_or_create!
+    log.model_action = 'destroy'
+    log.save
 
     head :no_content
   end
