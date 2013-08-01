@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130801154752) do
+ActiveRecord::Schema.define(:version => 20130801155450) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -20,11 +20,11 @@ ActiveRecord::Schema.define(:version => 20130801154752) do
   end
 
   create_table "changelogs", :force => true do |t|
-    t.string   "type"
+    t.string   "model_action"
     t.string   "model"
     t.text     "meta"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
     t.integer  "model_id"
   end
 
