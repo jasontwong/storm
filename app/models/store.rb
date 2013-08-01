@@ -19,6 +19,25 @@ class Store < ActiveRecord::Base
   validates :zip, presence: true
   validates :phone, presence: true
 
+  before_create :make_full_address
+  before_save :make_full_address
+
+  def make_full_address
+    location = self.address1
+    if self.address2.length > 0
+      location += ' ' + self.address2
+    end
+
+    location += ', ' + self.city
+    location += ', ' + self.state
+    if self.country.length > 0
+      location += ', ' + self.country
+    end
+    location += ', ' + self.zip
+
+    self.full_address = location
+  end
+
   def parse_receipt(text, order)
     data = {
       items: []
