@@ -24,7 +24,7 @@ class Store < ActiveRecord::Base
 
   def make_full_address
     location = self.address1
-    if self.address2.length > 0
+    if self.address2 && self.address2.length > 0
       location += ' ' + self.address2
     end
 
