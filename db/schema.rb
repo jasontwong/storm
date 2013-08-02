@@ -11,12 +11,21 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130723163533) do
+ActiveRecord::Schema.define(:version => 20130801201541) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
     t.datetime "created_at",   :null => false
     t.datetime "updated_at",   :null => false
+  end
+
+  create_table "changelogs", :force => true do |t|
+    t.string   "model_action"
+    t.string   "model"
+    t.text     "meta"
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
+    t.integer  "model_id"
   end
 
   create_table "client_groups", :force => true do |t|
@@ -182,13 +191,21 @@ ActiveRecord::Schema.define(:version => 20130723163533) do
     t.datetime "updated_at",    :null => false
   end
 
+  create_table "product_categories", :force => true do |t|
+    t.string   "name"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
   create_table "products", :force => true do |t|
     t.string   "name"
     t.decimal  "price"
     t.string   "size"
     t.string   "company_id"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",          :null => false
+    t.datetime "updated_at",          :null => false
+    t.integer  "product_category_id"
+    t.integer  "parent_id"
   end
 
   create_table "products_survey_questions", :id => false, :force => true do |t|
@@ -221,8 +238,10 @@ ActiveRecord::Schema.define(:version => 20130723163533) do
     t.string   "phone"
     t.string   "latitude"
     t.string   "longitude"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.datetime "created_at",   :null => false
+    t.datetime "updated_at",   :null => false
+    t.integer  "receipt_type"
+    t.string   "full_address"
   end
 
   create_table "stores_surveys", :id => false, :force => true do |t|
