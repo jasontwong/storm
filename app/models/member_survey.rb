@@ -51,17 +51,23 @@ class MemberSurvey < ActiveRecord::Base
     end
 
     store_survey ||= company.surveys.first
+    questions = []
 
     store_survey.survey_questions.each do |question|
-      if questions.length < company.survey_question_limit
-        questions << MemberSurveyAnswer.create!(
-          member_survey_id: survey.id,
-          survey_question_id: question.id,
-          question: question.build_question(code),
-        )
-      else
-        break
-      end
+      q = question.build_question(code)
+
+      questions << {
+        id: question.id,
+        question: q,
+      }
+    end
+
+    questions.sample(company.survey_question_limit).each do |question|
+      MemberSurveyAnswer.create!(
+        member_survey_id: survey.id,
+        survey_question_id: question.id,
+        question: question.question,
+      )
     end
 
     return survey
