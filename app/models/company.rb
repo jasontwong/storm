@@ -7,6 +7,7 @@ class Company < ActiveRecord::Base
   has_many :products, inverse_of: :company
   has_many :rewards, inverse_of: :company
   has_many :orders, inverse_of: :company
+  has_many :order_details, through: :orders
   has_many :surveys, inverse_of: :company
   has_many :survey_questions, inverse_of: :company
   has_many :member_points, inverse_of: :company
