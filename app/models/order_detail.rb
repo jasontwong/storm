@@ -4,7 +4,6 @@ class OrderDetail < ActiveRecord::Base
   belongs_to :code, inverse_of: :order_details
   belongs_to :order, inverse_of: :order_details
   belongs_to :product, inverse_of: :order_details
-  belongs_to :company, through: :order
 
   validates :code_id, presence: :true
   validates :name, presence: :true

@@ -59,7 +59,7 @@ class MemberSurvey < ActiveRecord::Base
       questions << {
         id: question.id,
         question: q,
-      }
+      } unless q.nil?
     end
 
     questions.sample(company.survey_question_limit).each do |question|
