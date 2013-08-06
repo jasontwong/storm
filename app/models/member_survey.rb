@@ -65,8 +65,8 @@ class MemberSurvey < ActiveRecord::Base
     questions.sample(company.survey_question_limit).each do |question|
       MemberSurveyAnswer.create!(
         member_survey_id: survey.id,
-        survey_question_id: question.id,
-        question: question.question,
+        survey_question_id: question[:id],
+        question: question[:question],
       )
     end
 
