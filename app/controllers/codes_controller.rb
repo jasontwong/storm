@@ -70,6 +70,10 @@ class CodesController < ApplicationController
       @code.used += 1
       @code.last_used_time = Time.now.utc
 
+      if @code.created_at + 2.days < @code.last_used_time
+        @code.active = false
+      end
+
       if @code.active
         @code.active = false
         if @code.save
@@ -89,7 +93,7 @@ class CodesController < ApplicationController
         end
       else
         if @code.save
-          render json: [ { code: "Already used" } ], status: :unprocessable_entity
+          render json: [ { code: "Already used or expired" } ], status: :unprocessable_entity
         else
           render json: @code.errors, status: :unprocessable_entity
         end
