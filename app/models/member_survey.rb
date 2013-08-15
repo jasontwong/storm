@@ -56,13 +56,17 @@ class MemberSurvey < ActiveRecord::Base
     store_survey.survey_questions.each do |question|
       q = question.build_question(code)
 
+      # This will order it by least answered
+      order = MemberSurveyAnswer.where(question_id: question.id, question: q).count
+
       questions << {
         id: question.id,
         question: q,
+        order: order,
       } unless q.nil?
     end
 
-    questions.sample(company.survey_question_limit).each do |question|
+    questions.sort{ |x,y| x[:order] <=> y[:order] }[0,company.survey_question_limit.to_i].each do |question|
       MemberSurveyAnswer.create!(
         member_survey_id: survey.id,
         survey_question_id: question[:id],
