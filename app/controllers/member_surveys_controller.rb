@@ -2,17 +2,37 @@ class MemberSurveysController < ApplicationController
   # GET /member_surveys
   # GET /member_surveys.json
   def index
-    @member_surveys = MemberSurvey.all
+    unless params[:store_id].nil?
+      @member_surveys = MemberSurvey.where(store_id: params[:store_id])
+    end
 
-    render json: @member_surveys
+    unless params[:company_id].nil?
+      @member_surveys ||= MemberSurvey.where(company_id: params[:company_id])
+    end
+
+    if params[:num_days] && !@member_surveys.nil?
+      if params[:num_days] == 'today'
+        @member_surveys = @member_surveys.where('created_at > ?', Time.now.strftime('%F'))
+      else
+        @member_surveys = @member_surveys.where('created_at > ?', Time.now.utc - params[:num_days].to_i.days)
+      end
+    end
+
+    @member_surveys ||= MemberSurvey.all
+
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @member_surveys.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /member_surveys/1
   # GET /member_surveys/1.json
   def show
-    @member_survey = MemberSurvey.find(params[:id])
+    @member_survey = MemberSurvey.where(id: params[:id], store_id: params[:store_id])
 
-    render json: @member_survey
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @member_survey.first.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /member_surveys
