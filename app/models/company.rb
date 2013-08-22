@@ -18,6 +18,7 @@ class Company < ActiveRecord::Base
   serialize :worth_meta, Hash
 
   validates :name, presence: true
+  validates :active, :inclusion => { :in => [true, false] }
 
   after_initialize :init
 
