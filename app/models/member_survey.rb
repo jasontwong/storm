@@ -57,7 +57,7 @@ class MemberSurvey < ActiveRecord::Base
       q = question.build_question(code)
 
       # This will order it by least answered
-      order = MemberSurveyAnswer.where(question_id: question.id, question: q).count
+      order = MemberSurveyAnswer.where(survey_question_id: question.id, question: q).count
 
       questions << {
         id: question.id,
