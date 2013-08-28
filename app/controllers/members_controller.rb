@@ -163,6 +163,7 @@ class MembersController < ApplicationController
   # GET /members/1/points
   # GET /members/1/points.json
   def point_index
+    Member.find(params[:id])
     where = {
       member_id: params[:id]
     }
