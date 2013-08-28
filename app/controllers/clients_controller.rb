@@ -24,6 +24,8 @@ class ClientsController < ApplicationController
   def create
     @client = Client.new(params[:client])
 
+    @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
+
     if @client.save
       render json: @client, status: :created, location: @client
     else
@@ -35,6 +37,8 @@ class ClientsController < ApplicationController
   # PATCH/PUT /clients/1.json
   def update
     @client = Client.find(params[:id])
+
+    @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @client.update_attributes(params[:client])
       head :no_content
