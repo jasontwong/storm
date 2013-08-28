@@ -4,7 +4,9 @@ class ClientsController < ApplicationController
   def index
     @clients = Client.all
 
-    render json: @clients
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @clients.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /clients/1
@@ -12,7 +14,9 @@ class ClientsController < ApplicationController
   def show
     @client = Client.find(params[:id])
 
-    render json: @client
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @client.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /clients
