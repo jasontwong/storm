@@ -62,9 +62,12 @@ class StatsController < ApplicationController
     @answers.each do |k,v|
       @answers[k] = v.length
     end
+    
+    average = @total / @count.to_f
+    average = 0 if average.nan?
 
     @ratings = {
-      average: @total / @count.to_f,
+      average: average,
       surveys: @surveys,
       answers: @answers,
     }
