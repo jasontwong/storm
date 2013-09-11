@@ -2,12 +2,12 @@ class StatsController < ApplicationController
   def store_ratings
     member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('created_at DESC')
 
-    if params[:num_days] && !member_surveys.nil?
-      if params[:num_days] == 'today'
-        member_surveys = member_surveys.where('created_at > ?', Time.now.strftime('%F'))
-      else
-        member_surveys = member_surveys.where('created_at > ?', Time.now.utc - params[:num_days].to_i.days)
-      end
+    if params[:offset] && !member_surveys.nil?
+      member_surveys = member_surveys.offset(params[:offset])
+    end
+
+    if params[:limit] && !member_surveys.nil?
+      member_surveys = member_surveys.limit(params[:limit])
     end
 
     @answers = {}
@@ -40,7 +40,7 @@ class StatsController < ApplicationController
       # turn this into member model method?
       survey.member.member_attributes.each do |attr|
         if attr[:name] == 'gender'
-          gender = attr[:value].downcase
+          gender = attr[:value][0].upcase
         end
         if attr[:name] == 'birthday'
           dob = Date.strptime(attr[:value], '%m/%d/%Y')
@@ -49,9 +49,12 @@ class StatsController < ApplicationController
         end
       end
 
+      # last_week = Time.now - 7.days
+
       @surveys << { 
         id: survey[:id],
         placed: survey.order[:created_at],
+        # placed: Time.at(last_week + rand * (Time.now.to_f - last_week.to_f)),
         spent: survey.order[:amount],
         age: age,
         gender: gender,

@@ -10,9 +10,9 @@ case Rails.env
 when 'development'
   # test seed
   require 'faker'
-  def random_num (decimal = false)
+  def random_num (decimal = false, limit = 100)
     round = decimal ? 2 : 0
-    lambda { |min, max| rand * (max - min) + min }.call(100, 1).round(round)
+    lambda { |min, max| rand * (max - min) + min }.call(limit, 1).round(round)
   end
 
   ApiKey.delete_all
@@ -114,6 +114,21 @@ when 'development'
     new_password.update password.hexdigest + member.salt
     member.password = new_password.hexdigest
 
+    max_age = Time.now - 100.years
+    min_age = Time.now - 13.years
+
+    MemberAttribute.create!(
+      member_id: member.id,
+      name: 'birthday',
+      value: Time.at(max_age + rand * (min_age.to_f - max_age.to_f)).strftime('%m/%d/%Y'),
+    )
+
+    MemberAttribute.create!(
+      member_id: member.id,
+      name: 'gender',
+      value: random_num % 2 == 0 ? 'Male' : 'Female',
+    )
+
     Company.all.each do |company|
       points = random_num
       MemberPoints.create!(
@@ -139,6 +154,22 @@ when 'development'
             checkin_worth: random_num(true),
             server: Faker::Name.name,
           )
+          m_survey = MemberSurvey.create!(
+            code_id: code.id,
+            member_id: Member.offset(rand(Member.count)).first.id,
+            order_id: order.id,
+            company_id: company.id,
+            store_id: store.id,
+            completed: true,
+          )
+          5.times do
+            MemberSurveyAnswer.create!(
+              member_survey_id: m_survey.id,
+              question: 'q',
+              answer: random_num(false, 10),
+              survey_question_id: SurveyQuestion.offset(rand(SurveyQuestion.count)).first.id,
+            )
+          end
           2.times do
             product = company.products.offset(rand(company.products.count)).first
             OrderDetail.create!(
