@@ -1,4 +1,5 @@
 class StatsController < ApplicationController
+  # {{{ def store_ratings
   def store_ratings
     member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('created_at DESC')
 
@@ -78,37 +79,18 @@ class StatsController < ApplicationController
     render json: @ratings.to_json
   end
 
+  # }}}
+  # {{{ def survey_member
   def survey_member
     survey = MemberSurvey.find(params[:id])
-    member = survey.member
-    surveys = MemberSurvey.where(member_id: member[:id], store_id: survey[:store_id]).includes(:member_survey_answers).order('created_at DESC').limit(5)
-
-    @total = 0
-    @count = 0
-    @surveys = []
-
-    surveys.each do |survey|
-      totals = 0
-      counts = 0
-      survey.member_survey_answers.each do |answer|
-        points = answer.answer.to_i
-
-        if points > 0
-          totals += points
-          counts += 1
-          @total += points
-          @count += 1
-        end
-      end
-      
-      @surveys << { 
-        average: totals / counts.to_f,
-      }
-    end
 
     age = nil
+    gender = nil
 
-    member.member_attributes.each do |attr|
+    survey.member.member_attributes.each do |attr|
+      if attr[:name] == 'gender'
+        gender = attr[:value][0].upcase
+      end
       if attr[:name] == 'birthday'
         dob = Date.strptime(attr[:value], '%m/%d/%Y')
         now = Time.now.utc.to_date
@@ -116,15 +98,19 @@ class StatsController < ApplicationController
       end
     end
 
+    @results = {}
+
+    survey.member_survey_answers.each do |ans| 
+    end
+
     @member = {
-      id: member[:id],
+      id: survey.member[:id],
       age: age,
-      spent: 0,
-      average: 0,
+      gender: gender,
       survey: {
         id: survey[:id],
         comments: survey[:comments],
-        results: survey.member_survey_answers.collect { |ans| { q: ans.question, a: ans.answer } },
+        results: @results,
         placed: survey.order[:created_at],
         spent: survey.order[:amount],
       },
@@ -134,4 +120,5 @@ class StatsController < ApplicationController
     render json: @member.to_json
   end
 
+  # }}}
 end
