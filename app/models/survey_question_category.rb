@@ -1,7 +1,7 @@
 class SurveyQuestionCategory < ActiveRecord::Base
   attr_accessible :name
 
-  has_and_belongs_to_many :survey_questions
+  has_many :survey_questions, inverse_of: :survey_question_category
 
   validates :name, presence: true
 end
