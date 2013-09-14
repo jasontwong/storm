@@ -43,7 +43,7 @@ class StatsController < ApplicationController
           gender = attr[:value].downcase
         end
         if attr[:name] == 'birthday'
-          dob = Date.strptime(attr[:value], '%m/%d/%Y')
+          dob = Date.parse(attr[:value])
           now = Time.now.utc.to_date
           age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
         end
@@ -113,7 +113,7 @@ class StatsController < ApplicationController
 
     member.member_attributes.each do |attr|
       if attr[:name] == 'birthday'
-        dob = Date.strptime(attr[:value], '%m/%d/%Y')
+        dob = Date.parse(attr[:value])
         now = Time.now.utc.to_date
         age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
       end
