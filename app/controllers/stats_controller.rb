@@ -101,8 +101,11 @@ class StatsController < ApplicationController
         end
       end
       
+      average = totals / counts.to_f
+      average = 0 if average.nan?
+
       @surveys << { 
-        average: totals / counts.to_f,
+        average: average,
       }
     end
 
