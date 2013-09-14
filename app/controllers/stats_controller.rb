@@ -49,13 +49,16 @@ class StatsController < ApplicationController
         end
       end
 
+      average = totals / counts.to_f
+      average = 0 if average.nan?
+
       @surveys << { 
         id: survey[:id],
         placed: survey.order[:created_at],
         spent: survey.order[:amount],
         age: age,
         gender: gender,
-        average: totals / counts.to_f,
+        average: average,
       }
     end
     
