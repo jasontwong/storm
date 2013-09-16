@@ -1,5 +1,5 @@
 class Product < ActiveRecord::Base
-  attr_accessible :company_id, :name, :price, :size, :product_category_id
+  attr_accessible :company_id, :name, :price, :size, :product_category_id, :parent_id
 
   belongs_to :parent, :class_name => "Product"
   belongs_to :product_category, inverse_of: :products
@@ -8,6 +8,7 @@ class Product < ActiveRecord::Base
   has_many :children, :class_name => "Product", :foreign_key => 'parent_id'
   has_many :order_details, inverse_of: :product
   has_many :orders, through: :order_details
+  has_many :member_survey_answers
 
   validates :company_id, presence: true
   validates :name, presence: true
