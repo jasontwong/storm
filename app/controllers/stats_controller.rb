@@ -107,13 +107,16 @@ class StatsController < ApplicationController
     o_count = 0
 
     survey.member_survey_answers.each do |ans|
+      product = ans.product
       category = ans.survey_question.survey_question_category
       points = ans.answer.to_i
       if points > 0
+        unless product.nil?
+          @results[:ratings] << { name: product.name, rating: points }
+        end
         unless category.nil?
           total = 0
           count = 0
-          found = false
           @results[:categories].each do |cat|
             if cat[:name] == category.name
               total = cat[:total]
