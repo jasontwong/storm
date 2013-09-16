@@ -98,10 +98,40 @@ class StatsController < ApplicationController
       end
     end
 
-    @results = {}
+    @results = {
+      categories: [],
+      ratings: [],
+    }
 
-    survey.member_survey_answers.each do |ans| 
+    o_total = 0
+    o_count = 0
+
+    survey.member_survey_answers.each do |ans|
+      category = ans.survey_question.survey_question_category
+      points = ans.answer.to_i
+      if points > 0
+        unless category.nil?
+          total = 0
+          count = 0
+          found = false
+          @results[:categories].each do |cat|
+            if cat[:name] == category.name
+              total = cat[:total]
+              count = cat[:count]
+              break
+            end
+          end
+          total += points
+          count += 1
+          @results[:categories] << { name: category.name, total: total, count: count }
+        end
+
+        o_total += points
+        o_count += 1
+      end
     end
+
+    @results[:categories] << { name: 'Overall', total: o_total, count: o_count }
 
     @member = {
       id: survey.member[:id],
@@ -114,7 +144,6 @@ class StatsController < ApplicationController
         placed: survey.order[:created_at],
         spent: survey.order[:amount],
       },
-      surveys: @surveys,
     }
 
     render json: @member.to_json
