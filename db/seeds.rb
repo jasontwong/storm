@@ -18,6 +18,18 @@ when 'development'
   ApiKey.delete_all
   ApiKey.create!(access_token: 'apikey')
 
+  SurveyQuestionCategory.create!(
+    name: 'Food Quality'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Cleanliness'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Speed of Service'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Greeting'
+  )
   5.times do
     company = Company.create!(
       name: Faker::Company.name,
@@ -84,6 +96,7 @@ when 'development'
           company_id: company.id,
           dynamic: false,
           dynamic_meta: [],
+          survey_question_category_id: random_num(false, 4),
         )
       end
       survey.save
@@ -168,6 +181,7 @@ when 'development'
               question: 'q',
               answer: random_num(false, 10),
               survey_question_id: SurveyQuestion.offset(rand(SurveyQuestion.count)).first.id,
+              product_id: Product.offset(rand(Product.count)).first.id,
             )
           end
           2.times do

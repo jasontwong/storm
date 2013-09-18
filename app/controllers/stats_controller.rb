@@ -25,7 +25,7 @@ class StatsController < ApplicationController
         end
 
         @answers[answer.answer] << { question: answer.question }
-        points = answer.answer.to_i
+        points = answer.answer.to_f
 
         if points > 0
           totals += points
@@ -41,7 +41,7 @@ class StatsController < ApplicationController
       # turn this into member model method?
       survey.member.member_attributes.each do |attr|
         if attr[:name] == 'gender'
-          gender = attr[:value][0].upcase
+          gender = attr[:value]
         end
         if attr[:name] == 'birthday'
           dob = Date.strptime(attr[:value], '%m/%d/%Y')
@@ -50,12 +50,9 @@ class StatsController < ApplicationController
         end
       end
 
-      # last_week = Time.now - 7.days
-
       @surveys << { 
         id: survey[:id],
         placed: survey.order[:created_at],
-        # placed: Time.at(last_week + rand * (Time.now.to_f - last_week.to_f)),
         spent: survey.order[:amount],
         age: age,
         gender: gender,
@@ -89,7 +86,7 @@ class StatsController < ApplicationController
 
     survey.member.member_attributes.each do |attr|
       if attr[:name] == 'gender'
-        gender = attr[:value][0].upcase
+        gender = attr[:value]
       end
       if attr[:name] == 'birthday'
         dob = Date.strptime(attr[:value], '%m/%d/%Y')
@@ -109,7 +106,7 @@ class StatsController < ApplicationController
     survey.member_survey_answers.each do |ans|
       product = ans.product
       category = ans.survey_question.survey_question_category
-      points = ans.answer.to_i
+      points = ans.answer.to_f
       if points > 0
         unless product.nil?
           @results[:ratings] << { name: product.name, rating: points }
@@ -117,16 +114,20 @@ class StatsController < ApplicationController
         unless category.nil?
           total = 0
           count = 0
+          found = false
           @results[:categories].each do |cat|
             if cat[:name] == category.name
-              total = cat[:total]
-              count = cat[:count]
+              found = true
+              cat[:total] += points
+              cat[:count] += 1
               break
             end
           end
-          total += points
-          count += 1
-          @results[:categories] << { name: category.name, total: total, count: count }
+          unless found
+            total += points
+            count += 1
+            @results[:categories] << { name: category.name, total: total, count: count }
+          end
         end
 
         o_total += points
