@@ -1,7 +1,7 @@
 class StatsController < ApplicationController
   # {{{ def store_ratings
   def store_ratings
-    member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('created_at DESC')
+    member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
 
     if params[:offset] && !member_surveys.nil?
       member_surveys = member_surveys.offset(params[:offset])
@@ -80,6 +80,7 @@ class StatsController < ApplicationController
   # {{{ def survey_member
   def survey_member
     survey = MemberSurvey.find(params[:id])
+    next_survey = MemberSurvey.select('id').where(store_id: params[:store_id]).where('member_surveys.id < ?', params[:id]).includes(:order).order('orders.created_at DESC').limit(1).first
 
     age = nil
     gender = nil
@@ -137,6 +138,9 @@ class StatsController < ApplicationController
 
     @results[:categories] << { name: 'Overall', total: o_total, count: o_count }
 
+    next_id = nil
+    next_id = next_survey[:id] unless next_survey.nil?
+
     @member = {
       id: survey.member[:id],
       age: age,
@@ -147,6 +151,7 @@ class StatsController < ApplicationController
         results: @results,
         placed: survey.order[:created_at],
         spent: survey.order[:amount],
+        next_id: next_id,
       },
     }
 
