@@ -110,7 +110,18 @@ class StatsController < ApplicationController
       points = ans.answer.to_f
       if points > 0
         unless product.nil?
-          @results[:ratings] << { name: product.name, rating: points }
+          found = false
+          @results[:ratings].each do |rating|
+            if rating[:name] == product.name
+              found = true
+              rating[:total] += points
+              rating[:count] += 1
+              break
+            end
+          end
+          unless found
+            @results[:ratings] << { name: product.name, total: points, count: 1 }
+          end
         end
         unless category.nil?
           total = 0
@@ -156,6 +167,73 @@ class StatsController < ApplicationController
     }
 
     render json: @member.to_json
+  end
+
+  # }}}
+  # {{{ def surveys
+  def surveys
+    member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
+
+    @results = {
+      past: {
+        one: {
+          ratings: [],
+        },
+        seven: {
+          ratings: [],
+        },
+        thirty: {
+          ratings: [],
+        },
+      },
+      ratings: [],
+      total: {
+        surveys: member_surveys.count,
+        members: 0,
+      },
+    }
+
+    members = []
+
+    now = Time.now
+    yesterday = now - 1.day
+    past_seven = now - 7.day
+    past_thirty = now - 30.day
+
+    member_surveys.each do |survey|
+      unless members.include? survey.member_id
+        members << survey.member_id
+      end
+      survey.member_survey_answers.each do |ans|
+        product = ans.product
+        points = ans.answer.to_f
+        if points > 0
+          unless product.nil?
+            found = false
+            @results[:ratings].each do |rating|
+              if rating[:name] == product.name
+                found = true
+                rating[:total] += points
+                rating[:count] += 1
+                break
+              end
+            end
+            unless found
+              @results[:ratings] << { name: product.name, total: points, count: 1 }
+            end
+          end
+        end
+      end
+      
+      break if survey.order.created_at < past_thirty
+      @results[:past][:one][:ratings] = @results[:ratings] if survey.order.created_at >= yesterday
+      @results[:past][:seven][:ratings] = @results[:ratings] if survey.order.created_at >= past_seven
+      @results[:past][:thirty][:ratings] = @results[:ratings] if survey.order.created_at >= past_thirty
+    end
+
+    @results[:total][:members] = members.length
+
+    render json: @results.to_json
   end
 
   # }}}
