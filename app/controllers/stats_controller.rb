@@ -177,15 +177,19 @@ class StatsController < ApplicationController
     @results = {
       past: {
         one: {
+          categories: [],
           ratings: [],
         },
         seven: {
+          categories: [],
           ratings: [],
         },
         thirty: {
+          categories: [],
           ratings: [],
         },
       },
+      categories: [],
       ratings: [],
       total: {
         surveys: member_surveys.count,
@@ -200,12 +204,16 @@ class StatsController < ApplicationController
     past_seven = now - 7.day
     past_thirty = now - 30.day
 
+    o_total = 0
+    o_count = 0
+
     member_surveys.each do |survey|
       unless members.include? survey.member_id
         members << survey.member_id
       end
       survey.member_survey_answers.each do |ans|
         product = ans.product
+        category = ans.survey_question.survey_question_category
         points = ans.answer.to_f
         if points > 0
           unless product.nil?
@@ -224,11 +232,41 @@ class StatsController < ApplicationController
           end
         end
       end
+      unless category.nil?
+        total = 0
+        count = 0
+        found = false
+        @results[:categories].each do |cat|
+          if cat[:name] == category.name
+            found = true
+            cat[:total] += points
+            cat[:count] += 1
+            break
+          end
+        end
+        unless found
+          total += points
+          count += 1
+          @results[:categories] << { name: category.name, total: total, count: count }
+        end
+      end
+
+      o_total += points
+      o_count += 1
       
       break if survey.order.created_at < past_thirty
-      @results[:past][:one][:ratings] = @results[:ratings] if survey.order.created_at >= yesterday
-      @results[:past][:seven][:ratings] = @results[:ratings] if survey.order.created_at >= past_seven
-      @results[:past][:thirty][:ratings] = @results[:ratings] if survey.order.created_at >= past_thirty
+      if survey.order.created_at >= yesterday
+        @results[:past][:one][:ratings] = @results[:ratings]
+        @results[:past][:one][:categories] = @results[:categories]
+      end
+      if survey.order.created_at >= past_seven
+        @results[:past][:seven][:ratings] = @results[:ratings] 
+        @results[:past][:seven][:categories] = @results[:categories] 
+      end
+      if survey.order.created_at >= past_thirty
+        @results[:past][:thirty][:ratings] = @results[:ratings] 
+        @results[:past][:thirty][:categories] = @results[:categories] 
+      end
     end
 
     @results[:total][:members] = members.length
