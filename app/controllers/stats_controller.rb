@@ -214,6 +214,7 @@ class StatsController < ApplicationController
       survey.member_survey_answers.each do |ans|
         product = ans.product
         category = ans.survey_question.survey_question_category
+        category = category.parent unless category.parent.nil?
         points = ans.answer.to_f
         if points > 0
           unless product.nil?
