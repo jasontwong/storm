@@ -184,6 +184,12 @@ class StatsController < ApplicationController
             thirty: 0, 
             all: 0, 
           },
+          data: {
+            one: [],
+            seven: [],
+            thirty: [],
+            all: [],
+          },
           count: {
             one: 0, 
             seven: 0, 
@@ -256,6 +262,7 @@ class StatsController < ApplicationController
                 found = true
                 cat[:total][:all] += points
                 cat[:count][:all] += 1
+                cat[:data][:all] << { time: survey.order.created_at, points: points }
                 break
               end
             end
@@ -270,6 +277,14 @@ class StatsController < ApplicationController
                   thirty: 0,
                   all: total, 
                 },
+                data: {
+                  one: [],
+                  seven: [],
+                  thirty: [],
+                  all: [
+                    { time: survey.order.created_at, points: points },
+                  ],
+                },
                 count: {
                   one: 0,
                   seven: 0,
@@ -282,24 +297,12 @@ class StatsController < ApplicationController
 
           o_total += points
           o_count += 1
+          @results[:categories][0][:data][:all] << { time: survey.order.created_at, points: points }
         end
       end
 
-      @results[:categories][0] = { 
-        name: 'Overall',
-        total: {
-          one: 0,
-          seven: 0,
-          thirty: 0,
-          all: o_total,
-        },
-        count: {
-          one: 0,
-          seven: 0,
-          thirty: 0,
-          all: o_count,
-        },
-      }
+      @results[:categories][0][:total][:all] = o_total; 
+      @results[:categories][0][:count][:all] = o_count; 
 
       break if survey.order.created_at < past_thirty
       if survey.order.created_at >= yesterday
@@ -310,6 +313,7 @@ class StatsController < ApplicationController
         @results[:categories].each do |category| 
           category[:total][:one] = category[:total][:all] 
           category[:count][:one] = category[:count][:all] 
+          category[:data][:one] = category[:data][:all] 
         end
       end
       if survey.order.created_at >= past_seven
@@ -320,6 +324,7 @@ class StatsController < ApplicationController
         @results[:categories].each do |category| 
           category[:total][:seven] = category[:total][:all] 
           category[:count][:seven] = category[:count][:all] 
+          category[:data][:seven] = category[:data][:all] 
         end
       end
       if survey.order.created_at >= past_thirty
@@ -330,6 +335,7 @@ class StatsController < ApplicationController
         @results[:categories].each do |category| 
           category[:total][:thirty] = category[:total][:all] 
           category[:count][:thirty] = category[:count][:all] 
+          category[:data][:thirty] = category[:data][:all] 
         end
       end
     end
