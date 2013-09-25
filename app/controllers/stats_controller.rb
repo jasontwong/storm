@@ -175,21 +175,23 @@ class StatsController < ApplicationController
     member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
 
     @results = {
-      past: {
-        one: {
-          categories: [],
-          ratings: [],
+      categories: [
+        { 
+          name: 'Overall', 
+          total: {
+            one: 0, 
+            seven: 0, 
+            thirty: 0, 
+            all: 0, 
+          },
+          count: {
+            one: 0, 
+            seven: 0, 
+            thirty: 0, 
+            all: 0, 
+          },
         },
-        seven: {
-          categories: [],
-          ratings: [],
-        },
-        thirty: {
-          categories: [],
-          ratings: [],
-        },
-      },
-      categories: [],
+      ],
       ratings: [],
       total: {
         surveys: member_surveys.count,
@@ -222,51 +224,113 @@ class StatsController < ApplicationController
             @results[:ratings].each do |rating|
               if rating[:name] == product.name
                 found = true
-                rating[:total] += points
-                rating[:count] += 1
+                rating[:total][:all] += points
+                rating[:count][:all] += 1
                 break
               end
             end
             unless found
-              @results[:ratings] << { name: product.name, total: points, count: 1 }
+              @results[:ratings] << { 
+                name: product.name,
+                total: {
+                  one: 0,
+                  seven: 0,
+                  thirty: 0,
+                  all: points,
+                },
+                count: {
+                  one: 0,
+                  seven: 0,
+                  thirty: 0,
+                  all: 1,
+                },
+              }
             end
           end
-        end
-      end
-      unless category.nil?
-        total = 0
-        count = 0
-        found = false
-        @results[:categories].each do |cat|
-          if cat[:name] == category.name
-            found = true
-            cat[:total] += points
-            cat[:count] += 1
-            break
+          unless category.nil?
+            total = 0
+            count = 0
+            found = false
+            @results[:categories].each do |cat|
+              if cat[:name] == category.name
+                found = true
+                cat[:total][:all] += points
+                cat[:count][:all] += 1
+                break
+              end
+            end
+            unless found
+              total += points
+              count += 1
+              @results[:categories] << { 
+                name: category.name, 
+                total: {
+                  one: 0,
+                  seven: 0,
+                  thirty: 0,
+                  all: total, 
+                },
+                count: {
+                  one: 0,
+                  seven: 0,
+                  thirty: 0,
+                  all: count,
+                },
+              }
+            end
           end
-        end
-        unless found
-          total += points
-          count += 1
-          @results[:categories] << { name: category.name, total: total, count: count }
+
+          o_total += points
+          o_count += 1
         end
       end
 
-      o_total += points
-      o_count += 1
-      
+      @results[:categories][0] = { 
+        name: 'Overall',
+        total: {
+          one: 0,
+          seven: 0,
+          thirty: 0,
+          all: o_total,
+        },
+        count: {
+          one: 0,
+          seven: 0,
+          thirty: 0,
+          all: o_count,
+        },
+      }
+
       break if survey.order.created_at < past_thirty
       if survey.order.created_at >= yesterday
-        @results[:past][:one][:ratings] = @results[:ratings]
-        @results[:past][:one][:categories] = @results[:categories]
+        @results[:ratings].each do |rating| 
+          rating[:total][:one] = rating[:total][:all] 
+          rating[:count][:one] = rating[:count][:all] 
+        end
+        @results[:categories].each do |category| 
+          category[:total][:one] = category[:total][:all] 
+          category[:count][:one] = category[:count][:all] 
+        end
       end
       if survey.order.created_at >= past_seven
-        @results[:past][:seven][:ratings] = @results[:ratings] 
-        @results[:past][:seven][:categories] = @results[:categories] 
+        @results[:ratings].each do |rating| 
+          rating[:total][:seven] = rating[:total][:all] 
+          rating[:count][:seven] = rating[:count][:all] 
+        end
+        @results[:categories].each do |category| 
+          category[:total][:seven] = category[:total][:all] 
+          category[:count][:seven] = category[:count][:all] 
+        end
       end
       if survey.order.created_at >= past_thirty
-        @results[:past][:thirty][:ratings] = @results[:ratings] 
-        @results[:past][:thirty][:categories] = @results[:categories] 
+        @results[:ratings].each do |rating| 
+          rating[:total][:thirty] = rating[:total][:all] 
+          rating[:count][:thirty] = rating[:count][:all] 
+        end
+        @results[:categories].each do |category| 
+          category[:total][:thirty] = category[:total][:all] 
+          category[:count][:thirty] = category[:count][:all] 
+        end
       end
     end
 
