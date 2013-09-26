@@ -304,7 +304,6 @@ class StatsController < ApplicationController
       @results[:categories][0][:total][:all] = o_total; 
       @results[:categories][0][:count][:all] = o_count; 
 
-      break if survey.order.created_at < past_thirty
       if survey.order.created_at >= yesterday
         @results[:ratings].each do |rating| 
           rating[:total][:one] = rating[:total][:all] 
