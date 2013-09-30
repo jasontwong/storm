@@ -65,7 +65,7 @@ class CodesController < ApplicationController
   # POST /codes/scan.json
   def scan
     @code = Code.where(qr: params[:qr]).limit(1).first
-    location = CodeScanLocation.new(params[:location]) if params[:code_scan_location].present?
+    location = CodeScanLocation.new(params[:location]) if params[:location].present?
 
     unless @code.nil?
       @code.used += 1
