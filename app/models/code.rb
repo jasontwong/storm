@@ -9,6 +9,7 @@ class Code < ActiveRecord::Base
 
   validates :qr, presence: true, uniqueness: true
   validates :active, inclusion: { in: [ true, false ] }
+  validates :static, inclusion: { in: [ true, false ] }
   validates :used, presence: true
   validates :store_id, presence: true
 
@@ -16,5 +17,6 @@ class Code < ActiveRecord::Base
   
   def init
     self.used = 0 if self.used.nil?
+    self.static = false if self.static.nil?
   end
 end

@@ -64,18 +64,17 @@ class CodesController < ApplicationController
   # POST /codes/scan
   # POST /codes/scan.json
   def scan
-    codes = Code.where(qr: params[:qr]).limit(1)
-    if codes.length == 1
-      @code = codes[0]
+    @code = Code.where(qr: params[:qr]).limit(1).first
+    unless @code.nil?
       @code.used += 1
       @code.last_used_time = Time.now.utc
 
       if @code.created_at + 2.days < @code.last_used_time
-        @code.active = false
+        @code.active = false unless @code.static
       end
 
       if @code.active
-        @code.active = false
+        @code.active = false unless @code.static
         if @code.save
           survey = MemberSurvey.create_from_code(@code, params[:member_id])
           render json: survey.to_json(:include => { 
