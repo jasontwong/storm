@@ -67,9 +67,14 @@ class CodesController < ApplicationController
   # POST /codes/scan.json
   def scan
     @code = Code.where(qr: params[:qr]).limit(1).first
-    location = CodeScanLocation.new(params[:location]) if params[:location].present?
 
     unless @code.nil?
+      if params[:location].present?
+        params[:location][:member_id] = params[:member_id]
+        params[:location][:code_id] = @code.id
+        location = CodeScanLocation.create!(params[:location])
+      end
+
       @code.used += 1
       @code.last_used_time = Time.now.utc
 
