@@ -28,7 +28,7 @@ class SurveyQuestionsController < ApplicationController
   def create
     @survey_question = SurveyQuestion.new(params[:survey_question])
 
-    @survey_question.survey_question_category = SurveyQuestionCategory.find(id: params[:category_id]) if params[:category_id].present?
+    @survey_question.survey_question_category = SurveyQuestionCategory.find(params[:category_id]) if params[:category_id].present?
 
     if @survey_question.save
       render json: @survey_question, status: :created, location: @survey_question
