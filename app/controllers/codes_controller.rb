@@ -21,14 +21,16 @@ class CodesController < ApplicationController
     @code = Code.new(params[:code])
 
     if @code.save
-      store = Store.find(@code.store_id);
-      order = Order.create!(
-        amount: 0,
-        survey_worth: 0,
-        code_id: @code.id,
-        store_id: store.id,
-        company_id: store.company.id,
-      )
+      unless @code.static
+        store = Store.find(@code.store_id);
+        order = Order.create!(
+          amount: 0,
+          survey_worth: 0,
+          code_id: @code.id,
+          store_id: store.id,
+          company_id: store.company.id,
+        )
+      end
       render json: @code, status: :created, location: @code
     else
       render json: @code.errors, status: :unprocessable_entity
@@ -64,18 +66,24 @@ class CodesController < ApplicationController
   # POST /codes/scan
   # POST /codes/scan.json
   def scan
-    codes = Code.where(qr: params[:qr]).limit(1)
-    if codes.length == 1
-      @code = codes[0]
+    @code = Code.where(qr: params[:qr]).limit(1).first
+
+    unless @code.nil?
+      if params[:location].present?
+        params[:location][:member_id] = params[:member_id]
+        params[:location][:code_id] = @code.id
+        location = CodeScanLocation.create!(params[:location])
+      end
+
       @code.used += 1
       @code.last_used_time = Time.now.utc
 
       if @code.created_at + 2.days < @code.last_used_time
-        @code.active = false
+        @code.active = false unless @code.static
       end
 
       if @code.active
-        @code.active = false
+        @code.active = false unless @code.static
         if @code.save
           survey = MemberSurvey.create_from_code(@code, params[:member_id])
           render json: survey.to_json(:include => { 

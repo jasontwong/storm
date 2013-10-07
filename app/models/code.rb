@@ -1,5 +1,5 @@
 class Code < ActiveRecord::Base
-  attr_accessible :qr, :used, :active, :last_used_time, :text, :store_id
+  attr_accessible :qr, :used, :active, :last_used_time, :text, :store_id, :static
 
   belongs_to :store, inverse_of: :codes
   has_one :order, inverse_of: :code
@@ -9,6 +9,7 @@ class Code < ActiveRecord::Base
 
   validates :qr, presence: true, uniqueness: true
   validates :active, inclusion: { in: [ true, false ] }
+  validates :static, inclusion: { in: [ true, false ] }
   validates :used, presence: true
   validates :store_id, presence: true
 
@@ -16,5 +17,6 @@ class Code < ActiveRecord::Base
   
   def init
     self.used = 0 if self.used.nil?
+    self.static = false if self.static.nil?
   end
 end

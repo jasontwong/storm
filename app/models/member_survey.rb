@@ -11,7 +11,7 @@ class MemberSurvey < ActiveRecord::Base
   validates :code_id, presence: true
   validates :company_id, presence: true
   validates :member_id, presence: true
-  validates :order_id, presence: true
+  # validates :order_id, presence: true
   validates :store_id, presence: true
   validates :completed, :inclusion => { :in => [true, false] }
 
@@ -31,18 +31,19 @@ class MemberSurvey < ActiveRecord::Base
     when Company::WORTH_TYPE_FLAT
       worth = company.worth_meta[:worth]
     when Company::WORTH_TYPE_PRICE
-      worth = order.survey_worth
+      worth = order.survey_worth unless order.nil?
     end
 
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
       member_id: member_id,
-      order_id: order.id,
+      # order_id: order.id,
       store_id: store.id,
       completed: false,
       worth: worth,
     )
+    survey.order = order unless order.nil?
     questions = []
 
     store.surveys.each do |s|
@@ -57,12 +58,12 @@ class MemberSurvey < ActiveRecord::Base
       q = question.build_question(code)
 
       # This will order it by least answered
-      order = MemberSurveyAnswer.where(survey_question_id: question.id, question: q).count
+      count = MemberSurveyAnswer.where(survey_question_id: question.id, question: q).count
 
       questions << {
         id: question.id,
         question: q,
-        order: order,
+        order: count,
       } unless q.nil?
     end
 
@@ -73,6 +74,8 @@ class MemberSurvey < ActiveRecord::Base
         question: question[:question],
       )
     end
+
+    survey.save
 
     return survey
 

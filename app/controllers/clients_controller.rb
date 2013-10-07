@@ -59,4 +59,25 @@ class ClientsController < ApplicationController
       render json: @client.errors, status: :unprocessable_entity
     end
   end
+  
+  # POST /clients/verify
+  # POST /clients/verify.json
+  def verify
+    clients = Client.where(email: params[:email]).limit(1)
+    if clients.length == 1
+      @client = clients[0]
+      password = Digest::SHA256.new
+      password.update params[:password] + @client.salt
+      
+      if password.hexdigest == @client.password
+        render json: @client
+      else
+        render json: { client: 'Bad Password' }, status: :unprocessable_entity
+      end
+    else
+      render json: { client: 'Not Found' }, status: :unprocessable_entity
+    end
+
+  end
+
 end
