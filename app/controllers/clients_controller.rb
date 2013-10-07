@@ -63,14 +63,13 @@ class ClientsController < ApplicationController
   # POST /clients/verify
   # POST /clients/verify.json
   def verify
-    clients = Client.where(email: params[:email]).limit(1)
-    if clients.length == 1
-      @client = clients[0]
+    @client = Client.where(email: params[:email]).limit(1).first
+    unless @client.nil?
       password = Digest::SHA256.new
       password.update params[:password] + @client.salt
       
       if password.hexdigest == @client.password
-        render json: @client
+        render json: @client.to_json(:include => [ :stores, :client_permissions ])
       else
         render json: { client: 'Bad Password' }, status: :unprocessable_entity
       end
