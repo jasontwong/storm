@@ -2,9 +2,13 @@ class CompaniesController < ApplicationController
   # GET /companies
   # GET /companies.json
   def index
-    active = true
-    active = false if params[:inactive]
-    @companies = Company.where(active: active)
+    if params[:give_all]
+      @companies = Company.all
+    else
+      active = true
+      active = false if params[:inactive]
+      @companies = Company.where(active: active)
+    end
 
     params[:include] = [] unless params[:include].is_a? Array
 
