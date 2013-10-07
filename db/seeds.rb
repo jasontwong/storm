@@ -10,14 +10,26 @@ case Rails.env
 when 'development'
   # test seed
   require 'faker'
-  def random_num (decimal = false)
+  def random_num (decimal = false, limit = 100)
     round = decimal ? 2 : 0
-    lambda { |min, max| rand * (max - min) + min }.call(100, 1).round(round)
+    lambda { |min, max| rand * (max - min) + min }.call(limit, 1).round(round)
   end
 
   ApiKey.delete_all
   ApiKey.create!(access_token: 'apikey')
 
+  SurveyQuestionCategory.create!(
+    name: 'Food Quality'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Cleanliness'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Speed of Service'
+  )
+  SurveyQuestionCategory.create!(
+    name: 'Greeting'
+  )
   5.times do
     company = Company.create!(
       name: Faker::Company.name,
@@ -46,6 +58,7 @@ when 'development'
       description: Faker::Lorem.sentence,
       location: Faker::Address.street_address(true),
       phone: Faker::PhoneNumber.phone_number,
+      active: 1,
       survey_question_limit: 6,
       html: '<!DOCTYPE html><html><head></head><body></body><p style="text-align:center;">Yella <strong>bold</strong> <em>italic</em>!</p><p style="text-align:center;width:100%;">{QR}</p><div style="float:left;width:20%;">float left</div><div style="float:right;width:20%;">float right</div><div style="clear:both;">Cleared</div><div><p>Mongoose:</p><hr /><img src="http://www.enchantedlearning.com/ygifs/Yellowmongoose_bw.GIF" /></div><div><ul><li>A list item</li><li style="color:red;">Print red?</li><li><ul><li>A nested list item</li></ul></li></ul></div><table><tbody><tr><td>Support table cells?</td><td>Support table cells?</td></tr></tbody></table></html>',
     )
@@ -83,6 +96,7 @@ when 'development'
           company_id: company.id,
           dynamic: false,
           dynamic_meta: [],
+          survey_question_category_id: random_num(false, 4),
         )
       end
       survey.save
@@ -113,6 +127,21 @@ when 'development'
     new_password.update password.hexdigest + member.salt
     member.password = new_password.hexdigest
 
+    max_age = Time.now - 100.years
+    min_age = Time.now - 13.years
+
+    MemberAttribute.create!(
+      member_id: member.id,
+      name: 'birthday',
+      value: Time.at(max_age + rand * (min_age.to_f - max_age.to_f)).strftime('%m/%d/%Y'),
+    )
+
+    MemberAttribute.create!(
+      member_id: member.id,
+      name: 'gender',
+      value: random_num % 2 == 0 ? 'Male' : 'Female',
+    )
+
     Company.all.each do |company|
       points = random_num
       MemberPoints.create!(
@@ -138,6 +167,23 @@ when 'development'
             checkin_worth: random_num(true),
             server: Faker::Name.name,
           )
+          m_survey = MemberSurvey.create!(
+            code_id: code.id,
+            member_id: Member.offset(rand(Member.count)).first.id,
+            order_id: order.id,
+            company_id: company.id,
+            store_id: store.id,
+            completed: true,
+          )
+          5.times do
+            MemberSurveyAnswer.create!(
+              member_survey_id: m_survey.id,
+              question: 'q',
+              answer: random_num(false, 10),
+              survey_question_id: SurveyQuestion.offset(rand(SurveyQuestion.count)).first.id,
+              product_id: Product.offset(rand(Product.count)).first.id,
+            )
+          end
           2.times do
             product = company.products.offset(rand(company.products.count)).first
             OrderDetail.create!(

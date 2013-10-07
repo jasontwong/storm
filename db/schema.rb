@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130801201541) do
+ActiveRecord::Schema.define(:version => 20130930185442) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -62,6 +62,20 @@ ActiveRecord::Schema.define(:version => 20130801201541) do
     t.datetime "updated_at",      :null => false
   end
 
+  create_table "clients_stores", :id => false, :force => true do |t|
+    t.integer "client_id"
+    t.integer "store_id"
+  end
+
+  create_table "code_scan_locations", :force => true do |t|
+    t.decimal  "latitude",   :precision => 10, :scale => 6
+    t.decimal  "longitude",  :precision => 10, :scale => 6
+    t.integer  "member_id"
+    t.integer  "code_id"
+    t.datetime "created_at",                                :null => false
+    t.datetime "updated_at",                                :null => false
+  end
+
   create_table "codes", :force => true do |t|
     t.string   "qr"
     t.datetime "created_at",     :null => false
@@ -71,6 +85,7 @@ ActiveRecord::Schema.define(:version => 20130801201541) do
     t.datetime "last_used_time"
     t.text     "text"
     t.integer  "store_id"
+    t.boolean  "static"
   end
 
   create_table "companies", :force => true do |t|
@@ -85,6 +100,7 @@ ActiveRecord::Schema.define(:version => 20130801201541) do
     t.text     "html"
     t.integer  "worth_type",            :limit => 1
     t.text     "worth_meta"
+    t.boolean  "active"
   end
 
   create_table "member_answers", :force => true do |t|
@@ -135,6 +151,7 @@ ActiveRecord::Schema.define(:version => 20130801201541) do
     t.datetime "created_at",         :null => false
     t.datetime "updated_at",         :null => false
     t.integer  "survey_question_id"
+    t.integer  "product_id"
   end
 
   create_table "member_surveys", :force => true do |t|
@@ -253,23 +270,20 @@ ActiveRecord::Schema.define(:version => 20130801201541) do
     t.string   "name"
     t.datetime "created_at", :null => false
     t.datetime "updated_at", :null => false
-  end
-
-  create_table "survey_question_categories_survey_questions", :id => false, :force => true do |t|
-    t.integer "survey_question_category_id"
-    t.integer "survey_question_id"
+    t.integer  "parent_id"
   end
 
   create_table "survey_questions", :force => true do |t|
     t.string   "question"
     t.string   "answer_type"
-    t.text     "answer_meta",  :limit => 255
+    t.text     "answer_meta",                 :limit => 255
     t.boolean  "active"
-    t.datetime "created_at",                  :null => false
-    t.datetime "updated_at",                  :null => false
+    t.datetime "created_at",                                 :null => false
+    t.datetime "updated_at",                                 :null => false
     t.integer  "company_id"
     t.boolean  "dynamic"
-    t.text     "dynamic_meta", :limit => 255
+    t.text     "dynamic_meta",                :limit => 255
+    t.integer  "survey_question_category_id"
   end
 
   create_table "survey_questions_surveys", :id => false, :force => true do |t|

@@ -4,7 +4,9 @@ class ClientsController < ApplicationController
   def index
     @clients = Client.all
 
-    render json: @clients
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @clients.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /clients/1
@@ -12,13 +14,17 @@ class ClientsController < ApplicationController
   def show
     @client = Client.find(params[:id])
 
-    render json: @client
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @client.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # POST /clients
   # POST /clients.json
   def create
     @client = Client.new(params[:client])
+
+    @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @client.save
       render json: @client, status: :created, location: @client
@@ -31,6 +37,8 @@ class ClientsController < ApplicationController
   # PATCH/PUT /clients/1.json
   def update
     @client = Client.find(params[:id])
+
+    @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
     if @client.update_attributes(params[:client])
       head :no_content
@@ -51,4 +59,24 @@ class ClientsController < ApplicationController
       render json: @client.errors, status: :unprocessable_entity
     end
   end
+  
+  # POST /clients/verify
+  # POST /clients/verify.json
+  def verify
+    @client = Client.where(email: params[:email]).limit(1).first
+    unless @client.nil?
+      password = Digest::SHA256.new
+      password.update params[:password] + @client.salt
+      
+      if password.hexdigest == @client.password
+        render json: @client.to_json(:include => [ :stores, :client_permissions ])
+      else
+        render json: { client: 'Bad Password' }, status: :unprocessable_entity
+      end
+    else
+      render json: { client: 'Not Found' }, status: :unprocessable_entity
+    end
+
+  end
+
 end

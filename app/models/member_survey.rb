@@ -11,7 +11,7 @@ class MemberSurvey < ActiveRecord::Base
   validates :code_id, presence: true
   validates :company_id, presence: true
   validates :member_id, presence: true
-  validates :order_id, presence: true
+  # validates :order_id, presence: true
   validates :store_id, presence: true
   validates :completed, :inclusion => { :in => [true, false] }
 
@@ -31,18 +31,19 @@ class MemberSurvey < ActiveRecord::Base
     when Company::WORTH_TYPE_FLAT
       worth = company.worth_meta[:worth]
     when Company::WORTH_TYPE_PRICE
-      worth = order.survey_worth
+      worth = order.survey_worth unless order.nil?
     end
 
     survey = MemberSurvey.create!(
       code_id: code.id,
       company_id: company.id,
       member_id: member_id,
-      order_id: order.id,
+      # order_id: order.id,
       store_id: store.id,
       completed: false,
       worth: worth,
     )
+    survey.order = order unless order.nil?
     questions = []
 
     store.surveys.each do |s|
@@ -51,18 +52,30 @@ class MemberSurvey < ActiveRecord::Base
     end
 
     store_survey ||= company.surveys.first
+    questions = []
 
     store_survey.survey_questions.each do |question|
-      if questions.length < company.survey_question_limit
-        questions << MemberSurveyAnswer.create!(
-          member_survey_id: survey.id,
-          survey_question_id: question.id,
-          question: question.build_question(code),
-        )
-      else
-        break
-      end
+      q = question.build_question(code)
+
+      # This will order it by least answered
+      count = MemberSurveyAnswer.where(survey_question_id: question.id, question: q).count
+
+      questions << {
+        id: question.id,
+        question: q,
+        order: count,
+      } unless q.nil?
     end
+
+    questions.sort{ |x,y| x[:order] <=> y[:order] }[0,company.survey_question_limit.to_i].each do |question|
+      MemberSurveyAnswer.create!(
+        member_survey_id: survey.id,
+        survey_question_id: question[:id],
+        question: question[:question],
+      )
+    end
+
+    survey.save
 
     return survey
 

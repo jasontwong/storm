@@ -28,7 +28,29 @@ describe SurveyQuestion do
   it 'requires answer_meta to be a Hash' do
     FactoryGirl.create(:survey_question).answer_meta.should be_a(Hash)
   end
-  it 'requires dynamic_meta to be a Hash' do
+  it 'requires dynamic_meta to be a Array' do
     FactoryGirl.create(:survey_question).dynamic_meta.should be_a(Array)
+  end
+  it 'requires a dynamic question to respond awesomeness' do
+    question = FactoryGirl.create(:dynamic_survey_question)
+    order = FactoryGirl.create(:order)
+    product = FactoryGirl.create(:product, name: 'Product 1')
+    code = FactoryGirl.create(:code, order: order)
+    order_detail = FactoryGirl.create(:order_detail, code: code, order: order, name: 'prod-1', product: product, price: 99)
+
+    q1 = question.build_question(code)
+    q1.should eq('This is a dynamic question: Product 1')
+
+    product = FactoryGirl.create(:product, id: 3, name: 'Product 3')
+    order_detail = FactoryGirl.create(:order_detail, code: code, order: order, name: 'prod-3', product: product, price: 9999)
+
+    q2 = question.build_question(code)
+    q2.should eq('This is a dynamic question: Product 3')
+
+    product = FactoryGirl.create(:product, id: 7, name: 'Product 7')
+    order_detail = FactoryGirl.create(:order_detail, code: code, order: order, name: 'prod-3', product: product, price: 999)
+
+    q3 = question.build_question(code)
+    q3.should_not eq('This is a dynamic question: Product 7')
   end
 end

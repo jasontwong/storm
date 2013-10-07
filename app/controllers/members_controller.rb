@@ -87,7 +87,12 @@ class MembersController < ApplicationController
   # POST /members/fb_verify
   # POST /members/fb_verify.json
   def fb_verify
-    @member = Member.where(email: params[:email], fb_id: params[:fb_id]).first
+    unless params[:email].nil?
+      @member = Member.where(email: params[:email], fb_id: params[:fb_id]).first
+    end
+
+    @member ||= Member.where(fb_id: params[:fb_id]).first
+
     if @member
       render json: @member
     else
@@ -158,6 +163,7 @@ class MembersController < ApplicationController
   # GET /members/1/points
   # GET /members/1/points.json
   def point_index
+    Member.find(params[:id])
     where = {
       member_id: params[:id]
     }

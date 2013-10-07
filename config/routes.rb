@@ -1,4 +1,6 @@
 DataApi::Application.routes.draw do
+  resources :order_details, except: [:new, :edit, :create, :destroy, :update]
+
   resources :changelogs, except: [:new, :edit, :create, :destroy, :update]
 
   resources :survey_question_categories, except: [:new, :edit]
@@ -26,8 +28,10 @@ DataApi::Application.routes.draw do
   resources :companies, except: [:new, :edit]
 
   # custom routes
+  get 'api_key/generate' => 'api_key#generate'
   get 'stats/store/ratings' => 'stats#store_ratings'
   get 'stats/survey/:id/member' => 'stats#survey_member'
+  get 'stats/surveys' => 'stats#surveys'
   get 'members/:id/points' => 'members#point_index', as: :member_points
   get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
   post 'members/:id/rewards' => 'members#reward_create'
@@ -36,6 +40,7 @@ DataApi::Application.routes.draw do
   post 'members/fb_verify' => 'members#fb_verify'
   put 'members/pass_reset' => 'members#pass_reset'
   post 'codes/scan' => 'codes#scan'
+  post 'clients/verify' => 'clients#verify'
 
   resources :members, except: [:new, :edit]
 

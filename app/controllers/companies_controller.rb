@@ -2,7 +2,9 @@ class CompaniesController < ApplicationController
   # GET /companies
   # GET /companies.json
   def index
-    @companies = Company.all
+    active = true
+    active = false if params[:inactive]
+    @companies = Company.where(active: active)
 
     params[:include] = [] unless params[:include].is_a? Array
 
@@ -12,7 +14,13 @@ class CompaniesController < ApplicationController
   # GET /companies/1
   # GET /companies/1.json
   def show
+    active = true
+    active = false if params[:inactive]
     @company = Company.find(params[:id])
+
+    if active && !@company.active
+      raise ActiveRecord::RecordNotFound
+    end
 
     params[:include] = [] unless params[:include].is_a? Array
 
@@ -59,7 +67,15 @@ class CompaniesController < ApplicationController
   # DELETE /companies/1.json
   def destroy
     @company = Company.find(params[:id])
-    @company.destroy
+    @company.active = false
+    @comapny.save
+
+    log = Changelog.where(
+      model: 'Company', 
+      model_id: @company.id,
+    ).first_or_create!
+    log.model_action = 'destroy'
+    log.save
 
     log = Changelog.where(
       model: 'Company', 

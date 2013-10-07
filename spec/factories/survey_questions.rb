@@ -14,6 +14,13 @@ FactoryGirl.define do
     company
   end
 
+  factory :dynamic_survey_question, parent: :survey_question do
+    question 'This is a dynamic question: %s'
+    active true
+    dynamic true
+    dynamic_meta { [ { product_ids: [1,3,7] } ] }
+  end
+
   factory :invalid_survey_question, parent: :survey_question do
     question nil
   end

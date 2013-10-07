@@ -1,12 +1,13 @@
 class Company < ActiveRecord::Base
   WORTH_TYPE_FLAT = 1
   WORTH_TYPE_PRICE = 2
-  attr_accessible :description, :location, :logo, :name, :phone, :survey_question_limit, :html, :worth_type, :worth_meta
+  attr_accessible :description, :location, :logo, :name, :phone, :survey_question_limit, :html, :worth_type, :worth_meta, :active
 
   has_many :stores, inverse_of: :company
   has_many :products, inverse_of: :company
   has_many :rewards, inverse_of: :company
   has_many :orders, inverse_of: :company
+  has_many :order_details, through: :orders
   has_many :surveys, inverse_of: :company
   has_many :survey_questions, inverse_of: :company
   has_many :member_points, inverse_of: :company
@@ -17,6 +18,7 @@ class Company < ActiveRecord::Base
   serialize :worth_meta, Hash
 
   validates :name, presence: true
+  validates :active, :inclusion => { :in => [true, false] }
 
   after_initialize :init
 
