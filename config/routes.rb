@@ -29,6 +29,9 @@ DataApi::Application.routes.draw do
 
   # custom routes
   get 'api_key/generate' => 'api_key#generate'
+  get 'stats/poster/store/ratings' => 'stats#poster_store_ratings'
+  get 'stats/poster/survey/:id/member' => 'stats#poster_survey_member'
+  get 'stats/poster/surveys' => 'stats#poster_surveys'
   get 'stats/store/ratings' => 'stats#store_ratings'
   get 'stats/survey/:id/member' => 'stats#survey_member'
   get 'stats/surveys' => 'stats#surveys'
