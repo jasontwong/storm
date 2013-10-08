@@ -1,7 +1,7 @@
 class StatsController < ApplicationController
   # {{{ def poster_store_ratings
   def poster_store_ratings
-    member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
+    member_surveys = MemberSurvey.where(store_id: params[:store_id], codes: { static: true }).joins(:code).includes(:member_survey_answers, :member => :member_attributes).order('created_at DESC')
 
     if params[:offset] && !member_surveys.nil?
       member_surveys = member_surveys.offset(params[:offset])
@@ -17,6 +17,8 @@ class StatsController < ApplicationController
     @count = 0
     
     member_surveys.each do |survey|
+      puts survey.code.inspect
+
       totals = 0
       counts = 0
       survey.member_survey_answers.each do |answer|
@@ -50,13 +52,16 @@ class StatsController < ApplicationController
         end
       end
 
+      avg = totals / counts.to_f
+      avg = 0 if avg.nan?
+
       @surveys << { 
         id: survey[:id],
-        placed: survey.order[:created_at],
-        spent: survey.order[:amount],
+        submitted: survey[:created_at],
         age: age,
         gender: gender,
-        average: totals / counts.to_f,
+        average: avg,
+        comments: survey[:comments],
       }
     end
     
@@ -80,7 +85,7 @@ class StatsController < ApplicationController
   # {{{ def poster_survey_member
   def poster_survey_member
     survey = MemberSurvey.find(params[:id])
-    next_survey = MemberSurvey.select('id').where(store_id: params[:store_id]).where('member_surveys.id < ?', params[:id]).includes(:order).order('orders.created_at DESC').limit(1).first
+    next_survey = MemberSurvey.select('id').where(store_id: params[:store_id], codes: { static: true }).where('member_surveys.id < ?', params[:id]).joins(:code).includes(:order).order('orders.created_at DESC').limit(1).first
 
     age = nil
     gender = nil
@@ -160,6 +165,7 @@ class StatsController < ApplicationController
         id: survey[:id],
         comments: survey[:comments],
         results: @results,
+        submitted: survey[:created_at],
         placed: survey.order[:created_at],
         spent: survey.order[:amount],
         next_id: next_id,
