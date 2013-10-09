@@ -114,7 +114,11 @@ class CodesController < ApplicationController
           end
         end
       else
-        render json: [ { code: "Recently scanned by this user." } ], status: :unprocessable_entity
+        if @code.save
+          render json: [ { code: "Recently scanned by this user." } ], status: :unprocessable_entity
+        else
+          render json: @code.errors, status: :unprocessable_entity
+        end
       end
     else
       render json: [ { code: "Not Found" } ], status: :unprocessable_entity
