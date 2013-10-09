@@ -69,9 +69,15 @@ class CodesController < ApplicationController
     @code = Code.where(qr: params[:qr]).limit(1).first
 
     unless @code.nil?
+      error = nil
       if params[:location].present?
+        scan = CodeScanLocation.where(member_id: params[:member_id], success: true).order('created_at DESC').first
+        unless scan.nil?
+          error = true if Time.now < (scan.created_at + 3.hours)
+        end
         params[:location][:member_id] = params[:member_id]
         params[:location][:code_id] = @code.id
+        params[:location][:success] = error.nil?
         location = CodeScanLocation.create!(params[:location])
       end
 
@@ -82,26 +88,34 @@ class CodesController < ApplicationController
         @code.active = false unless @code.static
       end
 
-      if @code.active
-        @code.active = false unless @code.static
-        if @code.save
-          survey = MemberSurvey.create_from_code(@code, params[:member_id])
-          render json: survey.to_json(:include => { 
-            :member_survey_answers => { 
-              :include => { 
-                :survey_question => {
-                  :only => [ :answer_type, :answer_meta ],
+      if error.nil?
+        if @code.active
+          @code.active = false unless @code.static
+          if @code.save
+            survey = MemberSurvey.create_from_code(@code, params[:member_id])
+            render json: survey.to_json(:include => { 
+              :member_survey_answers => { 
+                :include => { 
+                  :survey_question => {
+                    :only => [ :answer_type, :answer_meta ],
+                  },
                 },
-              },
-            }, 
-            :company  => {},
-          })
+              }, 
+              :company  => {},
+            })
+          else
+            render json: @code.errors, status: :unprocessable_entity
+          end
         else
-          render json: @code.errors, status: :unprocessable_entity
+          if @code.save
+            render json: [ { code: "Already used or expired" } ], status: :unprocessable_entity
+          else
+            render json: @code.errors, status: :unprocessable_entity
+          end
         end
       else
         if @code.save
-          render json: [ { code: "Already used or expired" } ], status: :unprocessable_entity
+          render json: [ { code: "Recently scanned by this user." } ], status: :unprocessable_entity
         else
           render json: @code.errors, status: :unprocessable_entity
         end

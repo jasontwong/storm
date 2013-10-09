@@ -47,6 +47,7 @@ class StatsController < ApplicationController
         end
         if attr[:name] == 'birthday'
           dob = Date.strptime(attr[:value], '%m/%d/%Y')
+          dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
           now = Time.now.utc.to_date
           age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
         end
@@ -96,6 +97,7 @@ class StatsController < ApplicationController
       end
       if attr[:name] == 'birthday'
         dob = Date.strptime(attr[:value], '%m/%d/%Y')
+        dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
         now = Time.now.utc.to_date
         age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
       end
@@ -371,6 +373,7 @@ class StatsController < ApplicationController
         end
         if attr[:name] == 'birthday'
           dob = Date.strptime(attr[:value], '%m/%d/%Y')
+          dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
           now = Time.now.utc.to_date
           age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
         end
@@ -417,6 +420,7 @@ class StatsController < ApplicationController
       end
       if attr[:name] == 'birthday'
         dob = Date.strptime(attr[:value], '%m/%d/%Y')
+        dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
         now = Time.now.utc.to_date
         age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
       end
