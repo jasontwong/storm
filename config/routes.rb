@@ -43,6 +43,7 @@ DataApi::Application.routes.draw do
   post 'members/fb_verify' => 'members#fb_verify'
   put 'members/pass_reset' => 'members#pass_reset'
   post 'codes/scan' => 'codes#scan'
+  post 'codes/beacon' => 'codes#beacon'
   post 'clients/verify' => 'clients#verify'
 
   resources :members, except: [:new, :edit]
