@@ -63,6 +63,44 @@ class CodesController < ApplicationController
     end
   end
 
+  # POST /codes/beacon
+  # POST /codes/beacon.json
+  def beacon
+    @code = Code.where(major: params[:major], minor: params[:minor]).limit(1).first
+
+    unless @code.nil?
+      @code.used += 1
+      @code.last_used_time = Time.now.utc
+
+      if @code.active
+        @code.active = false unless @code.static
+        if @code.save
+          survey = MemberSurvey.create_from_code(@code, params[:member_id])
+          render json: survey.to_json(:include => { 
+            :member_survey_answers => { 
+              :include => { 
+                :survey_question => {
+                  :only => [ :answer_type, :answer_meta ],
+                },
+              },
+            }, 
+            :company  => {},
+          })
+        else
+          render json: @code.errors, status: :unprocessable_entity
+        end
+      else
+        if @code.save
+          render json: [ { code: "Already used or expired" } ], status: :unprocessable_entity
+        else
+          render json: @code.errors, status: :unprocessable_entity
+        end
+      end
+    else
+      render json: [ { code: "Not Found" } ], status: :unprocessable_entity
+    end
+  end
+
   # POST /codes/scan
   # POST /codes/scan.json
   def scan

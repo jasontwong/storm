@@ -28,11 +28,22 @@ class MemberSurveysController < ApplicationController
   # GET /member_surveys/1
   # GET /member_surveys/1.json
   def show
-    @member_survey = MemberSurvey.where(id: params[:id], store_id: params[:store_id])
+    # @member_survey = MemberSurvey.where(id: params[:id], store_id: params[:store_id])
+    @member_survey = MemberSurvey.find(params[:id])
 
     params[:include] = [] unless params[:include].is_a? Array
 
-    render json: @member_survey.first.to_json(:include => params[:include].collect { |data| data.to_sym })
+    # render json: @member_survey.first.to_json(:include => params[:include].collect { |data| data.to_sym })
+    render json: @member_survey.to_json(:include => { 
+      :member_survey_answers => { 
+        :include => { 
+          :survey_question => {
+            :only => [ :answer_type, :answer_meta ],
+          },
+        },
+      }, 
+      :company  => {},
+    })
   end
 
   # POST /member_surveys
