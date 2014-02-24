@@ -42,7 +42,7 @@ class SurveyQuestionsController < ApplicationController
   def update
     @survey_question = SurveyQuestion.find(params[:id])
 
-    @survey_question.survey_question_category = SurveyQuestionCategory.find(id: params[:category_id]) if params[:category_id].present?
+    @survey_question.survey_question_category = SurveyQuestionCategory.find(params[:category_id]) if params[:category_id].present?
 
     if @survey_question.update_attributes(params[:survey_question])
       head :no_content
