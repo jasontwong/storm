@@ -93,7 +93,7 @@ class CompaniesController < ApplicationController
   
   # POST /companies/1/beacon_verify
   # POST /companies/1/beacon_verify.json
-  def create
+  def beacon_verify
     major = params[:major].to_i
     minor = params[:minor].to_i
     @company = Company.find(params[:id])
