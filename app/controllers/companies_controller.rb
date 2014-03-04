@@ -27,8 +27,9 @@ class CompaniesController < ApplicationController
     end
 
     params[:include] = [] unless params[:include].is_a? Array
+    params[:include] << "rewards"
 
-    render json: @company.to_json(:include => params[:include].collect { |data| data.to_sym })
+    render json: @company.to_json(:include => params[:include].uniq!.collect { |data| data.to_sym })
   end
 
   # POST /companies
