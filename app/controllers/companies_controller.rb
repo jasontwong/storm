@@ -90,4 +90,32 @@ class CompaniesController < ApplicationController
 
     head :no_content
   end
+  
+  # POST /companies/1/beacon_verify
+  # POST /companies/1/beacon_verify.json
+  def beacon_verify
+    major = params[:major].to_i
+    minor = params[:minor].to_i
+    @company = Company.find(params[:id])
+    stores = @company.stores
+    found = false
+
+    stores.each do |store|
+      codes = store.codes
+      codes.each do |code|
+        if code.major == major && code.minor == minor
+          found = true
+          break
+        end
+      end
+      break if found
+    end
+
+    if found
+      render json: @company
+    else
+      render json: { company: "Not found" }, status: :unprocessable_entity
+    end
+  end
+
 end
