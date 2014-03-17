@@ -4,7 +4,9 @@ class MembersController < ApplicationController
   def index
     @members = Member.all
 
-    render json: @members
+    params[:include] = [] unless params[:include].is_a? Array
+
+    render json: @members.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
   # GET /members/1
