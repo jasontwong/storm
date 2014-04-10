@@ -82,7 +82,29 @@ class ClientsController < ApplicationController
     else
       render json: { client: 'Not Found' }, status: :unprocessable_entity
     end
+  end
 
+  # POST /clients/pass_reset
+  # POST /clients/pass_reset.json
+  def pass_reset
+    @client = Client.where(temp_password: params[:temp_password]).limit(1).first
+    @client = nil if @client.updated_at + 1.days < Time.now.utc
+
+    unless @client.nil?
+      password = Digest::SHA256.new
+      password.update params[:password] + @client.salt
+
+      @client.password = password
+      @client.temp_password = nil
+      
+      if @client.save
+        render json: @client.to_json(:include => [ :stores, :client_permissions ])
+      else
+        render json: @client.errors, status: :unprocessable_entity
+      end
+    else
+      render json: { client: 'Not Found' }, status: :unprocessable_entity
+    end
   end
 
 end
