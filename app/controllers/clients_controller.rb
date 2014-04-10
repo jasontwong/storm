@@ -72,12 +72,33 @@ class ClientsController < ApplicationController
         @client.temp_password = nil unless @client.temp_password.nil?
 
         if @client.save
-          render json: @client.to_json(:include => [ :stores, :client_permissions ])
+          head :no_content
         else
           render json: @client.errors, status: :unprocessable_entity
         end
       else
         render json: { client: 'Bad Password' }, status: :unprocessable_entity
+      end
+    else
+      render json: { client: 'Not Found' }, status: :unprocessable_entity
+    end
+  end
+
+  # POST /clients/:id/pass_generate
+  # POST /clients/:id/pass_generate.json
+  def pass_generate
+    @client = Client.find(params[:id])
+
+    unless @client.nil?
+      password = Digest::SHA256.new
+      password.update SecureRandom.hex + @client.salt
+
+      @client.temp_password = password
+      
+      if @client.save
+        head :no_content
+      else
+        render json: @client.errors, status: :unprocessable_entity
       end
     else
       render json: { client: 'Not Found' }, status: :unprocessable_entity
@@ -98,7 +119,7 @@ class ClientsController < ApplicationController
       @client.temp_password = nil
       
       if @client.save
-        render json: @client.to_json(:include => [ :stores, :client_permissions ])
+        head :no_content
       else
         render json: @client.errors, status: :unprocessable_entity
       end
