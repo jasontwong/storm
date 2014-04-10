@@ -69,7 +69,13 @@ class ClientsController < ApplicationController
       password.update params[:password] + @client.salt
       
       if password.hexdigest == @client.password
-        render json: @client.to_json(:include => [ :stores, :client_permissions ])
+        @client.temp_password = nil unless @client.temp_password.nil?
+
+        if @client.save
+          render json: @client.to_json(:include => [ :stores, :client_permissions ])
+        else
+          render json: @client.errors, status: :unprocessable_entity
+        end
       else
         render json: { client: 'Bad Password' }, status: :unprocessable_entity
       end
