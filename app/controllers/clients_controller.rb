@@ -96,7 +96,7 @@ class ClientsController < ApplicationController
       @client.temp_password = password
       
       if @client.save
-        head :no_content
+        render json: { temp_password: @client.temp_password }
       else
         render json: @client.errors, status: :unprocessable_entity
       end
