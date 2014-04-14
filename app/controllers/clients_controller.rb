@@ -84,10 +84,10 @@ class ClientsController < ApplicationController
     end
   end
 
-  # POST /clients/:id/pass_generate
-  # POST /clients/:id/pass_generate.json
+  # POST /clients/pass_generate
+  # POST /clients/pass_generate.json
   def pass_generate
-    @client = Client.find(params[:id])
+    @client = Client.where(email: params[:email]).limit(1).first
 
     unless @client.nil?
       password = Digest::SHA256.new
