@@ -97,7 +97,7 @@ class ClientsController < ApplicationController
       
       if @client.save
         ClientMailer.password_reset(@client).deliver
-        render json: { temp_password: @client.temp_password }
+        head :no_content
       else
         render json: @client.errors, status: :unprocessable_entity
       end
