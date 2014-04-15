@@ -110,7 +110,7 @@ class ClientsController < ApplicationController
   # POST /clients/pass_reset.json
   def pass_reset
     @client = Client.where(temp_password: params[:temp_password]).limit(1).first
-    @client = nil if @client.updated_at + 1.days < Time.now.utc
+    @client = nil if @client && @client.updated_at + 1.days < Time.now.utc
 
     unless @client.nil?
       password = Digest::SHA256.new
