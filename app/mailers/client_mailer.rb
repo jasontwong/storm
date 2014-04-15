@@ -1,9 +1,8 @@
 class ClientMailer < ActionMailer::Base
-  default from: "dashboardsupport@getyella.com",
-          delivery_method_options: {
-            user_name: "<username>",
-            password: "<password>"
-          }
+  include AbstractController::Callbacks
+
+  default from: "Support<support@getyella.com>"
+  after_filter :set_delivery_options
 
   def password_reset(client)
     @client = client
@@ -11,5 +10,14 @@ class ClientMailer < ActionMailer::Base
          body: "Put content here",
          content_type: "text/html",
          subject: "Password Reset")
+  end
+
+  private
+
+  def set_delivery_options
+    mail.delivery_method.settings.merge!({
+      user_name: "<email>",
+      password: "<password>"
+    })
   end
 end
