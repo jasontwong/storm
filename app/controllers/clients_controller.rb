@@ -93,9 +93,10 @@ class ClientsController < ApplicationController
       password = Digest::SHA256.new
       password.update SecureRandom.hex + @client.salt
 
-      @client.temp_password = password
+      @client.temp_password = password.hexdigest
       
       if @client.save
+        ClientMailer.password_reset(@client).deliver
         render json: { temp_password: @client.temp_password }
       else
         render json: @client.errors, status: :unprocessable_entity
