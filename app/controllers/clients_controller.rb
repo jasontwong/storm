@@ -116,7 +116,7 @@ class ClientsController < ApplicationController
       password = Digest::SHA256.new
       password.update params[:password] + @client.salt
 
-      @client.password = password
+      @client.password = password.hexdigest
       @client.temp_password = nil
       
       if @client.save
