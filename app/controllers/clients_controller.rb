@@ -72,7 +72,7 @@ class ClientsController < ApplicationController
         @client.temp_password = nil unless @client.temp_password.nil?
 
         if @client.save
-          head :no_content
+          render json: @client.to_json(include: ['stores'])
         else
           render json: @client.errors, status: :unprocessable_entity
         end
