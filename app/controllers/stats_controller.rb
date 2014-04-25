@@ -177,7 +177,7 @@ class StatsController < ApplicationController
     params[:limit] ||= 20
     params[:offset] ||= 0
     surveys = MemberSurvey
-      .where(store_id: params[:store_id], completed: true)
+      .where(store_id: eval(params[:store_id]), completed: true)
       .order('created_at DESC')
       .limit(params[:limit])
       .offset(params[:offset])
