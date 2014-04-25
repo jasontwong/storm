@@ -29,7 +29,7 @@ DataApi::Application.routes.draw do
 
   # custom routes
   get 'api_key/generate' => 'api_key#generate'
-  get 'stats/store/ratings' => 'stats#store_ratings'
+  get 'stats/analytics' => 'stats#analytics'
   get 'stats/surveys' => 'stats#surveys'
   get 'stats/surveys/:id' => 'stats#survey'
   get 'members/:id/points' => 'members#point_index', as: :member_points
