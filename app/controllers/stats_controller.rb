@@ -1,81 +1,122 @@
 class StatsController < ApplicationController
-  # {{{ def store_ratings
-  def store_ratings
-    member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
+  # {{{ def analytics
+  def analytics
+    store_ids = eval(params[:store_id])
+    params[:num] ||= "0"
+    num = params[:num].to_i
+    surveys = MemberSurvey
+      .where(store_id: store_ids, completed: true)
+      .includes(:member_survey_answers)
+      .order('created_at DESC')
 
-    if params[:offset] && !member_surveys.nil?
-      member_surveys = member_surveys.offset(params[:offset])
-    end
+    surveys = surveys.where('created_at >= ?', num.days.ago) if num > 0
 
-    if params[:limit] && !member_surveys.nil?
-      member_surveys = member_surveys.limit(params[:limit])
-    end
-
-    @answers = {}
-    @surveys = []
-    @total = 0
-    @count = 0
-    
-    member_surveys.each do |survey|
-      totals = 0
-      counts = 0
-      survey.member_survey_answers.each do |answer|
-        if @answers[answer.answer].nil?
-          @answers[answer.answer] = []
-        end
-
-        @answers[answer.answer] << { question: answer.question }
-        points = answer.answer.to_f
-
-        if points > 0
-          totals += points
-          counts += 1
-          @total += points
-          @count += 1
-        end
-      end
-      
-      age = nil
-      gender = nil
-
-      # turn this into member model method?
-      survey.member.member_attributes.each do |attr|
-        if attr[:name] == 'gender'
-          gender = attr[:value]
-        end
-        if attr[:name] == 'birthday'
-          dob = Date.strptime(attr[:value], '%m/%d/%Y')
-          dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
-          now = Time.now.utc.to_date
-          age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
-        end
-      end
-
-      @surveys << { 
-        id: survey[:id],
-        placed: survey.order[:created_at],
-        spent: survey.order[:amount],
-        age: age,
-        gender: gender,
-        average: totals / counts.to_f,
-      }
-    end
-    
-    @answers.each do |k,v|
-      @answers[k] = v.length
-    end
-    
-    average = @total / @count.to_f
-    average = 0 if average.nan?
-
-    @ratings = {
-      average: average,
-      surveys: @surveys,
-      answers: @answers,
+    survey_data = {
+      surveys: {
+        count: surveys.count,
+      },
+      members: {},
     }
 
-    render json: @ratings.to_json
+    @questions = {}
+    @user_ids = []
+
+    surveys.each do |survey|
+      @user_ids << survey.member_id
+      survey.member_survey_answers.each do |answer|
+        points = answer.answer.to_f
+        @questions[answer.question] = [] if @questions[answer.question].nil?
+        @questions[answer.question] << points
+      end
+    end
+
+    @questions.each do |q, points|
+      @questions[q] = points.inject(0.0) { |sum, el| sum + el } / points.size
+    end
+
+    survey_data[:questions] = @questions
+    survey_data[:members][:count] = @user_ids.uniq.length
+
+    render json: survey_data
   end
+  # }}}
+  # {{{ def store_ratings
+  # def store_ratings
+  #   member_surveys = MemberSurvey.where(store_id: params[:store_id]).includes(:member_survey_answers, :order, :member => :member_attributes).order('orders.created_at DESC')
+
+  #   if params[:offset] && !member_surveys.nil?
+  #     member_surveys = member_surveys.offset(params[:offset])
+  #   end
+
+  #   if params[:limit] && !member_surveys.nil?
+  #     member_surveys = member_surveys.limit(params[:limit])
+  #   end
+
+  #   @answers = {}
+  #   @surveys = []
+  #   @total = 0
+  #   @count = 0
+  #   
+  #   member_surveys.each do |survey|
+  #     totals = 0
+  #     counts = 0
+  #     survey.member_survey_answers.each do |answer|
+  #       if @answers[answer.answer].nil?
+  #         @answers[answer.answer] = []
+  #       end
+
+  #       @answers[answer.answer] << { question: answer.question }
+  #       points = answer.answer.to_f
+
+  #       if points > 0
+  #         totals += points
+  #         counts += 1
+  #         @total += points
+  #         @count += 1
+  #       end
+  #     end
+  #     
+  #     age = nil
+  #     gender = nil
+
+  #     # turn this into member model method?
+  #     survey.member.member_attributes.each do |attr|
+  #       if attr[:name] == 'gender'
+  #         gender = attr[:value]
+  #       end
+  #       if attr[:name] == 'birthday'
+  #         dob = Date.strptime(attr[:value], '%m/%d/%Y')
+  #         dob = Date.strptime(attr[:value], '%m/%d/%y') if dob.year < 100
+  #         now = Time.now.utc.to_date
+  #         age = now.year - dob.year - ((now.month > dob.month || (now.month == dob.month && now.day >= dob.day)) ? 0 : 1)
+  #       end
+  #     end
+
+  #     @surveys << { 
+  #       id: survey[:id],
+  #       placed: survey.order[:created_at],
+  #       spent: survey.order[:amount],
+  #       age: age,
+  #       gender: gender,
+  #       average: totals / counts.to_f,
+  #     }
+  #   end
+  #   
+  #   @answers.each do |k,v|
+  #     @answers[k] = v.length
+  #   end
+  #   
+  #   average = @total / @count.to_f
+  #   average = 0 if average.nan?
+
+  #   @ratings = {
+  #     average: average,
+  #     surveys: @surveys,
+  #     answers: @answers,
+  #   }
+
+  #   render json: @ratings.to_json
+  # end
 
   # }}}
   # {{{ def survey_member
