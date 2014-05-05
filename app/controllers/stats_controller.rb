@@ -16,6 +16,7 @@ class StatsController < ApplicationController
         count: surveys.count,
       },
       members: {},
+      questions: [],
     }
 
     @questions = {}
@@ -24,17 +25,24 @@ class StatsController < ApplicationController
     surveys.each do |survey|
       @user_ids << survey.member_id
       survey.member_survey_answers.each do |answer|
-        points = answer.answer.to_f
-        @questions[answer.question] = [] if @questions[answer.question].nil?
-        @questions[answer.question] << points
+        @questions[answer.question] ||= { points: [] }
+        @questions[answer.question][:type] ||= answer.survey_question.answer_type
+        points = answer.answer
+        points = points.to_f if @questions[answer.question][:type] != 'switch'
+        @questions[answer.question][:points] << points
       end
     end
 
-    @questions.each do |q, points|
-      @questions[q] = points.inject(0.0) { |sum, el| sum + el } / points.size
+    @questions.each do |q, data|
+      data[:question] = q
+      if data[:type] == 'switch'
+        data[:avg_points] = data[:points].count { |x| x.upcase == 'YES' } / data[:points].size.to_f
+      else
+        data[:avg_points] = data[:points].inject(0.0) { |sum, el| sum + el } / data[:points].size
+      end
+      survey_data[:questions] << data
     end
 
-    survey_data[:questions] = @questions
     survey_data[:members][:count] = @user_ids.uniq.length
 
     render json: survey_data
