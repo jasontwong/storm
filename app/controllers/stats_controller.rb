@@ -232,7 +232,13 @@ class StatsController < ApplicationController
       .offset(params[:offset])
     surveys ||= []
 
-    render json: surveys
+    render json: surveys.to_json(include: {
+      member: {
+        include: {
+          member_attributes: {}
+        }
+      },
+    })
   end
   # {{{ old
   # def surveys
@@ -415,14 +421,7 @@ class StatsController < ApplicationController
     survey = MemberSurvey.find(params[:id])
     survey ||= {}
 
-    render json: survey.to_json(include: {
-      member_survey_answers: {},
-      member: {
-        include: {
-          member_attributes: {}
-        }
-      },
-    })
+    render json: survey.to_json(include: [:member_survey_answers])
   end
   # }}}
 end
