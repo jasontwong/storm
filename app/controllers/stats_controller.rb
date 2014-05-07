@@ -421,7 +421,16 @@ class StatsController < ApplicationController
     survey = MemberSurvey.find(params[:id])
     survey ||= {}
 
-    render json: survey.to_json(include: [:member_survey_answers])
+    render json: survey.to_json(include: {
+      member_survey_answers: {
+        include: {
+          survey_question: {}
+        }
+      },
+      store: {
+        only: :address1
+      },
+    })
   end
   # }}}
 end
