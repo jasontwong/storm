@@ -14,8 +14,11 @@ class StatsController < ApplicationController
     survey_data = {
       surveys: {
         count: surveys.count,
+        total_count: MemberSurvey.where(store_id: store_ids, completed: true).count,
       },
-      members: {},
+      members: {
+        total_count: MemberSurvey.where(store_id: store_ids, completed: true).uniq.pluck(:member_id).count,
+      },
       questions: [],
     }
 
