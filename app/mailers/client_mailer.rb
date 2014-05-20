@@ -1,7 +1,7 @@
 class ClientMailer < ActionMailer::Base
   include AbstractController::Callbacks
 
-  default from: "Support<support@getyella.com>"
+  default from: "Merchant Support<merchantsupport@getyella.com>"
   after_filter :set_delivery_options
 
   def password_reset(client)

@@ -20,20 +20,35 @@ class StatsController < ApplicationController
         total_count: MemberSurvey.where(store_id: store_ids, completed: true).uniq.pluck(:member_id).count,
       },
       questions: [],
+      performance: {
+        dates: [],
+        points: [],
+      }
     }
 
     @questions = {}
     @user_ids = []
+    @performance = {}
 
     surveys.each do |survey|
       @user_ids << survey.member_id
+      total_points = 0
       survey.member_survey_answers.each do |answer|
         @questions[answer.question] ||= { points: [] }
         @questions[answer.question][:type] ||= answer.survey_question.answer_type
         points = answer.answer
         points = points.to_f if @questions[answer.question][:type] != 'switch'
+        total_points += points if @questions[answer.question][:type] == 'slider'
+        total_points += (points * 2) if @questions[answer.question][:type] == 'star_rating'
         @questions[answer.question][:points] << points
       end
+      @performance[survey.created_at] ||= []
+      @performance[survey.created_at] << total_points / survey.member_survey_answers.length
+    end
+
+    @performance.sort_by { |date, points| date }.each do |date, points|
+      survey_data[:performance][:dates] << date
+      survey_data[:performance][:points] << points.inject(0.0) { |sum, el| sum + el } / points.size
     end
 
     @questions.each do |q, data|
