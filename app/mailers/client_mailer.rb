@@ -7,7 +7,7 @@ class ClientMailer < ActionMailer::Base
   def password_reset(client)
     @client = client
     mail(to: @client.email, 
-         body: "Put content here",
+         body: "Reset your password here: http://yedi-staging.yellarewards.com/pass_reset?temp=" + @client.temp_password,
          content_type: "text/html",
          subject: "Password Reset")
   end
@@ -16,8 +16,8 @@ class ClientMailer < ActionMailer::Base
 
   def set_delivery_options
     mail.delivery_method.settings.merge!({
-      user_name: "<email>",
-      password: "<password>"
+      user_name: "merchantsupport@getyella.com",
+      password: "4484LkKJKj"
     })
   end
 end
