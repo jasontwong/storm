@@ -72,7 +72,15 @@ class ClientsController < ApplicationController
         @client.temp_password = nil unless @client.temp_password.nil?
 
         if @client.save
-          render json: @client.to_json(include: ['stores'])
+          render json: @client.to_json(include: {
+            stores: {
+              include: {
+                company: {
+                  only: :name
+                }
+              }
+            }
+          })
         else
           render json: @client.errors, status: :unprocessable_entity
         end

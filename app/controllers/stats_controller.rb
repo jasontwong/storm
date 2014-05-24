@@ -440,6 +440,9 @@ class StatsController < ApplicationController
     survey ||= {}
 
     render json: survey.to_json(include: {
+      company: {
+        only: :name
+      },
       member_survey_answers: {
         include: {
           survey_question: {}
