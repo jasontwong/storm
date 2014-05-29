@@ -29,12 +29,9 @@ DataApi::Application.routes.draw do
 
   # custom routes
   get 'api_key/generate' => 'api_key#generate'
-  get 'stats/poster/store/ratings' => 'stats#poster_store_ratings'
-  get 'stats/poster/survey/:id/member' => 'stats#poster_survey_member'
-  get 'stats/poster/surveys' => 'stats#poster_surveys'
-  get 'stats/store/ratings' => 'stats#store_ratings'
-  get 'stats/survey/:id/member' => 'stats#survey_member'
+  get 'stats/analytics' => 'stats#analytics'
   get 'stats/surveys' => 'stats#surveys'
+  get 'stats/surveys/:id' => 'stats#survey'
   get 'members/:id/points' => 'members#point_index', as: :member_points
   get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
   post 'members/:id/rewards' => 'members#reward_create'
@@ -46,6 +43,8 @@ DataApi::Application.routes.draw do
   post 'codes/beacon' => 'codes#beacon'
   post 'clients/verify' => 'clients#verify'
   post 'companies/:id/beacon_verify' => 'companies#beacon_verify'
+  post 'clients/pass_reset' => 'clients#pass_reset'
+  post 'clients/pass_generate' => 'clients#pass_generate'
 
   resources :members, except: [:new, :edit]
 
