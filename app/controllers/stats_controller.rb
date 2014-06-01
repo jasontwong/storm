@@ -248,15 +248,45 @@ class StatsController < ApplicationController
       .order('created_at DESC')
       .limit(params[:limit])
       .offset(params[:offset])
-    surveys ||= []
 
-    render json: surveys.to_json(include: {
-      member: {
+    if surveys.nil?
+      render json: []
+    else
+      render json: surveys.to_json(
+        except: [
+          :worth,
+          :code_id,
+          :company_id,
+          :completed,
+          :completed_time,
+          :member_id,
+          :order_id,
+          :store_id,
+        ],
         include: {
-          member_attributes: {}
+          member: {
+            include: {
+              member_attributes: {}
+            },
+            only: [
+              :member_attributes
+            ]
+          },
+          member_survey_answers: {
+            include: {
+              survey_question: {
+                only: [
+                  :answer_type
+                ]
+              }
+            },
+            only: [
+              :answer
+            ]
+          },
         }
-      },
-    })
+      )
+    end
   end
   # {{{ old
   # def surveys
