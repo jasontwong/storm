@@ -37,7 +37,7 @@ class StatsController < ApplicationController
       has_rewards = false
       company = survey.company
       survey_data[:companies].each do |comp|
-        has_rewards if company[:id] == comp[:id]
+        has_rewards = company[:id] == comp[:id]
         break if has_rewards
       end
       survey_data[:companies] << { 
