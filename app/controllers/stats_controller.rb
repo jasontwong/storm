@@ -23,7 +23,8 @@ class StatsController < ApplicationController
       performance: {
         dates: [],
         points: [],
-      }
+      },
+      companies: []
     }
 
     @questions = {}
@@ -33,6 +34,24 @@ class StatsController < ApplicationController
     surveys.each do |survey|
       @user_ids << survey.member_id
       total_points = 0
+      has_rewards = false
+      company = survey.company
+      survey_data[:companies].each do |comp|
+        has_rewards = company[:id] == comp[:id]
+        break if has_rewards
+      end
+      survey_data[:companies] << { 
+        id: company[:id], 
+        name: company[:name],
+        rewards: company.rewards.collect do |reward|
+          reward = reward[:reward] unless reward[:reward].nil?
+          r = {
+            cost: reward[:cost],
+            id: reward[:id],
+            title: reward[:title],
+          }
+        end
+      } unless has_rewards
       survey.member_survey_answers.each do |answer|
         @questions[answer.question] ||= { points: [] }
         @questions[answer.question][:type] ||= answer.survey_question.answer_type
@@ -248,15 +267,45 @@ class StatsController < ApplicationController
       .order('created_at DESC')
       .limit(params[:limit])
       .offset(params[:offset])
-    surveys ||= []
 
-    render json: surveys.to_json(include: {
-      member: {
+    if surveys.nil?
+      render json: []
+    else
+      render json: surveys.to_json(
+        except: [
+          :worth,
+          :code_id,
+          :company_id,
+          :completed,
+          :completed_time,
+          :member_id,
+          :order_id,
+          :store_id,
+        ],
         include: {
-          member_attributes: {}
+          member: {
+            include: {
+              member_attributes: {}
+            },
+            only: [
+              :member_attributes
+            ]
+          },
+          member_survey_answers: {
+            include: {
+              survey_question: {
+                only: [
+                  :answer_type
+                ]
+              }
+            },
+            only: [
+              :answer
+            ]
+          },
         }
-      },
-    })
+      )
+    end
   end
   # {{{ old
   # def surveys
