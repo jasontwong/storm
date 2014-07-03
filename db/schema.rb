@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140703203552) do
+ActiveRecord::Schema.define(:version => 20140703203824) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -267,6 +267,8 @@ ActiveRecord::Schema.define(:version => 20140703203552) do
     t.integer  "receipt_type"
     t.string   "full_address"
   end
+
+  add_index "stores", ["company_id"], :name => "index_stores_on_company_id"
 
   create_table "stores_surveys", :id => false, :force => true do |t|
     t.integer "store_id"
