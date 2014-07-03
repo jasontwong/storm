@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140410193958) do
+ActiveRecord::Schema.define(:version => 20140703204100) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -61,6 +61,7 @@ ActiveRecord::Schema.define(:version => 20140410193958) do
     t.datetime "created_at",      :null => false
     t.datetime "updated_at",      :null => false
     t.string   "temp_password"
+    t.string   "stripe_id"
   end
 
   create_table "clients_stores", :id => false, :force => true do |t|
@@ -106,6 +107,8 @@ ActiveRecord::Schema.define(:version => 20140410193958) do
     t.text     "worth_meta"
     t.boolean  "active"
   end
+
+  add_index "companies", ["active"], :name => "index_companies_on_active"
 
   create_table "member_answers", :force => true do |t|
     t.integer  "member_id"
@@ -247,6 +250,8 @@ ActiveRecord::Schema.define(:version => 20140410193958) do
     t.text     "images",      :limit => 255
   end
 
+  add_index "rewards", ["company_id"], :name => "index_rewards_on_company_id"
+
   create_table "stores", :force => true do |t|
     t.integer  "company_id"
     t.string   "name"
@@ -264,6 +269,8 @@ ActiveRecord::Schema.define(:version => 20140410193958) do
     t.integer  "receipt_type"
     t.string   "full_address"
   end
+
+  add_index "stores", ["company_id"], :name => "index_stores_on_company_id"
 
   create_table "stores_surveys", :id => false, :force => true do |t|
     t.integer "store_id"
