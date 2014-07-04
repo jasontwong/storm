@@ -12,7 +12,21 @@ class CompaniesController < ApplicationController
 
     params[:include] = [] unless params[:include].is_a? Array
 
-    render json: @companies.to_json(:include => params[:include].collect { |data| data.to_sym })
+    if params[:include].include?('stores') && params[:include].include?('rewards') && active
+      render json: @companies.to_json(
+        except: [ :created_at, :updated_at, :html, :description, :worth_meta, :worth_type ],
+        include: {
+          stores: {
+            except: [ :receipt_type, :full_address, :created_at, :updated_at ]
+          },
+          rewards: {
+            except: [ :images, :description, :uses_left, :created_at, :updated_at ]
+          }
+        }
+      )
+    else
+      render json: @companies.to_json(:include => params[:include].collect { |data| data.to_sym })
+    end
   end
 
   # GET /companies/1
