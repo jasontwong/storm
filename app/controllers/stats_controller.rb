@@ -52,17 +52,21 @@ class StatsController < ApplicationController
           }
         end
       } unless has_rewards
+      total_qs = 0
       survey.member_survey_answers.each do |answer|
         @questions[answer.question] ||= { points: [] }
         @questions[answer.question][:type] ||= answer.survey_question.answer_type
         points = answer.answer
-        points = points.to_f if @questions[answer.question][:type] != 'switch'
+        if @questions[answer.question][:type] != 'switch'
+          points = points.to_f 
+          total_qs += 1
+        end
         total_points += points if @questions[answer.question][:type] == 'slider'
         total_points += (points * 2) if @questions[answer.question][:type] == 'star_rating'
         @questions[answer.question][:points] << points
       end
       @performance[survey.created_at] ||= []
-      @performance[survey.created_at] << total_points / survey.member_survey_answers.length
+      @performance[survey.created_at] << total_points / total_qs
     end
 
     @performance.sort_by { |date, points| date }.each do |date, points|
