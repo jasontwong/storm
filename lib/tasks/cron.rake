@@ -11,7 +11,7 @@ namespace :cron do
     local_file_path = '/tmp/' + file_name
 
     File.open(local_file_path, 'w') do |file| 
-      file.write(Company.where(active: true).to_json)
+      file.write(Company.where(active: true).to_json(include: [:rewards, :stores]))
     end
     
     # Get an instance of the S3 interface.
