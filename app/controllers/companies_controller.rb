@@ -10,6 +10,13 @@ class CompaniesController < ApplicationController
       @companies = Company.where(active: active)
     end
 
+    if params[:page]
+      @companies = @companies.page(params[:page])
+      if params[:per_page]
+        @companies = @companies.per(params[:per_page])
+      end
+    end
+
     params[:include] = [] unless params[:include].is_a? Array
 
     if params[:include].include?('stores') && params[:include].include?('rewards') && active

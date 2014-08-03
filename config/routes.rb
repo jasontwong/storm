@@ -45,6 +45,7 @@ DataApi::Application.routes.draw do
   post 'companies/:id/beacon_verify' => 'companies#beacon_verify'
   post 'clients/pass_reset' => 'clients#pass_reset'
   post 'clients/pass_generate' => 'clients#pass_generate'
+  post 'ios/check_version' => 'ios#check_version'
 
   resources :members, except: [:new, :edit]
 
