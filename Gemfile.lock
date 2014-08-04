@@ -58,6 +58,7 @@ GEM
       mime-types (~> 1.16)
       treetop (~> 1.4.8)
     mime-types (1.23)
+    minitest (4.7.5)
     multi_json (1.7.3)
     mysql2 (0.3.11)
     nokogiri (1.5.9)
@@ -122,10 +123,12 @@ PLATFORMS
 DEPENDENCIES
   aws-sdk (~> 1.0)
   bcrypt-ruby
+  diff-lcs
   factory_girl_rails
   faker
   figaro
   kaminari
+  minitest
   mysql2
   rails (= 3.2.13)
   rails-api

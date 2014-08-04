@@ -20,6 +20,8 @@ end
 
 group :production do
   gem 'mysql2'
+  gem 'minitest'
+  gem 'diff-lcs'
 end
 
 # To use ActiveModel has_secure_password
