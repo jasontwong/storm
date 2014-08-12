@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140703204100) do
+ActiveRecord::Schema.define(:version => 20140812211653) do
 
   create_table "api_keys", :force => true do |t|
     t.string   "access_token"
@@ -96,11 +96,11 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
   create_table "companies", :force => true do |t|
     t.string   "name"
     t.string   "description"
-    t.text     "logo",                  :limit => 255
+    t.text     "logo"
     t.string   "location"
     t.string   "phone"
-    t.datetime "created_at",                           :null => false
-    t.datetime "updated_at",                           :null => false
+    t.datetime "created_at",                         :null => false
+    t.datetime "updated_at",                         :null => false
     t.integer  "survey_question_limit"
     t.text     "html"
     t.integer  "worth_type",            :limit => 1
@@ -109,6 +109,7 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
   end
 
   add_index "companies", ["active"], :name => "index_companies_on_active"
+  add_index "companies", ["updated_at", "active"], :name => "index_companies_on_updated_at_and_active"
 
   create_table "member_answers", :force => true do |t|
     t.integer  "member_id"
@@ -130,11 +131,11 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
   create_table "member_points", :force => true do |t|
     t.integer  "member_id"
     t.integer  "company_id"
-    t.decimal  "points"
-    t.decimal  "total_points"
+    t.decimal  "points",       :precision => 10, :scale => 0
+    t.decimal  "total_points", :precision => 10, :scale => 0
     t.datetime "last_earned"
-    t.datetime "created_at",   :null => false
-    t.datetime "updated_at",   :null => false
+    t.datetime "created_at",                                  :null => false
+    t.datetime "updated_at",                                  :null => false
   end
 
   create_table "member_rewards", :force => true do |t|
@@ -167,12 +168,12 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
     t.integer  "order_id"
     t.integer  "company_id"
     t.integer  "store_id"
-    t.datetime "created_at",     :null => false
-    t.datetime "updated_at",     :null => false
+    t.datetime "created_at",                                    :null => false
+    t.datetime "updated_at",                                    :null => false
     t.boolean  "completed"
     t.datetime "completed_time"
-    t.string   "comments"
-    t.decimal  "worth"
+    t.text     "comments"
+    t.decimal  "worth",          :precision => 10, :scale => 0
   end
 
   create_table "members", :force => true do |t|
@@ -195,11 +196,11 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
     t.integer  "product_id"
     t.string   "name"
     t.integer  "quantity"
-    t.decimal  "discount"
+    t.decimal  "discount",   :precision => 10, :scale => 0
     t.integer  "code_id"
-    t.decimal  "price"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+    t.decimal  "price",      :precision => 10, :scale => 0
+    t.datetime "created_at",                                :null => false
+    t.datetime "updated_at",                                :null => false
   end
 
   create_table "orders", :force => true do |t|
@@ -207,12 +208,12 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
     t.integer  "code_id"
     t.integer  "company_id"
     t.integer  "store_id"
-    t.decimal  "amount"
-    t.decimal  "survey_worth"
-    t.decimal  "checkin_worth"
+    t.decimal  "amount",        :precision => 10, :scale => 0
+    t.decimal  "survey_worth",  :precision => 10, :scale => 0
+    t.decimal  "checkin_worth", :precision => 10, :scale => 0
     t.string   "server"
-    t.datetime "created_at",    :null => false
-    t.datetime "updated_at",    :null => false
+    t.datetime "created_at",                                   :null => false
+    t.datetime "updated_at",                                   :null => false
   end
 
   create_table "product_categories", :force => true do |t|
@@ -223,11 +224,11 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
 
   create_table "products", :force => true do |t|
     t.string   "name"
-    t.decimal  "price"
+    t.decimal  "price",               :precision => 10, :scale => 0
     t.string   "size"
     t.string   "company_id"
-    t.datetime "created_at",          :null => false
-    t.datetime "updated_at",          :null => false
+    t.datetime "created_at",                                         :null => false
+    t.datetime "updated_at",                                         :null => false
     t.integer  "product_category_id"
     t.integer  "parent_id"
   end
@@ -245,9 +246,9 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
     t.datetime "starts"
     t.datetime "expires"
     t.integer  "uses_left"
-    t.datetime "created_at",                 :null => false
-    t.datetime "updated_at",                 :null => false
-    t.text     "images",      :limit => 255
+    t.datetime "created_at",  :null => false
+    t.datetime "updated_at",  :null => false
+    t.text     "images"
   end
 
   add_index "rewards", ["company_id"], :name => "index_rewards_on_company_id"
@@ -287,13 +288,13 @@ ActiveRecord::Schema.define(:version => 20140703204100) do
   create_table "survey_questions", :force => true do |t|
     t.string   "question"
     t.string   "answer_type"
-    t.text     "answer_meta",                 :limit => 255
+    t.text     "answer_meta"
     t.boolean  "active"
-    t.datetime "created_at",                                 :null => false
-    t.datetime "updated_at",                                 :null => false
+    t.datetime "created_at",                  :null => false
+    t.datetime "updated_at",                  :null => false
     t.integer  "company_id"
     t.boolean  "dynamic"
-    t.text     "dynamic_meta",                :limit => 255
+    t.text     "dynamic_meta"
     t.integer  "survey_question_category_id"
   end
 
