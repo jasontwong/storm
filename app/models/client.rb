@@ -1,6 +1,6 @@
 class Client < ActiveRecord::Base
   include ActiveModel::Validations
-  attr_accessible :active, :client_group_id, :company_id, :email, :name, :password, :salt
+  attr_accessible :active, :client_group_id, :company_id, :email, :name, :password, :salt, :stripe_id, :tos
 
   belongs_to :company, inverse_of: :clients
   belongs_to :client_group, inverse_of: :clients
