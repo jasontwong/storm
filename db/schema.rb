@@ -109,7 +109,6 @@ ActiveRecord::Schema.define(:version => 20140815151228) do
   end
 
   add_index "companies", ["active"], :name => "index_companies_on_active"
-  add_index "companies", ["updated_at", "active"], :name => "index_companies_on_updated_at_and_active"
 
   create_table "member_answers", :force => true do |t|
     t.integer  "member_id"
