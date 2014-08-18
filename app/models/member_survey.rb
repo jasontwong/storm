@@ -45,6 +45,7 @@ class MemberSurvey < ActiveRecord::Base
     )
     survey.order = order unless order.nil?
     questions = []
+    store_survey = nil
 
     store.surveys.each do |s|
       store_survey ||= s
