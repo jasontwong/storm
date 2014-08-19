@@ -16,7 +16,17 @@ class ClientsController < ApplicationController
 
     params[:include] = [] unless params[:include].is_a? Array
 
-    render json: @client.to_json(:include => params[:include].collect { |data| data.to_sym })
+    if params[:give_all]
+      render json: @client.to_json(include: {
+        stores: {
+          include: {
+            company: {}
+          }
+        }
+      })
+    else
+      render json: @client.to_json(:include => params[:include].collect { |data| data.to_sym })
+    end
   end
 
   # POST /clients

@@ -40,18 +40,6 @@ class StatsController < ApplicationController
         has_rewards = company[:id] == comp[:id]
         break if has_rewards
       end
-      survey_data[:companies] << { 
-        id: company[:id], 
-        name: company[:name],
-        rewards: company.rewards.collect do |reward|
-          reward = reward[:reward] unless reward[:reward].nil?
-          r = {
-            cost: reward[:cost],
-            id: reward[:id],
-            title: reward[:title],
-          }
-        end
-      } unless has_rewards
       total_qs = 0
       survey.member_survey_answers.each do |answer|
         @questions[answer.question] ||= { points: [] }
