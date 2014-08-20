@@ -8,6 +8,7 @@ FactoryGirl.define do
     logo {{ Faker::Lorem.word => Faker::Lorem.word }}
     location { Faker::Lorem.word }
     phone { Faker::Lorem.word }
+    active true
   end
 
   factory :invalid_company, parent: :company do

@@ -6,13 +6,11 @@ FactoryGirl.define do
     company_id 1
     email { Faker::Internet.email }
     password { Faker::Lorem.word }
-    client_group_id 1
     name { Faker::Name.name }
     salt { Faker::Lorem.word }
     active false
 
     company
-    client_group
   end
 
   factory :invalid_client, parent: :client do

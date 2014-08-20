@@ -4,7 +4,6 @@ FactoryGirl.define do
   factory :member_survey do
     code_id 1
     member_id 1
-    order_id 1
     company_id 1
     store_id 1
     completed false
@@ -12,7 +11,6 @@ FactoryGirl.define do
 
     code
     member
-    order
     company
     store
   end

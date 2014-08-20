@@ -2,9 +2,9 @@ require 'rails_helper'
 
 describe SurveyQuestionCategory do
   it 'has a valid factory' do
-    FactoryGirl.build(:survey_question_category).should be_valid
+    expect(FactoryGirl.build(:survey_question_category)).to be_valid
   end
   it 'requires a name' do
-    FactoryGirl.build(:survey_question_category, name: nil).should_not be_valid
+    expect(FactoryGirl.build(:survey_question_category, name: nil)).not_to be_valid
   end
 end
