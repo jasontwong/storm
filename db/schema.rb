@@ -11,43 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140815151228) do
+ActiveRecord::Schema.define(version: 20140820020841) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
-  end
-
-  create_table "changelogs", force: true do |t|
-    t.string   "model_action"
-    t.string   "model"
-    t.text     "meta"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
-    t.integer  "model_id"
-  end
-
-  create_table "client_groups", force: true do |t|
-    t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "client_groups_client_permissions", id: false, force: true do |t|
-    t.integer "client_group_id"
-    t.integer "client_permission_id"
-  end
-
-  create_table "client_permissions", force: true do |t|
-    t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "client_permissions_clients", id: false, force: true do |t|
-    t.integer "client_id"
-    t.integer "client_permission_id"
   end
 
   create_table "clients", force: true do |t|
@@ -67,16 +36,6 @@ ActiveRecord::Schema.define(version: 20140815151228) do
   create_table "clients_stores", id: false, force: true do |t|
     t.integer "client_id"
     t.integer "store_id"
-  end
-
-  create_table "code_scan_locations", force: true do |t|
-    t.decimal  "latitude",   precision: 10, scale: 6
-    t.decimal  "longitude",  precision: 10, scale: 6
-    t.integer  "member_id"
-    t.integer  "code_id"
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
-    t.boolean  "success"
   end
 
   create_table "codes", force: true do |t|
@@ -158,13 +117,11 @@ ActiveRecord::Schema.define(version: 20140815151228) do
     t.datetime "created_at",         null: false
     t.datetime "updated_at",         null: false
     t.integer  "survey_question_id"
-    t.integer  "product_id"
   end
 
   create_table "member_surveys", force: true do |t|
     t.integer  "code_id"
     t.integer  "member_id"
-    t.integer  "order_id"
     t.integer  "company_id"
     t.integer  "store_id"
     t.datetime "created_at",                              null: false
@@ -188,53 +145,6 @@ ActiveRecord::Schema.define(version: 20140815151228) do
     t.string   "temp_pass"
     t.date     "temp_pass_expiration"
     t.integer  "fb_id",                limit: 8
-  end
-
-  create_table "order_details", force: true do |t|
-    t.integer  "order_id"
-    t.integer  "product_id"
-    t.string   "name"
-    t.integer  "quantity"
-    t.decimal  "discount",   precision: 10, scale: 0
-    t.integer  "code_id"
-    t.decimal  "price",      precision: 10, scale: 0
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
-  end
-
-  create_table "orders", force: true do |t|
-    t.integer  "member_id"
-    t.integer  "code_id"
-    t.integer  "company_id"
-    t.integer  "store_id"
-    t.decimal  "amount",        precision: 10, scale: 0
-    t.decimal  "survey_worth",  precision: 10, scale: 0
-    t.decimal  "checkin_worth", precision: 10, scale: 0
-    t.string   "server"
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
-  end
-
-  create_table "product_categories", force: true do |t|
-    t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  create_table "products", force: true do |t|
-    t.string   "name"
-    t.decimal  "price",               precision: 10, scale: 0
-    t.string   "size"
-    t.string   "company_id"
-    t.datetime "created_at",                                   null: false
-    t.datetime "updated_at",                                   null: false
-    t.integer  "product_category_id"
-    t.integer  "parent_id"
-  end
-
-  create_table "products_survey_questions", id: false, force: true do |t|
-    t.integer "product_id"
-    t.integer "survey_question_id"
   end
 
   create_table "rewards", force: true do |t|
