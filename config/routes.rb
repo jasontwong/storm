@@ -37,7 +37,6 @@ Rails.application.routes.draw do
 
   resources :survey_questions, except: [:new, :edit]
 
-  resources :orders, except: [:new, :edit]
 
   resources :codes, except: [:new, :edit]
 
@@ -45,7 +44,6 @@ Rails.application.routes.draw do
 
   resources :rewards, except: [:new, :edit]
 
-  resources :products, except: [:new, :edit]
 
   resources :stores, except: [:new, :edit]
 
