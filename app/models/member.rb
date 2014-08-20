@@ -2,7 +2,6 @@ class Member < ActiveRecord::Base
   include ActiveModel::Validations
 
   has_many :member_attributes, inverse_of: :member
-  has_many :orders, inverse_of: :member
   has_many :member_points, inverse_of: :member, class_name: 'MemberPoints'
   has_many :member_answers, inverse_of: :member
   has_many :member_rewards, inverse_of: :member
