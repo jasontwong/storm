@@ -6,7 +6,6 @@ class Store < ActiveRecord::Base
   has_and_belongs_to_many :surveys
   has_many :codes, inverse_of: :store
   has_many :survey_questions, through: :surveys
-  has_many :orders, inverse_of: :store
   has_many :member_rewards, inverse_of: :store
   has_many :member_surveys, inverse_of: :store
 
