@@ -1,4 +1,5 @@
 class CodesController < ApplicationController
+  # {{{ def index
   # GET /codes
   # GET /codes.json
   def index
@@ -7,6 +8,8 @@ class CodesController < ApplicationController
     render json: @codes
   end
 
+  # }}}
+  # {{{ def show
   # GET /codes/1
   # GET /codes/1.json
   def show
@@ -15,41 +18,39 @@ class CodesController < ApplicationController
     render json: @code
   end
 
+  # }}}
+  # {{{ def create
   # POST /codes
   # POST /codes.json
   def create
-    @code = Code.new(params[:code])
+    @code = Code.new(code_params)
 
     if @code.save
       unless @code.static
         store = Store.find(@code.store_id);
-        order = Order.create!(
-          amount: 0,
-          survey_worth: 0,
-          code_id: @code.id,
-          store_id: store.id,
-          company_id: store.company.id,
-        )
       end
       render json: @code, status: :created, location: @code
     else
       render json: @code.errors, status: :unprocessable_entity
     end
-
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /codes/1
   # PATCH/PUT /codes/1.json
   def update
     @code = Code.find(params[:id])
 
-    if @code.update_attributes(params[:code])
+    if @code.update_attributes(code_params)
       head :no_content
     else
       render json: @code.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /codes/1
   # DELETE /codes/1.json
   def destroy
@@ -63,6 +64,8 @@ class CodesController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def beacon
   # POST /codes/beacon
   # POST /codes/beacon.json
   def beacon
@@ -101,4 +104,12 @@ class CodesController < ApplicationController
     end
   end
 
+  # }}}
+  private
+    # {{{ def code_params
+    def code_params
+      params.require(:code).permit(:qr, :used, :active, :store_id)
+    end
+
+    # }}}
 end
