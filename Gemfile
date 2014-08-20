@@ -1,27 +1,25 @@
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.13'
+gem 'rails', '4.1.5'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
-gem 'rails-api'
+gem 'rails-api', '~> 0.2'
 gem 'aws-sdk', '~> 1.0'
-gem 'figaro'
+gem 'figaro', '~> 0.7'
 gem 'bcrypt-ruby', :require => 'bcrypt'
-gem 'kaminari'
+gem 'kaminari', '~> 0.16'
 
 group :development, :test do
-  gem 'faker'
-  gem 'sqlite3'
-  gem 'rspec-rails', '~> 2.0'
-  gem 'factory_girl_rails'
+  gem 'faker', '~> 1.4'
+  gem 'sqlite3', '~> 1.3'
+  gem 'rspec-rails', '~> 3.0'
+  gem 'factory_girl_rails', '~> 4.4'
 end
 
 group :production do
-  gem 'mysql2'
-  gem 'minitest'
-  gem 'diff-lcs'
+  gem 'mysql2', '~> 0.3'
 end
 
 # To use ActiveModel has_secure_password
