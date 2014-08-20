@@ -5,8 +5,8 @@ FactoryGirl.define do
   factory :member_point, :class => 'MemberPoints' do
     member_id 1
     company_id 1
-    points { FactoryGirl.generate(:rand_d) }
-    total_points { points + 5 }
+    points 10
+    total_points 37
     last_earned { Time.now }
 
     member
