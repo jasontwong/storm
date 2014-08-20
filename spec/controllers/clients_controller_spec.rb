@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe ClientsController do
+describe ClientsController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -10,11 +10,11 @@ describe ClientsController do
     it 'populates an array of clients' do
       client = FactoryGirl.create(:client)
       get :index
-      assigns(:clients).should eq([client])
+      expect(assigns(:clients)).to eq([client])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -22,11 +22,11 @@ describe ClientsController do
     it 'assigns the requested client to @client' do
       client = FactoryGirl.create(:client)
       get :show, id: client
-      assigns(:client).should eq(client)
+      expect(assigns(:client)).to eq(client)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:client)
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -39,7 +39,7 @@ describe ClientsController do
       end
       it 'returns created status' do
         post :create, client: FactoryGirl.attributes_for(:client)
-        response.status.should == 201
+        expect(response.status).to eq(201)
       end
     end
     context 'with invalid attributes' do
@@ -59,26 +59,21 @@ describe ClientsController do
     context 'with valid attributes' do
       it 'locates requested client' do
         put :update, id: @client, client: FactoryGirl.attributes_for(:client)
-        assigns(:client).should eq(@client)
+        expect(assigns(:client)).to eq(@client)
       end
       it 'changes the client attributes' do
         put :update, id: @client, client: FactoryGirl.attributes_for(:client, name: 'foobar', salt: 'foobaz')
         @client.reload
-        @client.name.should eq('foobar')
-        @client.salt.should eq('foobaz')
+        expect(@client.name).to eq('foobar')
+        expect(@client.salt).to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested client' do
-        put :update, id: @client, client: FactoryGirl.attributes_for(:invalid_client)
-        assigns(:client).should eq(@client)
-      end
-      it 'does not change client attributes' do
-        put :update, id: @client, client: FactoryGirl.attributes_for(:invalid_client)
-        @client.reload
-        @client.name.should eq(@client.name)
-        @client.salt.should_not eq('foobaz')
+      it 'fails with validation error' do
+        expect {
+          put :update, id: @client, client: FactoryGirl.attributes_for(:invalid_client)
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end
@@ -93,7 +88,7 @@ describe ClientsController do
         delete :destroy, id: @client
       }.to change(Member, :count).by(0)
       @client.reload
-      @client.active.should be_false
+      expect(@client.active).to be_falsey
     end
   end
 
