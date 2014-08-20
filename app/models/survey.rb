@@ -1,6 +1,4 @@
 class Survey < ActiveRecord::Base
-  attr_accessible :company_id, :default, :description, :title
-
   belongs_to :company, inverse_of: :surveys
   has_and_belongs_to_many :stores
   has_and_belongs_to_many :survey_questions

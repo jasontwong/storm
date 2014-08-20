@@ -1,6 +1,4 @@
 class Product < ActiveRecord::Base
-  attr_accessible :company_id, :name, :price, :size, :product_category_id, :parent_id
-
   belongs_to :parent, :class_name => "Product"
   belongs_to :product_category, inverse_of: :products
   belongs_to :company, inverse_of: :products

@@ -1,5 +1,4 @@
 class MemberAttribute < ActiveRecord::Base
-  attr_accessible :member_id, :name, :value
   belongs_to :member, inverse_of: :member_attributes
 
   validates :member_id, presence: true

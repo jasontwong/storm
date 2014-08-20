@@ -1,6 +1,4 @@
 class MemberSurveyAnswer < ActiveRecord::Base
-  attr_accessible :answer, :member_survey_id, :question, :survey_question_id, :product_id
-
   belongs_to :member_survey, inverse_of: :member_survey_answers
   belongs_to :survey_question, inverse_of: :member_survey_answers
   belongs_to :product, inverse_of: :member_survey_answers

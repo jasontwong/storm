@@ -1,4 +1,5 @@
 class StoresController < ApplicationController
+  # {{{ def index
   # GET /stores
   # GET /stores.json
   def index
@@ -9,6 +10,8 @@ class StoresController < ApplicationController
     render json: @stores.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def show
   # GET /stores/1
   # GET /stores/1.json
   def show
@@ -19,26 +22,24 @@ class StoresController < ApplicationController
     render json: @store.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def create
   # POST /stores
   # POST /stores.json
   def create
-    @store = Store.new(params[:store])
+    @store = Store.new(store_params)
 
     @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
     if @store.save
-      log = Changelog.where(
-        model: 'Store', 
-        model_id: @store.id,
-      ).first_or_create!
-      log.model_action = 'create'
-      log.save
       render json: @store, status: :created, location: @store
     else
       render json: @store.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /stores/1
   # PATCH/PUT /stores/1.json
   def update
@@ -46,32 +47,30 @@ class StoresController < ApplicationController
 
     @store.surveys = Survey.where(id: params[:survey_ids]) if params[:survey_ids].present?
 
-    if @store.update_attributes(params[:store])
-      log = Changelog.where(
-        model: 'Store', 
-        model_id: @store.id,
-      ).first_or_create!
-      log.model_action = 'update'
-      log.save
+    if @store.update_attributes!(store_params)
       head :no_content
     else
       render json: @store.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /stores/1
   # DELETE /stores/1.json
   def destroy
     @store = Store.find(params[:id])
     @store.destroy
 
-    log = Changelog.where(
-      model: 'Store', 
-      model_id: @store.id,
-    ).first_or_create!
-    log.model_action = 'destroy'
-    log.save
-
     head :no_content
   end
+  
+  # }}}
+  private
+    # {{{ def store_params
+    def store_params
+      params.require(:store).permit(:company_id, :name, :phone, :address1, :address2, :city, :state, :country, :zip)
+    end
+
+    # }}}
 end

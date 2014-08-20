@@ -1,6 +1,4 @@
 class MemberAnswer < ActiveRecord::Base
-  attr_accessible :answer, :code_id, :completed, :completed_time, :member_id, :question
-
   belongs_to :member, inverse_of: :member_answers
   belongs_to :code, inverse_of: :member_answers
 

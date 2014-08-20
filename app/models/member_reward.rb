@@ -3,7 +3,6 @@ class MemberReward < ActiveRecord::Base
   ALPHANUMERIC = 2
   NUMERIC = 3
   BAR = 4
-  attr_accessible :bcode, :code, :printed, :redeemed, :redeemed_time, :reward_id, :scanned, :store_id, :member_id
 
   belongs_to :member, inverse_of: :member_rewards
   belongs_to :reward, inverse_of: :member_rewards

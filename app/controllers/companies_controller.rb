@@ -1,4 +1,5 @@
 class CompaniesController < ApplicationController
+  # {{{ def index
   # GET /companies
   # GET /companies.json
   def index
@@ -36,6 +37,8 @@ class CompaniesController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def show
   # GET /companies/1
   # GET /companies/1.json
   def show
@@ -53,42 +56,36 @@ class CompaniesController < ApplicationController
     render json: @company.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def create
   # POST /companies
   # POST /companies.json
   def create
-    @company = Company.new(params[:company])
+    @company = Company.new(company_params)
 
     if @company.save
-      log = Changelog.where(
-        model: 'Company', 
-        model_id: @company.id,
-      ).first_or_create!
-      log.model_action = 'create'
-      log.save
       render json: @company, status: :created, location: @company
     else
       render json: @company.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /companies/1
   # PATCH/PUT /companies/1.json
   def update
     @company = Company.find(params[:id])
 
-    if @company.update_attributes(params[:company])
-      log = Changelog.where(
-        model: 'Company', 
-        model_id: @company.id,
-      ).first_or_create!
-      log.model_action = 'update'
-      log.save
+    if @company.update_attributes!(company_params)
       head :no_content
     else
       render json: @company.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /companies/1
   # DELETE /companies/1.json
   def destroy
@@ -96,23 +93,11 @@ class CompaniesController < ApplicationController
     @company.active = false
     @comapny.save
 
-    log = Changelog.where(
-      model: 'Company', 
-      model_id: @company.id,
-    ).first_or_create!
-    log.model_action = 'destroy'
-    log.save
-
-    log = Changelog.where(
-      model: 'Company', 
-      model_id: @company.id,
-    ).first_or_create!
-    log.model_action = 'destroy'
-    log.save
-
     head :no_content
   end
   
+  # }}}
+  # {{{ def beacon_verify
   # POST /companies/1/beacon_verify
   # POST /companies/1/beacon_verify.json
   def beacon_verify
@@ -140,6 +125,8 @@ class CompaniesController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def create_payload
   # GET /companies/create_payload
   # GET /companies/create_payload.json
   def create_payload
@@ -158,5 +145,13 @@ class CompaniesController < ApplicationController
     key = File.basename(file_name)
     s3.buckets[bucket_name].objects[key].write(Company.where(active: true).to_json(include: [:rewards, :stores]))
   end
+  #
+  # }}}
+  private
+    # {{{ def company_params
+    def company_params
+      params.require(:company).permit(:name, :description, :phone, :survey_question_limit, :location, :logo, :active)
+    end
 
+    # }}}
 end
