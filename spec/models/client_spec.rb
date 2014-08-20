@@ -17,8 +17,8 @@ describe Client do
     expect(FactoryGirl.build(:client, email: 'kdjfkjdf')).not_to be_valid
   end
   it 'require active to be false if not true' do
-    expect(FactoryGirl.build(:client, active: 5)).active.to be_false
-    expect(FactoryGirl.build(:client, active: 'a')).active.to be_false
+    expect(FactoryGirl.build(:client, active: 5).active).to be_falsey
+    expect(FactoryGirl.build(:client, active: 'a').active).to be_falsey
     expect(FactoryGirl.build(:client, active: 1)).to be_valid
     expect(FactoryGirl.build(:client, active: 0)).to be_valid
   end
