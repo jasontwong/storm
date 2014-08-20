@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe CompaniesController do
+describe CompaniesController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -10,11 +10,11 @@ describe CompaniesController do
     it 'populates an array of companies' do
       company = FactoryGirl.create(:company)
       get :index
-      assigns(:companies).should eq([company])
+      expect(assigns(:companies)).to eq([company])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -22,11 +22,11 @@ describe CompaniesController do
     it 'assigns the requested company to @company' do
       company = FactoryGirl.create(:company)
       get :show, id: company
-      assigns(:company).should eq(company)
+      expect(assigns(:company)).to eq(company)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:company)
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -39,7 +39,7 @@ describe CompaniesController do
       end
       it 'returns created status' do
         post :create, company: FactoryGirl.attributes_for(:company)
-        response.status.should == 201
+        expect(response.status).to eq(201)
       end
     end
     context 'with invalid attributes' do
@@ -59,26 +59,25 @@ describe CompaniesController do
     context 'with valid attributes' do
       it 'locates requested company' do
         put :update, id: @company, company: FactoryGirl.attributes_for(:company)
-        assigns(:company).should eq(@company)
+        expect(assigns(:company)).to eq(@company)
       end
-      it 'changes the company attributes' do
-        put :update, id: @company, company: FactoryGirl.attributes_for(:company, name: 'foobar', logo: 'foobaz')
+      it 'changes the company name attribute' do
+        put :update, id: @company, company: FactoryGirl.attributes_for(:company, name: 'foobar')
         @company.reload
-        @company.name.should eq('foobar')
-        @company.logo.should eq('foobaz')
+        expect(@company.name).to eq('foobar')
+      end
+      it 'changes the company logo attribute' do
+        put :update, id: @company, company: FactoryGirl.attributes_for(:company, logo: { 'foo' => 'foobaz' })
+        @company.reload
+        expect(@company.logo).to eq({ 'foo' => 'foobaz' })
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested company' do
-        put :update, id: @company, company: FactoryGirl.attributes_for(:invalid_company)
-        assigns(:company).should eq(@company)
-      end
-      it 'does not change company attributes' do
-        put :update, id: @company, company: FactoryGirl.attributes_for(:invalid_company)
-        @company.reload
-        @company.name.should eq(@company.name)
-        @company.logo.should_not eq('foobaz')
+      it 'fails with validation error' do
+        expect {
+          put :update, id: @company, company: FactoryGirl.attributes_for(:invalid_company)
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end
