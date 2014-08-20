@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe SurveyQuestionsController do
+describe SurveyQuestionsController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -10,24 +10,11 @@ describe SurveyQuestionsController do
     it 'populates an array of survey_questions' do
       survey_question = FactoryGirl.create(:survey_question)
       get :index
-      assigns(:survey_questions).should eq([survey_question])
+      expect(assigns(:survey_questions)).to eq([survey_question])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
-    end
-    it 'populates an array of survey_questions based on the qr code' do
-      order = FactoryGirl.create(:order)
-      questions = [
-        FactoryGirl.create(:survey_question),
-        FactoryGirl.create(:survey_question),
-        FactoryGirl.create(:survey_question),
-        FactoryGirl.create(:survey_question),
-      ]
-      FactoryGirl.create(:survey_question)
-      survey = FactoryGirl.create(:survey, store: order.store, survey_questions: questions)
-      get :index, qr: order.code.qr
-      assigns(:survey_questions).length.should == 4
+      expect(response.status).to eq(200)
     end
   end
 
@@ -35,11 +22,11 @@ describe SurveyQuestionsController do
     it 'assigns the requested survey_question to @survey_question' do
       survey_question = FactoryGirl.create(:survey_question)
       get :show, id: survey_question
-      assigns(:survey_question).should eq(survey_question)
+      expect(assigns(:survey_question)).to eq(survey_question)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:survey_question)
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -52,7 +39,7 @@ describe SurveyQuestionsController do
       end
       it 'returns created status' do
         post :create, survey_question: FactoryGirl.attributes_for(:survey_question)
-        response.status.should == 201
+        expect(response).to have_http_status(:created)
       end
     end
     context 'with invalid attributes' do
@@ -72,26 +59,21 @@ describe SurveyQuestionsController do
     context 'with valid attributes' do
       it 'locates requested survey_question' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:survey_question)
-        assigns(:survey_question).should eq(@survey_question)
+        expect(assigns(:survey_question)).to eq(@survey_question)
       end
       it 'changes the survey_question attributes' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:survey_question, question: 'foobar', answer_type: 'foobaz')
         @survey_question.reload
-        @survey_question.question.should eq('foobar')
-        @survey_question.answer_type.should eq('foobaz')
+        expect(@survey_question.question).to eq('foobar')
+        expect(@survey_question.answer_type).to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested survey_question' do
-        put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:invalid_survey_question)
-        assigns(:survey_question).should eq(@survey_question)
-      end
-      it 'does not change survey_question attributes' do
-        put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:invalid_survey_question, answer_type: 'foobaz')
-        @survey_question.reload
-        @survey_question.question.should eq(@survey_question.question)
-        @survey_question.answer_type.should_not eq('foobaz')
+      it 'fails with validation error' do
+        expect {
+          put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:invalid_survey_question, answer_type: 'foobaz')
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end
@@ -106,7 +88,7 @@ describe SurveyQuestionsController do
         delete :destroy, id: @survey_question
       }.to change(SurveyQuestion, :count).by(0)
       @survey_question.reload
-      @survey_question.active.should be_false
+      expect(@survey_question.active).to be_falsey
     end
   end
 

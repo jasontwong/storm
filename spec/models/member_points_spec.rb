@@ -1,13 +1,13 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe MemberPoints do
   it 'has a valid factory' do
-    FactoryGirl.build(:member_point).should be_valid
+    expect(FactoryGirl.build(:member_point)).to be_valid
   end
   it 'requires a member' do
-    FactoryGirl.build(:member_point, member: nil).should_not be_valid
+    expect(FactoryGirl.build(:member_point, member: nil)).not_to be_valid
   end
   it 'requires a company' do
-    FactoryGirl.build(:member_point, company: nil).should_not be_valid
+    expect(FactoryGirl.build(:member_point, company: nil)).not_to be_valid
   end
 end

@@ -15,6 +15,7 @@ group :development, :test do
   gem 'faker', '~> 1.4'
   gem 'sqlite3', '~> 1.3'
   gem 'rspec-rails', '~> 3.0'
+  gem 'rspec-collection_matchers', '~> 1.0'
   gem 'factory_girl_rails', '~> 4.4'
 end
 

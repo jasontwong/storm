@@ -1,4 +1,5 @@
 class MembersController < ApplicationController
+  # {{{ def index
   # GET /members
   # GET /members.json
   def index
@@ -9,6 +10,8 @@ class MembersController < ApplicationController
     render json: @members.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def show
   # GET /members/1
   # GET /members/1.json
   def show
@@ -19,16 +22,18 @@ class MembersController < ApplicationController
     render json: @member.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def create
   # POST /members
   # POST /members.json
   def create
-    @member = Member.new(params[:member])
+    @member = Member.new(member_params)
     @member.salt = SecureRandom.hex
     password = Digest::SHA256.new
     password.update @member.password + @member.salt
     @member.password = password.hexdigest
 
-    if !@member.email.nil? && @member.save
+    if @member.save
       @member.parse_attrs(params[:attrs]) unless params[:attrs].nil?
       render json: @member, status: :created, location: @member
     else
@@ -36,6 +41,8 @@ class MembersController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /members/1
   # PATCH/PUT /members/1.json
   def update
@@ -46,13 +53,15 @@ class MembersController < ApplicationController
       @member.parse_points(params[:points].to_f, params[:company_id])
     end
 
-    if !@member.email.nil? && @member.update_attributes(params[:member])
+    if @member.update_attributes!(member_params)
       head :no_content
     else
       render json: @member.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /members/1
   # DELETE /members/1.json
   def destroy
@@ -66,6 +75,8 @@ class MembersController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def verify
   # POST /members/verify
   # POST /members/verify.json
   def verify
@@ -86,6 +97,8 @@ class MembersController < ApplicationController
 
   end
 
+  # }}}
+  # {{{ def fb_verify
   # POST /members/fb_verify
   # POST /members/fb_verify.json
   def fb_verify
@@ -103,6 +116,8 @@ class MembersController < ApplicationController
 
   end
 
+  # }}}
+  # {{{ def pass_reset
   # PUT /members/pass_reset
   # PUT /members/pass_reset.json
   def pass_reset
@@ -125,43 +140,8 @@ class MembersController < ApplicationController
 
   end
 
-  # GET /members/1/rewards
-  # GET /members/1/rewards.json
-  def reward_index
-    @member_rewards = MemberReward.where(member_id: params[:id])
-
-    render json: @member_rewards
-  end
-
-  # POST /members/1/rewards
-  # POST /members/1/rewards.json
-  def reward_create
-    @member_reward = MemberReward.new(params[:member_reward])
-    if @member_reward.reward.nil? 
-      render json: ["that reward doesn't exist"], status: :unprocessable_entity
-    elsif @member_reward.reward.expired? 
-      render json: ["that reward is expired"], status: :unprocessable_entity
-    elsif @member_reward.save
-      # Look up the reward/company and figure out if it needs code or bcode
-      # @member_reward.generate_code(MemberReward::ALPHANUMERIC, 5)
-      render json: @member_reward, status: :created, location: @member_reward
-    else
-      render json: @member_reward.errors, status: :unprocessable_entity
-    end
-  end
-
-  # PUT/PATCH /members/1/rewards/1
-  # PUT/PATCH /members/1/rewards/1.json
-  def reward_update
-    member = Member.find(params[:member_id])
-    @member_reward = MemberReward.find(params[:id])
-    if @member_reward.update_attributes(params[:member_reward])
-      head :no_content
-    else
-      render json: @member_reward.errors, status: :unprocessable_entity
-    end
-  end
-  
+  # }}}
+  # {{{ def point_index
   # GET /members/1/points
   # GET /members/1/points.json
   def point_index
@@ -179,4 +159,12 @@ class MembersController < ApplicationController
     render json: @member_points
   end
 
+  # }}}
+  private
+    # {{{ def member_params
+    def member_params
+      params.require(:member).permit(:points, :company_id, :password, :email, :salt, :fb_id, :temp_pass, :active)
+    end
+
+    # }}}
 end

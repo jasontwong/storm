@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140820022437) do
+ActiveRecord::Schema.define(version: 20140820194049) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
@@ -117,7 +117,6 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.datetime "created_at",         null: false
     t.datetime "updated_at",         null: false
     t.integer  "survey_question_id"
-    t.integer  "product_id"
   end
 
   create_table "member_surveys", force: true do |t|
@@ -137,12 +136,9 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "email"
     t.string   "password"
     t.string   "salt"
-    t.string   "fb_username"
-    t.string   "fb_password"
     t.boolean  "active",                         default: true
     t.datetime "created_at",                                    null: false
     t.datetime "updated_at",                                    null: false
-    t.string   "other_id"
     t.string   "temp_pass"
     t.date     "temp_pass_expiration"
     t.integer  "fb_id",                limit: 8

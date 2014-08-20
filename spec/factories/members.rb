@@ -6,7 +6,7 @@ FactoryGirl.define do
     f.email { Faker::Internet.email }
     f.salt { Faker::Lorem.word }
     f.password { Faker::Lorem.word }
-    f.active 1
+    f.active true
   end
 
   factory :invalid_member, parent: :member do |f|

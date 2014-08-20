@@ -1,6 +1,6 @@
-require 'spec_helper'
+require 'rails_helper'
 
-describe RewardsController do
+describe RewardsController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -10,11 +10,11 @@ describe RewardsController do
     it 'populates an array of rewards' do
       reward = FactoryGirl.create(:reward)
       get :index
-      assigns(:rewards).should eq([reward])
+      expect(assigns(:rewards)).to eq([reward])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
     it 'populates an array of rewards for a specific company' do
       company_id = 37
@@ -26,7 +26,7 @@ describe RewardsController do
       FactoryGirl.create(:reward)
       FactoryGirl.create(:reward)
       get :index, company_id: company_id
-      assigns(:rewards).length.should == 5
+      expect(assigns(:rewards).length).to eq(5)
     end
   end
 
@@ -34,11 +34,11 @@ describe RewardsController do
     it 'assigns the requested reward to @reward' do
       reward = FactoryGirl.create(:reward)
       get :show, id: reward
-      assigns(:reward).should eq(reward)
+      expect(assigns(:reward)).to eq(reward)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:reward)
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -51,7 +51,7 @@ describe RewardsController do
       end
       it 'returns created status' do
         post :create, reward: FactoryGirl.attributes_for(:reward)
-        response.status.should == 201
+        expect(response.status).to eq(201)
       end
     end
     context 'with invalid attributes' do
@@ -71,26 +71,21 @@ describe RewardsController do
     context 'with valid attributes' do
       it 'locates requested reward' do
         put :update, id: @reward, reward: FactoryGirl.attributes_for(:reward)
-        assigns(:reward).should eq(@reward)
+        expect(assigns(:reward)).to eq(@reward)
       end
       it 'changes the reward attributes' do
         put :update, id: @reward, reward: FactoryGirl.attributes_for(:reward, title: 'foobar', description: 'foobaz')
         @reward.reload
-        @reward.title.should eq('foobar')
-        @reward.description.should eq('foobaz')
+        expect(@reward.title).to eq('foobar')
+        expect(@reward.description).to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested reward' do
-        put :update, id: @reward, reward: FactoryGirl.attributes_for(:invalid_reward)
-        assigns(:reward).should eq(@reward)
-      end
-      it 'does not change reward attributes' do
-        put :update, id: @reward, reward: FactoryGirl.attributes_for(:invalid_reward, description: 'foobaz')
-        @reward.reload
-        @reward.title.should eq(@reward.title)
-        @reward.description.should_not eq('foobaz')
+      it 'fails with validation error' do
+        expect {
+          put :update, id: @reward, reward: FactoryGirl.attributes_for(:invalid_reward, description: 'foobaz')
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end

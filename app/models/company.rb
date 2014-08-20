@@ -19,8 +19,8 @@ class Company < ActiveRecord::Base
   after_initialize :init
 
   def init
-    self.worth_type = Company::WORTH_TYPE_FLAT
-    self.worth_meta = { worth: 5 }
-    self.survey_question_limit = 5 if self.survey_question_limit.nil?
+    self.worth_type ||= Company::WORTH_TYPE_FLAT
+    self.worth_meta = { worth: 5 } if self.worth_meta.empty?
+    self.survey_question_limit ||= 5
   end
 end

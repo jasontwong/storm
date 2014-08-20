@@ -1,25 +1,26 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe Member do
   it 'has a valid factory' do
-    FactoryGirl.build(:member).should be_valid
+    expect(FactoryGirl.build(:member)).to be_valid
   end
   it 'requires an email' do
-    FactoryGirl.build(:member, email: nil).should be_valid
+    expect(FactoryGirl.build(:member, email: nil)).not_to be_valid
   end
   it 'requires email to be unique' do
     member1 = FactoryGirl.create(:member)
     member2 = FactoryGirl.build(:member, email: member1.email)
-    member2.should_not be_valid
-    member2.should have(1).error_on(:email)
+    expect(member1.email).to eq(member2.email)
+    expect(member2).not_to be_valid
+    expect(member2).to have(1).error_on(:email)
   end
   it 'requires proper email format' do
-    FactoryGirl.build(:member, email: 'kdjfkjdf').should_not be_valid
+    expect(FactoryGirl.build(:member, email: 'kdjfkjdf')).not_to be_valid
   end
   it 'require active to be false if not true' do
-    FactoryGirl.build(:member, active: 5).active.should be_false
-    FactoryGirl.build(:member, active: 'a').active.should be_false
-    FactoryGirl.build(:member, active: 1).should be_valid
-    FactoryGirl.build(:member, active: 0).should be_valid
+    expect(FactoryGirl.build(:member, active: 5).active).to be_falsey
+    expect(FactoryGirl.build(:member, active: 'a').active).to be_falsey
+    expect(FactoryGirl.build(:member, active: 1)).to be_valid
+    expect(FactoryGirl.build(:member, active: 0)).to be_valid
   end
 end

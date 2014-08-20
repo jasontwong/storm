@@ -90,8 +90,7 @@ class CompaniesController < ApplicationController
   # DELETE /companies/1.json
   def destroy
     @company = Company.find(params[:id])
-    @company.active = false
-    @comapny.save
+    @company.destroy
 
     head :no_content
   end
