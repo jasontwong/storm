@@ -1,4 +1,5 @@
 class ClientsController < ApplicationController
+  # {{{ def index
   # GET /clients
   # GET /clients.json
   def index
@@ -9,6 +10,8 @@ class ClientsController < ApplicationController
     render json: @clients.to_json(:include => params[:include].collect { |data| data.to_sym })
   end
 
+  # }}}
+  # {{{ def show
   # GET /clients/1
   # GET /clients/1.json
   def show
@@ -29,6 +32,8 @@ class ClientsController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def create
   # POST /clients
   # POST /clients.json
   def create
@@ -43,6 +48,8 @@ class ClientsController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /clients/1
   # PATCH/PUT /clients/1.json
   def update
@@ -50,13 +57,15 @@ class ClientsController < ApplicationController
 
     @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
-    if @client.update_attributes(params[:client])
+    if @client.update_attributes!(client_params)
       head :no_content
     else
       render json: @client.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /clients/1
   # DELETE /clients/1.json
   def destroy
@@ -70,6 +79,8 @@ class ClientsController < ApplicationController
     end
   end
   
+  # }}}
+  # {{{ def verify
   # POST /clients/verify
   # POST /clients/verify.json
   def verify
@@ -102,6 +113,8 @@ class ClientsController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def pass_generate
   # POST /clients/pass_generate
   # POST /clients/pass_generate.json
   def pass_generate
@@ -124,6 +137,8 @@ class ClientsController < ApplicationController
     end
   end
 
+  # }}}
+  # {{{ def pass_reset
   # POST /clients/pass_reset
   # POST /clients/pass_reset.json
   def pass_reset
@@ -147,4 +162,12 @@ class ClientsController < ApplicationController
     end
   end
 
+  # }}}
+  private
+    # {{{ def client_params
+    def client_params
+      params.require(:client).permit(:name, :active)
+    end
+
+    # }}}
 end
