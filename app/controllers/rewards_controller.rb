@@ -1,4 +1,5 @@
 class RewardsController < ApplicationController
+  # {{{ def index
   # GET /rewards
   # GET /rewards.json
   def index
@@ -10,6 +11,8 @@ class RewardsController < ApplicationController
     render json: @rewards
   end
 
+  # }}}
+  # {{{ def show
   # GET /rewards/1
   # GET /rewards/1.json
   def show
@@ -18,55 +21,51 @@ class RewardsController < ApplicationController
     render json: @reward
   end
 
+  # }}}
+  # {{{ def create
   # POST /rewards
   # POST /rewards.json
   def create
-    @reward = Reward.new(params[:reward])
+    @reward = Reward.new(reward_params)
 
     if @reward.save
-      log = Changelog.where(
-        model: 'Reward', 
-        model_id: @reward.id,
-      ).first_or_create!
-      log.model_action = 'create'
-      log.save
       render json: @reward, status: :created, location: @reward
     else
       render json: @reward.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def update
   # PATCH/PUT /rewards/1
   # PATCH/PUT /rewards/1.json
   def update
     @reward = Reward.find(params[:id])
 
-    if @reward.update_attributes(params[:reward])
-      log = Changelog.where(
-        model: 'Reward', 
-        model_id: @reward.id,
-      ).first_or_create!
-      log.model_action = 'update'
-      log.save
+    if @reward.update_attributes!(reward_params)
       head :no_content
     else
       render json: @reward.errors, status: :unprocessable_entity
     end
   end
 
+  # }}}
+  # {{{ def destroy
   # DELETE /rewards/1
   # DELETE /rewards/1.json
   def destroy
     @reward = Reward.find(params[:id])
     @reward.destroy
 
-    log = Changelog.where(
-      model: 'Reward', 
-      model_id: @reward.id,
-    ).first_or_create!
-    log.model_action = 'destroy'
-    log.save
-
     head :no_content
   end
+  
+  # }}}
+  private
+    # {{{ def reward_params
+    def reward_params
+      params.require(:reward).permit(:company_id, :title, :description, :cost, :images)
+    end
+
+    # }}}
 end
