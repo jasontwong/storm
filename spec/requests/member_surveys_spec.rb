@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'rails_helper'
 
 describe "MemberSurveys" do
   describe "GET /member_surveys" do

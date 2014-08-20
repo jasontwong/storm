@@ -1,4 +1,4 @@
-require "spec_helper"
+require "rails_helper"
 
 describe SurveysController do
   describe "routing" do
