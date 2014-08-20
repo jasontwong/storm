@@ -11,8 +11,8 @@ describe Survey do
     expect(FactoryGirl.build(:survey, company: nil)).not_to be_valid
   end
   it 'require default to be false if not true' do
-    expect(FactoryGirl.build(:survey, default: 5)).default.to be_false
-    expect(FactoryGirl.build(:survey, default: 'a')).default.to be_false
+    expect(FactoryGirl.build(:survey, default: 5).default).to be_falsey
+    expect(FactoryGirl.build(:survey, default: 'a').default).to be_falsey
     expect(FactoryGirl.build(:survey, default: 1)).to be_valid
     expect(FactoryGirl.build(:survey, default: 0)).to be_valid
   end
