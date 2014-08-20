@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe SurveysController do
+describe SurveysController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -10,11 +10,11 @@ describe SurveysController do
     it 'populates an array of surveys' do
       survey = FactoryGirl.create(:survey)
       get :index
-      assigns(:surveys).to eq([survey])
+      expect(assigns(:surveys)).to eq([survey])
     end
     it 'returns status ok' do
       get :index
-      response.status.to == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -22,11 +22,11 @@ describe SurveysController do
     it 'assigns the requested survey to @survey' do
       survey = FactoryGirl.create(:survey)
       get :show, id: survey
-      assigns(:survey).to eq(survey)
+      expect(assigns(:survey)).to eq(survey)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:survey)
-      response.status.to == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -39,7 +39,7 @@ describe SurveysController do
       end
       it 'returns created status' do
         post :create, survey: FactoryGirl.attributes_for(:survey)
-        response.status.to == 201
+        expect(response).to have_http_status(:created)
       end
     end
     context 'with invalid attributes' do
@@ -59,26 +59,21 @@ describe SurveysController do
     context 'with valid attributes' do
       it 'locates requested survey' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:survey)
-        assigns(:survey).to eq(@survey)
+        expect(assigns(:survey)).to eq(@survey)
       end
       it 'changes the survey attributes' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:survey, title: 'foobar', description: 'foobaz')
         @survey.reload
-        @survey.title.to eq('foobar')
-        @survey.description.to eq('foobaz')
+        expect(@survey.title).to eq('foobar')
+        expect(@survey.description).to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested survey' do
-        put :update, id: @survey, survey: FactoryGirl.attributes_for(:invalid_survey)
-        assigns(:survey).to eq(@survey)
-      end
-      it 'does not change survey attributes' do
-        put :update, id: @survey, survey: FactoryGirl.attributes_for(:invalid_survey, description: 'foobaz')
-        @survey.reload
-        @survey.title.to eq(@survey.title)
-        @survey.description.not_to eq('foobaz')
+      it 'fails with validation error' do
+        expect {
+          put :update, id: @survey, survey: FactoryGirl.attributes_for(:invalid_survey, description: 'foobaz')
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
   end
