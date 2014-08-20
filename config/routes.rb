@@ -2,6 +2,57 @@ Rails.application.routes.draw do
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
+  # custom routes
+  get 'api_key/generate' => 'api_key#generate'
+  get 'stats/analytics' => 'stats#analytics'
+  get 'stats/surveys' => 'stats#surveys'
+  get 'stats/surveys/:id' => 'stats#survey'
+  get 'members/:id/points' => 'members#point_index', as: :member_points
+  get 'members/:id/rewards' => 'members#reward_index', as: :member_rewards
+  post 'members/:id/rewards' => 'members#reward_create'
+  put 'members/:member_id/rewards/:id' => 'members#reward_update', as: :member_reward
+  post 'members/verify' => 'members#verify'
+  post 'members/fb_verify' => 'members#fb_verify'
+  put 'members/pass_reset' => 'members#pass_reset'
+  post 'codes/scan' => 'codes#scan'
+  post 'codes/beacon' => 'codes#beacon'
+  post 'clients/verify' => 'clients#verify'
+  post 'companies/:id/beacon_verify' => 'companies#beacon_verify'
+  post 'clients/pass_reset' => 'clients#pass_reset'
+  post 'clients/pass_generate' => 'clients#pass_generate'
+  post 'ios/check_version' => 'ios#check_version'
+  get 'companies/create_payload' => 'companies#create_payload'
+
+  resources :order_details, except: [:new, :edit, :create, :destroy, :update]
+
+  resources :changelogs, except: [:new, :edit, :create, :destroy, :update]
+
+  resources :survey_question_categories, except: [:new, :edit]
+
+  resources :member_surveys, except: [:new, :edit, :create, :destroy]
+
+  resources :member_survey_answers, except: [:new, :edit, :create, :destroy]
+
+  resources :clients, except: [:new, :edit]
+
+  resources :survey_questions, except: [:new, :edit]
+
+  resources :orders, except: [:new, :edit]
+
+  resources :codes, except: [:new, :edit]
+
+  resources :surveys, except: [:new, :edit]
+
+  resources :rewards, except: [:new, :edit]
+
+  resources :products, except: [:new, :edit]
+
+  resources :stores, except: [:new, :edit]
+
+  resources :companies, except: [:new, :edit]
+
+  resources :members, except: [:new, :edit]
+
   # You can have the root of your site routed with "root"
   # root 'welcome#index'
 
