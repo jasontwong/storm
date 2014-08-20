@@ -10,6 +10,7 @@ describe Member do
   it 'requires email to be unique' do
     member1 = FactoryGirl.create(:member)
     member2 = FactoryGirl.build(:member, email: member1.email)
+    expect(member1.email).to eq(member2.email)
     expect(member2).not_to be_valid
     expect(member2).to have(1).error_on(:email)
   end
@@ -17,8 +18,8 @@ describe Member do
     expect(FactoryGirl.build(:member, email: 'kdjfkjdf')).not_to be_valid
   end
   it 'require active to be false if not true' do
-    expect(FactoryGirl.build(:member, active: 5)).active.to be_false
-    expect(FactoryGirl.build(:member, active: 'a')).active.to be_false
+    expect(FactoryGirl.build(:member, active: 5).active).to be_falsey
+    expect(FactoryGirl.build(:member, active: 'a').active).to be_falsey
     expect(FactoryGirl.build(:member, active: 1)).to be_valid
     expect(FactoryGirl.build(:member, active: 0)).to be_valid
   end
