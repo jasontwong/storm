@@ -40,7 +40,7 @@ describe MembersController, type: :controller do
       end
       it 'returns created status' do
         post :create, member: FactoryGirl.attributes_for(:member)
-        expect(response.status).to eq(200)
+        expect(response).to have_http_status(:created)
       end
     end
     context 'with invalid attributes' do
@@ -70,30 +70,25 @@ describe MembersController, type: :controller do
         expect(assigns(:member)).to eq(@member)
       end
       it 'changes the member attributes' do
-        put :update, id: @member, member: FactoryGirl.attributes_for(:member, fb_username: 'foobar', fb_password: 'foobaz')
+        put :update, id: @member, member: FactoryGirl.attributes_for(:member, fb_id: 102323)
         @member.reload
-        expect(@member.fb_username).to eq('foobar')
-        expect(@member.fb_password).to eq('foobaz')
+        expect(@member.fb_id).to eq(102323)
       end
     end
 
     context 'with invalid attributes' do
-      it 'locates requested member' do
-        put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
-        expect(assigns(:member)).to eq(@member)
-      end
-      it 'does not change member attributes' do
-        put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
-        @member.reload
-        expect(@member.fb_username).to eq(@member.fb_username)
-        expect(@member.fb_password).not_to eq('foobaz')
+      it 'fails with validation error' do
+        reward = FactoryGirl.create(:reward)
+        expect {
+          put :update, id: reward, member_id: @member, member: FactoryGirl.attributes_for(:invalid_member)
+        }.to raise_error(ActiveRecord::RecordInvalid)
       end
     end
 
     context 'with extra attributes' do
       it 'updates a member with extra attributes' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member), attrs: { foo: 'bar' }
-        assigns(:member).to eq(@member)
+        expect(assigns(:member)).to eq(@member)
         expect(@member.member_attributes[0].name).to eq('foo')
         expect(@member.member_attributes[0].value).to eq('bar')
       end
@@ -205,54 +200,6 @@ describe MembersController, type: :controller do
         expect(@member.temp_pass).to be_blank
         expect(@member.temp_pass_expiration).to be_blank
         expect(response.status).to eq(422)
-      end
-    end
-  end
-
-  # member rewards section
-  describe 'GET #reward_index' do
-    it 'retrieves the rewards for a single member' do
-      member = FactoryGirl.create(:member)
-      reward = FactoryGirl.create(:member_reward, member: member)
-      member.member_rewards << reward
-      get :reward_index, id: member.id
-      expect(assigns(:member_rewards)).to eq([reward])
-    end
-  end
-
-  describe 'POST #reward_create' do
-    before :each do
-      @member_reward = FactoryGirl.attributes_for(:member_reward)
-    end
-
-    context 'with valid attributes' do
-      it 'creates a new reward for a single member' do
-        expect{
-          reward = FactoryGirl.create(:reward)
-          member = FactoryGirl.create(:member)
-          @member_reward[:member_id] = member.id
-          @member_reward[:reward_id] = reward.id
-          post :reward_create, id: member.id, member_reward: @member_reward
-        }.to change(MemberReward, :count).by(1)
-      end
-    end
-  end
-
-  describe 'PUT #reward_update' do
-    before :each do
-      @member_reward = FactoryGirl.create(:member_reward)
-    end
-
-    context 'with valid attributes' do
-      it 'locates a reward for a single member' do
-        put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward)
-        expect(assigns(:member_reward)).to eq(@member_reward)
-      end
-      it 'changes reward attributes for a single member' do
-        put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward, printed: 5, scanned: 55)
-        @member_reward.reload
-        expect(@member_reward.printed).to eq(5)
-        expect(@member_reward.scanned).to eq(55)
       end
     end
   end

@@ -7,7 +7,7 @@ class Member < ActiveRecord::Base
   has_many :member_rewards, inverse_of: :member
   has_many :member_surveys, inverse_of: :member
 
-  validates :email, email: true, uniqueness: true
+  validates :email, email: true, presence: true, uniqueness: true
   validates :active, inclusion: { in: [true, false] }
 
   def parse_attrs(attrs)
@@ -29,11 +29,11 @@ class Member < ActiveRecord::Base
     answers.each do |answer|
       member_answer = MemberAnswer.where(member_id: self.id, code_id: answer[:code_id], question: answer[:question]).last
       if member_answer.nil?
-        member_answer = MemberAnswer.new(answer)
+        member_answer = MemberAnswer.new(answer.permit(:code_id, :question, :answer, :completed, :completed_time))
         member_answer.member = self
         member_answer.save
       else
-        member_answer.update_attributes(answer)
+        member_answer.update_attributes!(answer.permit(:code_id, :question, :answer, :completed, :completed_time))
       end
     end
   end
