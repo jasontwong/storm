@@ -1,7 +1,6 @@
 class Company < ActiveRecord::Base
   WORTH_TYPE_FLAT = 1
   WORTH_TYPE_PRICE = 2
-  attr_accessible :description, :location, :logo, :name, :phone, :survey_question_limit, :html, :worth_type, :worth_meta, :active
 
   has_many :stores, inverse_of: :company
   has_many :products, inverse_of: :company

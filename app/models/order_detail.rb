@@ -1,6 +1,4 @@
 class OrderDetail < ActiveRecord::Base
-  attr_accessible :code_id, :discount, :name, :order_id, :price, :product_id, :quantity
-
   belongs_to :code, inverse_of: :order_details
   belongs_to :order, inverse_of: :order_details
   belongs_to :product, inverse_of: :order_details

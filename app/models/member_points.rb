@@ -1,6 +1,4 @@
 class MemberPoints < ActiveRecord::Base
-  attr_accessible :company_id, :last_earned, :member_id, :points, :total_points
-
   belongs_to :member, inverse_of: :member_points
   belongs_to :company, inverse_of: :member_points
 

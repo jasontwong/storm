@@ -1,6 +1,4 @@
 class Code < ActiveRecord::Base
-  attr_accessible :qr, :used, :active, :last_used_time, :text, :store_id, :static, :major, :minor
-
   belongs_to :store, inverse_of: :codes
   has_one :order, inverse_of: :code
   has_many :order_details, inverse_of: :code

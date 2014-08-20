@@ -1,6 +1,4 @@
 class ApiKey < ActiveRecord::Base
-  attr_accessible :access_token
-  
   before_validation :generate_access_token
 
   validates :access_token, uniqueness: true, presence: true
