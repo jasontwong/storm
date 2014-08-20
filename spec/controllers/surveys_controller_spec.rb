@@ -10,11 +10,11 @@ describe SurveysController do
     it 'populates an array of surveys' do
       survey = FactoryGirl.create(:survey)
       get :index
-      assigns(:surveys).should eq([survey])
+      assigns(:surveys).to eq([survey])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      response.status.to == 200
     end
   end
 
@@ -22,11 +22,11 @@ describe SurveysController do
     it 'assigns the requested survey to @survey' do
       survey = FactoryGirl.create(:survey)
       get :show, id: survey
-      assigns(:survey).should eq(survey)
+      assigns(:survey).to eq(survey)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:survey)
-      response.status.should == 200
+      response.status.to == 200
     end
   end
 
@@ -39,7 +39,7 @@ describe SurveysController do
       end
       it 'returns created status' do
         post :create, survey: FactoryGirl.attributes_for(:survey)
-        response.status.should == 201
+        response.status.to == 201
       end
     end
     context 'with invalid attributes' do
@@ -59,26 +59,26 @@ describe SurveysController do
     context 'with valid attributes' do
       it 'locates requested survey' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:survey)
-        assigns(:survey).should eq(@survey)
+        assigns(:survey).to eq(@survey)
       end
       it 'changes the survey attributes' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:survey, title: 'foobar', description: 'foobaz')
         @survey.reload
-        @survey.title.should eq('foobar')
-        @survey.description.should eq('foobaz')
+        @survey.title.to eq('foobar')
+        @survey.description.to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
       it 'locates requested survey' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:invalid_survey)
-        assigns(:survey).should eq(@survey)
+        assigns(:survey).to eq(@survey)
       end
       it 'does not change survey attributes' do
         put :update, id: @survey, survey: FactoryGirl.attributes_for(:invalid_survey, description: 'foobaz')
         @survey.reload
-        @survey.title.should eq(@survey.title)
-        @survey.description.should_not eq('foobaz')
+        @survey.title.to eq(@survey.title)
+        @survey.description.not_to eq('foobaz')
       end
     end
   end

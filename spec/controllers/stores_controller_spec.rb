@@ -10,11 +10,11 @@ describe StoresController do
     it 'populates an array of stores' do
       store = FactoryGirl.create(:store)
       get :index
-      assigns(:stores).should eq([store])
+      assigns(:stores).to eq([store])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      response.status.to == 200
     end
   end
 
@@ -22,11 +22,11 @@ describe StoresController do
     it 'assigns the requested store to @store' do
       store = FactoryGirl.create(:store)
       get :show, id: store
-      assigns(:store).should eq(store)
+      assigns(:store).to eq(store)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:store)
-      response.status.should == 200
+      response.status.to == 200
     end
   end
 
@@ -39,7 +39,7 @@ describe StoresController do
       end
       it 'returns created status' do
         post :create, store: FactoryGirl.attributes_for(:store)
-        response.status.should == 201
+        response.status.to == 201
       end
     end
     context 'with invalid attributes' do
@@ -59,26 +59,26 @@ describe StoresController do
     context 'with valid attributes' do
       it 'locates requested store' do
         put :update, id: @store, store: FactoryGirl.attributes_for(:store)
-        assigns(:store).should eq(@store)
+        assigns(:store).to eq(@store)
       end
       it 'changes the store attributes' do
         put :update, id: @store, store: FactoryGirl.attributes_for(:store, name: 'foobar', city: 'foobaz')
         @store.reload
-        @store.name.should eq('foobar')
-        @store.city.should eq('foobaz')
+        @store.name.to eq('foobar')
+        @store.city.to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
       it 'locates requested store' do
         put :update, id: @store, store: FactoryGirl.attributes_for(:invalid_store)
-        assigns(:store).should eq(@store)
+        assigns(:store).to eq(@store)
       end
       it 'does not change store attributes' do
         put :update, id: @store, store: FactoryGirl.attributes_for(:invalid_store, city: 'foobaz')
         @store.reload
-        @store.name.should eq(@store.name)
-        @store.city.should_not eq('foobaz')
+        @store.name.to eq(@store.name)
+        @store.city.not_to eq('foobaz')
       end
     end
   end

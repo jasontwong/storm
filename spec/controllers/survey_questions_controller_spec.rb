@@ -10,11 +10,11 @@ describe SurveyQuestionsController do
     it 'populates an array of survey_questions' do
       survey_question = FactoryGirl.create(:survey_question)
       get :index
-      assigns(:survey_questions).should eq([survey_question])
+      assigns(:survey_questions).to eq([survey_question])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      response.status.to == 200
     end
     it 'populates an array of survey_questions based on the qr code' do
       order = FactoryGirl.create(:order)
@@ -27,7 +27,7 @@ describe SurveyQuestionsController do
       FactoryGirl.create(:survey_question)
       survey = FactoryGirl.create(:survey, store: order.store, survey_questions: questions)
       get :index, qr: order.code.qr
-      assigns(:survey_questions).length.should == 4
+      assigns(:survey_questions).length.to == 4
     end
   end
 
@@ -35,11 +35,11 @@ describe SurveyQuestionsController do
     it 'assigns the requested survey_question to @survey_question' do
       survey_question = FactoryGirl.create(:survey_question)
       get :show, id: survey_question
-      assigns(:survey_question).should eq(survey_question)
+      assigns(:survey_question).to eq(survey_question)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:survey_question)
-      response.status.should == 200
+      response.status.to == 200
     end
   end
 
@@ -52,7 +52,7 @@ describe SurveyQuestionsController do
       end
       it 'returns created status' do
         post :create, survey_question: FactoryGirl.attributes_for(:survey_question)
-        response.status.should == 201
+        response.status.to == 201
       end
     end
     context 'with invalid attributes' do
@@ -72,26 +72,26 @@ describe SurveyQuestionsController do
     context 'with valid attributes' do
       it 'locates requested survey_question' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:survey_question)
-        assigns(:survey_question).should eq(@survey_question)
+        assigns(:survey_question).to eq(@survey_question)
       end
       it 'changes the survey_question attributes' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:survey_question, question: 'foobar', answer_type: 'foobaz')
         @survey_question.reload
-        @survey_question.question.should eq('foobar')
-        @survey_question.answer_type.should eq('foobaz')
+        @survey_question.question.to eq('foobar')
+        @survey_question.answer_type.to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
       it 'locates requested survey_question' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:invalid_survey_question)
-        assigns(:survey_question).should eq(@survey_question)
+        assigns(:survey_question).to eq(@survey_question)
       end
       it 'does not change survey_question attributes' do
         put :update, id: @survey_question, survey_question: FactoryGirl.attributes_for(:invalid_survey_question, answer_type: 'foobaz')
         @survey_question.reload
-        @survey_question.question.should eq(@survey_question.question)
-        @survey_question.answer_type.should_not eq('foobaz')
+        @survey_question.question.to eq(@survey_question.question)
+        @survey_question.answer_type.not_to eq('foobaz')
       end
     end
   end
@@ -106,7 +106,7 @@ describe SurveyQuestionsController do
         delete :destroy, id: @survey_question
       }.to change(SurveyQuestion, :count).by(0)
       @survey_question.reload
-      @survey_question.active.should be_false
+      @survey_question.active.to be_false
     end
   end
 

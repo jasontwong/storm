@@ -1,7 +1,7 @@
 require 'rails_helper'
 require 'bcrypt'
 
-describe MembersController do
+describe MembersController, type: :controller do
   before :each do
     @token = FactoryGirl.create(:api_key)
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials(@token.access_token)
@@ -11,11 +11,11 @@ describe MembersController do
     it 'populates an array of members' do
       member = FactoryGirl.create(:member)
       get :index
-      assigns(:members).should eq([member])
+      expect(assigns(:members)).to eq([member])
     end
     it 'returns status ok' do
       get :index
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -23,11 +23,11 @@ describe MembersController do
     it 'assigns the requested member to @member' do
       member = FactoryGirl.create(:member)
       get :show, id: member
-      assigns(:member).should eq(member)
+      expect(assigns(:member)).to eq(member)
     end
     it 'returns status ok' do
       get :show, id: FactoryGirl.create(:member)
-      response.status.should == 200
+      expect(response.status).to eq(200)
     end
   end
 
@@ -40,7 +40,7 @@ describe MembersController do
       end
       it 'returns created status' do
         post :create, member: FactoryGirl.attributes_for(:member)
-        response.status.should == 201
+        expect(response.status).to eq(200)
       end
     end
     context 'with invalid attributes' do
@@ -67,35 +67,35 @@ describe MembersController do
     context 'with valid attributes' do
       it 'locates requested member' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member)
-        assigns(:member).should eq(@member)
+        expect(assigns(:member)).to eq(@member)
       end
       it 'changes the member attributes' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member, fb_username: 'foobar', fb_password: 'foobaz')
         @member.reload
-        @member.fb_username.should eq('foobar')
-        @member.fb_password.should eq('foobaz')
+        expect(@member.fb_username).to eq('foobar')
+        expect(@member.fb_password).to eq('foobaz')
       end
     end
 
     context 'with invalid attributes' do
       it 'locates requested member' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
-        assigns(:member).should eq(@member)
+        expect(assigns(:member)).to eq(@member)
       end
       it 'does not change member attributes' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:invalid_member)
         @member.reload
-        @member.fb_username.should eq(@member.fb_username)
-        @member.fb_password.should_not eq('foobaz')
+        expect(@member.fb_username).to eq(@member.fb_username)
+        expect(@member.fb_password).not_to eq('foobaz')
       end
     end
 
     context 'with extra attributes' do
       it 'updates a member with extra attributes' do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member), attrs: { foo: 'bar' }
-        assigns(:member).should eq(@member)
-        @member.member_attributes[0].name.should eq('foo')
-        @member.member_attributes[0].value.should eq('bar')
+        assigns(:member).to eq(@member)
+        expect(@member.member_attributes[0].name).to eq('foo')
+        expect(@member.member_attributes[0].value).to eq('bar')
       end
     end
 
@@ -120,9 +120,9 @@ describe MembersController do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member), points: num_points, company_id: points.company_id
         latest_points = MemberPoints.where(member_id: @member.id, company_id: points.company_id).last
         new_points = points.points + num_points
-        new_points.should == latest_points.points
+        expect(new_points).to eq(latest_points.points)
         new_points = points.total_points + num_points
-        new_points.should == latest_points.total_points
+        expect(new_points).to eq(latest_points.total_points)
       end
       it 'can decrease member points for a company without decreasing total points' do
         num_points = -5
@@ -130,9 +130,9 @@ describe MembersController do
         put :update, id: @member, member: FactoryGirl.attributes_for(:member), points: num_points, company_id: points.company_id
         latest_points = MemberPoints.where(member_id: @member.id, company_id: points.company_id).last
         new_points = points.points + num_points
-        new_points.should == latest_points.points
+        expect(new_points).to eq(latest_points.points)
         new_points = points.total_points
-        new_points.should == latest_points.total_points
+        expect(new_points).to eq(latest_points.total_points)
       end
     end
   end
@@ -147,12 +147,11 @@ describe MembersController do
         delete :destroy, id: @member
       }.to change(Member, :count).by(0)
       @member.reload
-      @member.active.should be_false
+      expect(@member.active).to be_falsey
     end
   end
 
   # member verify section
-  
   describe 'POST #verify' do
     before :each do
       @member = FactoryGirl.create(:member)
@@ -165,27 +164,26 @@ describe MembersController do
     context 'valid password' do
       it 'returns member info' do
         post :verify, email: @member.email, password: @password
-        assigns(:member).should eq(@member)
+        expect(assigns(:member)).to eq(@member)
       end
     end
 
     context 'invalid password' do
       it 'returns an error' do
         post :verify, email: @member.email, password: 'wrong password'
-        response.status.should == 422
+        expect(response.status).to eq(422)
       end
     end
 
     context 'invalid email' do
       it 'returns an error' do
         post :verify, email: 'foobar', password: @password
-        response.status.should == 422
+        expect(response.status).to eq(422)
       end
     end
   end
 
   # member pass_reset section
-  
   describe 'PUT #pass_reset' do
     before :each do
       @member = FactoryGirl.create(:member)
@@ -195,8 +193,8 @@ describe MembersController do
       it 'returns member info' do
         put :pass_reset, email: @member.email
         @member.reload
-        @member.temp_pass.should_not be_blank
-        @member.temp_pass_expiration.should_not be_blank
+        expect(@member.temp_pass).not_to be_blank
+        expect(@member.temp_pass_expiration).not_to be_blank
       end
     end
 
@@ -204,22 +202,21 @@ describe MembersController do
       it 'returns an error' do
         put :pass_reset, email: 'foobar'
         @member.reload
-        @member.temp_pass.should be_blank
-        @member.temp_pass_expiration.should be_blank
-        response.status.should == 422
+        expect(@member.temp_pass).to be_blank
+        expect(@member.temp_pass_expiration).to be_blank
+        expect(response.status).to eq(422)
       end
     end
   end
 
   # member rewards section
-  
   describe 'GET #reward_index' do
     it 'retrieves the rewards for a single member' do
       member = FactoryGirl.create(:member)
       reward = FactoryGirl.create(:member_reward, member: member)
       member.member_rewards << reward
       get :reward_index, id: member.id
-      assigns(:member_rewards).should eq([reward])
+      expect(assigns(:member_rewards)).to eq([reward])
     end
   end
 
@@ -249,19 +246,18 @@ describe MembersController do
     context 'with valid attributes' do
       it 'locates a reward for a single member' do
         put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward)
-        assigns(:member_reward).should eq(@member_reward)
+        expect(assigns(:member_reward)).to eq(@member_reward)
       end
       it 'changes reward attributes for a single member' do
         put :reward_update, id: @member_reward.id, member_id: @member_reward.member.id, member_reward: FactoryGirl.attributes_for(:member_reward, printed: 5, scanned: 55)
         @member_reward.reload
-        @member_reward.printed.should == 5
-        @member_reward.scanned.should == 55
+        expect(@member_reward.printed).to eq(5)
+        expect(@member_reward.scanned).to eq(55)
       end
     end
   end
 
   # member points section
-  
   describe 'GET #point_index' do
     before :each do
       @member = FactoryGirl.create(:member)
@@ -271,14 +267,14 @@ describe MembersController do
       point = FactoryGirl.create(:member_point, member: @member)
       @member.member_points << point
       get :point_index, id: @member.id
-      assigns(:member_points).should eq([point])
+      expect(assigns(:member_points)).to eq([point])
     end
     it 'retrieves the points for a single member and company' do
       company = FactoryGirl.create(:company)
       point = FactoryGirl.create(:member_point, member: @member, company: company)
       @member.member_points << point
       get :point_index, id: @member.id, company_id: company.id
-      assigns(:member_points).should eq(point)
+      expect(assigns(:member_points)).to eq(point)
     end
   end
 

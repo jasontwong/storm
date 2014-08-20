@@ -20,12 +20,12 @@ require 'rails_helper'
 
 describe SurveyQuestionCategoriesController do
 
-  # This should return the minimal set of attributes required to create a valid
+  # This to return the minimal set of attributes required to create a valid
   # SurveyQuestionCategory. As you add validations to SurveyQuestionCategory, be sure to
   # adjust the attributes here as well.
   let(:valid_attributes) { {  } }
 
-  # This should return the minimal set of values that should be in the session
+  # This to return the minimal set of values that to be in the session
   # in order to pass any filters (e.g. authentication) defined in
   # SurveyQuestionCategoriesController. Be sure to keep this updated too.
   let(:valid_session) { {} }
@@ -34,7 +34,7 @@ describe SurveyQuestionCategoriesController do
     it "assigns all survey_question_categories as @survey_question_categories" do
       survey_question_category = SurveyQuestionCategory.create! valid_attributes
       get :index, {}, valid_session
-      assigns(:survey_question_categories).should eq([survey_question_category])
+      assigns(:survey_question_categories).to eq([survey_question_category])
     end
   end
 
@@ -42,14 +42,14 @@ describe SurveyQuestionCategoriesController do
     it "assigns the requested survey_question_category as @survey_question_category" do
       survey_question_category = SurveyQuestionCategory.create! valid_attributes
       get :show, {:id => survey_question_category.to_param}, valid_session
-      assigns(:survey_question_category).should eq(survey_question_category)
+      assigns(:survey_question_category).to eq(survey_question_category)
     end
   end
 
   describe "GET new" do
     it "assigns a new survey_question_category as @survey_question_category" do
       get :new, {}, valid_session
-      assigns(:survey_question_category).should be_a_new(SurveyQuestionCategory)
+      assigns(:survey_question_category).to be_a_new(SurveyQuestionCategory)
     end
   end
 
@@ -57,7 +57,7 @@ describe SurveyQuestionCategoriesController do
     it "assigns the requested survey_question_category as @survey_question_category" do
       survey_question_category = SurveyQuestionCategory.create! valid_attributes
       get :edit, {:id => survey_question_category.to_param}, valid_session
-      assigns(:survey_question_category).should eq(survey_question_category)
+      assigns(:survey_question_category).to eq(survey_question_category)
     end
   end
 
@@ -71,13 +71,13 @@ describe SurveyQuestionCategoriesController do
 
       it "assigns a newly created survey_question_category as @survey_question_category" do
         post :create, {:survey_question_category => valid_attributes}, valid_session
-        assigns(:survey_question_category).should be_a(SurveyQuestionCategory)
-        assigns(:survey_question_category).should be_persisted
+        assigns(:survey_question_category).to be_a(SurveyQuestionCategory)
+        assigns(:survey_question_category).to be_persisted
       end
 
       it "redirects to the created survey_question_category" do
         post :create, {:survey_question_category => valid_attributes}, valid_session
-        response.should redirect_to(SurveyQuestionCategory.last)
+        response.to redirect_to(SurveyQuestionCategory.last)
       end
     end
 
@@ -86,14 +86,14 @@ describe SurveyQuestionCategoriesController do
         # Trigger the behavior that occurs when invalid params are submitted
         SurveyQuestionCategory.any_instance.stub(:save).and_return(false)
         post :create, {:survey_question_category => {  }}, valid_session
-        assigns(:survey_question_category).should be_a_new(SurveyQuestionCategory)
+        assigns(:survey_question_category).to be_a_new(SurveyQuestionCategory)
       end
 
       it "re-renders the 'new' template" do
         # Trigger the behavior that occurs when invalid params are submitted
         SurveyQuestionCategory.any_instance.stub(:save).and_return(false)
         post :create, {:survey_question_category => {  }}, valid_session
-        response.should render_template("new")
+        response.to render_template("new")
       end
     end
   end
@@ -106,20 +106,20 @@ describe SurveyQuestionCategoriesController do
         # specifies that the SurveyQuestionCategory created on the previous line
         # receives the :update_attributes message with whatever params are
         # submitted in the request.
-        SurveyQuestionCategory.any_instance.should_receive(:update_attributes).with({ "these" => "params" })
+        SurveyQuestionCategory.any_instance.to_receive(:update_attributes).with({ "these" => "params" })
         put :update, {:id => survey_question_category.to_param, :survey_question_category => { "these" => "params" }}, valid_session
       end
 
       it "assigns the requested survey_question_category as @survey_question_category" do
         survey_question_category = SurveyQuestionCategory.create! valid_attributes
         put :update, {:id => survey_question_category.to_param, :survey_question_category => valid_attributes}, valid_session
-        assigns(:survey_question_category).should eq(survey_question_category)
+        assigns(:survey_question_category).to eq(survey_question_category)
       end
 
       it "redirects to the survey_question_category" do
         survey_question_category = SurveyQuestionCategory.create! valid_attributes
         put :update, {:id => survey_question_category.to_param, :survey_question_category => valid_attributes}, valid_session
-        response.should redirect_to(survey_question_category)
+        response.to redirect_to(survey_question_category)
       end
     end
 
@@ -129,7 +129,7 @@ describe SurveyQuestionCategoriesController do
         # Trigger the behavior that occurs when invalid params are submitted
         SurveyQuestionCategory.any_instance.stub(:save).and_return(false)
         put :update, {:id => survey_question_category.to_param, :survey_question_category => {  }}, valid_session
-        assigns(:survey_question_category).should eq(survey_question_category)
+        assigns(:survey_question_category).to eq(survey_question_category)
       end
 
       it "re-renders the 'edit' template" do
@@ -137,7 +137,7 @@ describe SurveyQuestionCategoriesController do
         # Trigger the behavior that occurs when invalid params are submitted
         SurveyQuestionCategory.any_instance.stub(:save).and_return(false)
         put :update, {:id => survey_question_category.to_param, :survey_question_category => {  }}, valid_session
-        response.should render_template("edit")
+        response.to render_template("edit")
       end
     end
   end
@@ -153,7 +153,7 @@ describe SurveyQuestionCategoriesController do
     it "redirects to the survey_question_categories list" do
       survey_question_category = SurveyQuestionCategory.create! valid_attributes
       delete :destroy, {:id => survey_question_category.to_param}, valid_session
-      response.should redirect_to(survey_question_categories_url)
+      response.to redirect_to(survey_question_categories_url)
     end
   end
 

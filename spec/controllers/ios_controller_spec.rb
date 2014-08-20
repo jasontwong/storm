@@ -1,5 +1,5 @@
 require 'rails_helper'
 
-describe IosController do
+describe IosController, type: :controller do
 
 end
