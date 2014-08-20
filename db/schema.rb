@@ -15,18 +15,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  create_table "client_groups_client_permissions", id: false, force: true do |t|
-    t.integer "client_group_id"
-    t.integer "client_permission_id"
-  end
-
-  create_table "client_permissions_clients", id: false, force: true do |t|
-    t.integer "client_id"
-    t.integer "client_permission_id"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
   end
 
   create_table "clients", force: true do |t|
@@ -37,8 +27,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "name"
     t.string   "salt"
     t.boolean  "active"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
     t.string   "temp_password"
     t.boolean  "tos"
   end
@@ -50,8 +40,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
 
   create_table "codes", force: true do |t|
     t.string   "qr"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
     t.integer  "used"
     t.boolean  "active"
     t.datetime "last_used_time"
@@ -68,8 +58,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.text     "logo"
     t.string   "location"
     t.string   "phone"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
     t.integer  "survey_question_limit"
     t.text     "html"
     t.integer  "worth_type",            limit: 1
@@ -86,8 +76,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "answer"
     t.boolean  "completed"
     t.datetime "completed_time"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
   end
 
   create_table "member_attributes", force: true do |t|
@@ -102,8 +92,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.decimal  "points",       precision: 10, scale: 0
     t.decimal  "total_points", precision: 10, scale: 0
     t.datetime "last_earned"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
   end
 
   create_table "member_rewards", force: true do |t|
@@ -116,17 +106,18 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "code"
     t.binary   "bcode"
     t.datetime "redeemed_time"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
   end
 
   create_table "member_survey_answers", force: true do |t|
     t.integer  "member_survey_id"
     t.string   "question"
     t.string   "answer"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",         null: false
+    t.datetime "updated_at",         null: false
     t.integer  "survey_question_id"
+    t.integer  "product_id"
   end
 
   create_table "member_surveys", force: true do |t|
@@ -134,8 +125,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.integer  "member_id"
     t.integer  "company_id"
     t.integer  "store_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",                              null: false
+    t.datetime "updated_at",                              null: false
     t.boolean  "completed"
     t.datetime "completed_time"
     t.text     "comments"
@@ -149,8 +140,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "fb_username"
     t.string   "fb_password"
     t.boolean  "active",                         default: true
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",                                    null: false
+    t.datetime "updated_at",                                    null: false
     t.string   "other_id"
     t.string   "temp_pass"
     t.date     "temp_pass_expiration"
@@ -165,8 +156,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.datetime "starts"
     t.datetime "expires"
     t.integer  "uses_left"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
     t.text     "images"
   end
 
@@ -184,8 +175,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "phone"
     t.string   "latitude"
     t.string   "longitude"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
     t.integer  "receipt_type"
     t.string   "full_address"
   end
@@ -199,8 +190,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
 
   create_table "survey_question_categories", force: true do |t|
     t.string   "name"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.integer  "parent_id"
   end
 
@@ -209,8 +200,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "answer_type"
     t.text     "answer_meta"
     t.boolean  "active"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
     t.integer  "company_id"
     t.boolean  "dynamic"
     t.text     "dynamic_meta"
@@ -227,8 +218,8 @@ ActiveRecord::Schema.define(version: 20140820022437) do
     t.string   "title"
     t.string   "description"
     t.boolean  "default"
-    t.datetime "created_at"
-    t.datetime "updated_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
   end
 
 end
