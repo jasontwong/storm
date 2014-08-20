@@ -5,7 +5,7 @@ describe Member do
     expect(FactoryGirl.build(:member)).to be_valid
   end
   it 'requires an email' do
-    expect(FactoryGirl.build(:member, email: nil)).to be_valid
+    expect(FactoryGirl.build(:member, email: nil)).not_to be_valid
   end
   it 'requires email to be unique' do
     member1 = FactoryGirl.create(:member)
