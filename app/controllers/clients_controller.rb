@@ -37,7 +37,7 @@ class ClientsController < ApplicationController
   # POST /clients
   # POST /clients.json
   def create
-    @client = Client.new(params[:client])
+    @client = Client.new(client_params)
 
     @client.stores = Store.where(id: params[:store_ids]) if params[:store_ids].present?
 
@@ -166,7 +166,7 @@ class ClientsController < ApplicationController
   private
     # {{{ def client_params
     def client_params
-      params.require(:client).permit(:name, :active)
+      params.require(:client).permit(:name, :active, :email, :password, :company_id, :salt, :tos)
     end
 
     # }}}
