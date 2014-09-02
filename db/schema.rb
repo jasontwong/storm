@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140820194049) do
+ActiveRecord::Schema.define(version: 20140902171423) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
@@ -158,6 +158,12 @@ ActiveRecord::Schema.define(version: 20140820194049) do
   end
 
   add_index "rewards", ["company_id"], name: "index_rewards_on_company_id", using: :btree
+
+  create_table "store_groups", force: true do |t|
+    t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "stores", force: true do |t|
     t.integer  "company_id"
