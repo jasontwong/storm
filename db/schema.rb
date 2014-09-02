@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140902172522) do
+ActiveRecord::Schema.define(version: 20140902173024) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
@@ -88,9 +88,9 @@ ActiveRecord::Schema.define(version: 20140902172522) do
 
   create_table "member_points", force: true do |t|
     t.integer  "member_id"
-    t.integer  "company_id"
-    t.decimal  "points",       precision: 10, scale: 0
-    t.decimal  "total_points", precision: 10, scale: 0
+    t.integer  "store_group_id"
+    t.decimal  "points",         precision: 10, scale: 0
+    t.decimal  "total_points",   precision: 10, scale: 0
     t.datetime "last_earned"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -145,7 +145,7 @@ ActiveRecord::Schema.define(version: 20140902172522) do
   end
 
   create_table "rewards", force: true do |t|
-    t.integer  "company_id"
+    t.integer  "store_group_id"
     t.string   "title"
     t.string   "description"
     t.integer  "cost"
@@ -157,7 +157,7 @@ ActiveRecord::Schema.define(version: 20140902172522) do
     t.text     "images"
   end
 
-  add_index "rewards", ["company_id"], name: "index_rewards_on_company_id", using: :btree
+  add_index "rewards", ["store_group_id"], name: "index_rewards_on_store_group_id", using: :btree
 
   create_table "store_groups", force: true do |t|
     t.string   "name"
