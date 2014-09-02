@@ -18,10 +18,12 @@ class Store < ActiveRecord::Base
   validates :name, presence: true
   validates :zip, presence: true
   validates :phone, presence: true
+  validates :store_group_id, presence: true
 
   before_create :make_full_address
   before_save :make_full_address
 
+  # {{{ def make_full_address
   def make_full_address
     location = self.address1
     if self.address2 && self.address2.length > 0
@@ -38,6 +40,8 @@ class Store < ActiveRecord::Base
     self.full_address = location
   end
 
+  # }}}
+  # {{{ def parse_receipt(text, order)
   def parse_receipt(text, order)
     data = {
       items: []
@@ -85,5 +89,6 @@ class Store < ActiveRecord::Base
     end
 
   end
-
+  
+  # }}}
 end

@@ -9,6 +9,9 @@ class RemoveExtraCrap < ActiveRecord::Migration
     if ActiveRecord::Base.connection.table_exists? :client_groups_permissions
       drop_table :client_groups_permissions
     end
+    if ActiveRecord::Base.connection.table_exists? :client_groups_client_permissions
+      drop_table :client_groups_client_permissions
+    end
     if ActiveRecord::Base.connection.table_exists? :client_permissions
       drop_table :client_permissions
     end
