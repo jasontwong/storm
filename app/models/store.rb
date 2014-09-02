@@ -2,6 +2,7 @@ class Store < ActiveRecord::Base
   RECEIPT_TYPE_WENDYS_1 = 1
 
   belongs_to :company, inverse_of: :stores
+  belongs_to :store_group, inverse_of: :stores
   has_and_belongs_to_many :clients
   has_and_belongs_to_many :surveys
   has_many :codes, inverse_of: :store
