@@ -64,7 +64,7 @@ class RewardsController < ApplicationController
   private
     # {{{ def reward_params
     def reward_params
-      params.require(:reward).permit(:company_id, :title, :description, :cost, :images)
+      params.require(:reward).permit(:store_group_id, :title, :description, :cost, :images)
     end
 
     # }}}
