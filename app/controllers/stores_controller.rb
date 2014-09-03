@@ -69,7 +69,7 @@ class StoresController < ApplicationController
   private
     # {{{ def store_params
     def store_params
-      params.require(:store).permit(:company_id, :name, :phone, :address1, :address2, :city, :state, :country, :zip)
+      params.require(:store).permit(:company_id, :name, :phone, :address1, :address2, :city, :state, :country, :zip, :store_group_id)
     end
 
     # }}}

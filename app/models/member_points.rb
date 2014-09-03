@@ -1,8 +1,8 @@
 class MemberPoints < ActiveRecord::Base
   belongs_to :member, inverse_of: :member_points
-  belongs_to :company, inverse_of: :member_points
+  belongs_to :store_group, inverse_of: :member_points
 
-  validates :company_id, presence: true
+  validates :store_group_id, presence: true
   validates :member_id, presence: true
 
   after_initialize :init
