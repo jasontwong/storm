@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   post 'clients/pass_reset' => 'clients#pass_reset'
   post 'clients/pass_generate' => 'clients#pass_generate'
   post 'ios/check_version' => 'ios#check_version'
+  get 'ios/:member_id/incomplete_surveys' => 'ios#incomplete_surveys'
   get 'companies/create_payload' => 'companies#create_payload'
 
   resources :survey_question_categories, except: [:new, :edit]
