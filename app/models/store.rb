@@ -19,6 +19,7 @@ class Store < ActiveRecord::Base
   validates :zip, presence: true
   validates :phone, presence: true
   validates :store_group_id, presence: true
+  validates :active, inclusion: { in: [true, false] }
 
   before_create :make_full_address
   before_save :make_full_address

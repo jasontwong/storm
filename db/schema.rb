@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140902173024) do
+ActiveRecord::Schema.define(version: 20140904185001) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
@@ -177,11 +177,12 @@ ActiveRecord::Schema.define(version: 20140902173024) do
     t.string   "phone"
     t.string   "latitude"
     t.string   "longitude"
-    t.datetime "created_at",     null: false
-    t.datetime "updated_at",     null: false
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
     t.integer  "receipt_type"
     t.string   "full_address"
     t.integer  "store_group_id"
+    t.boolean  "active",         default: false
   end
 
   add_index "stores", ["company_id"], name: "index_stores_on_company_id", using: :btree
