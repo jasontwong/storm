@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140908185825) do
+ActiveRecord::Schema.define(version: 20140908203407) do
 
   create_table "api_keys", force: true do |t|
     t.string   "access_token"
@@ -99,7 +99,10 @@ ActiveRecord::Schema.define(version: 20140908185825) do
   create_table "member_profiles", force: true do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "member_id"
   end
+
+  add_index "member_profiles", ["member_id"], name: "index_member_profiles_on_member_id", unique: true, using: :btree
 
   create_table "member_rewards", force: true do |t|
     t.integer  "member_id"
