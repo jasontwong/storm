@@ -23,8 +23,7 @@ class StatsController < ApplicationController
       performance: {
         dates: [],
         points: [],
-      },
-      companies: []
+      }
     }
 
     @questions = {}
@@ -34,12 +33,6 @@ class StatsController < ApplicationController
     surveys.each do |survey|
       @user_ids << survey.member_id
       total_points = 0
-      has_rewards = false
-      company = survey.company
-      survey_data[:companies].each do |comp|
-        has_rewards = company[:id] == comp[:id]
-        break if has_rewards
-      end
       total_qs = 0
       survey.member_survey_answers.each do |answer|
         @questions[answer.question] ||= { points: [] }
@@ -53,13 +46,19 @@ class StatsController < ApplicationController
         total_points += (points * 2) if @questions[answer.question][:type] == 'star_rating'
         @questions[answer.question][:points] << points
       end
-      @performance[survey.created_at] ||= []
-      @performance[survey.created_at] << total_points / total_qs
+      if total_qs > 0
+        @performance[survey.created_at] ||= []
+        @performance[survey.created_at] << total_points / total_qs
+      end
     end
 
     @performance.sort_by { |date, points| date }.each do |date, points|
       survey_data[:performance][:dates] << date
-      survey_data[:performance][:points] << points.inject(0.0) { |sum, el| sum + el } / points.size
+      if points.size > 0
+        survey_data[:performance][:points] << points.inject(0.0) { |sum, el| sum + el } / points.size
+      else
+        survey_data[:performance][:points] << 0
+      end
     end
 
     @questions.each do |q, data|
@@ -73,6 +72,8 @@ class StatsController < ApplicationController
     end
 
     survey_data[:members][:count] = @user_ids.uniq.length
+
+    puts survey_data.inspect
 
     render json: survey_data
   end
