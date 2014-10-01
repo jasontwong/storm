@@ -1,5 +1,7 @@
 class StatsController < ApplicationController
   # {{{ def analytics
+  # GET /analytics
+  # GET /analytics.json
   def analytics
     store_ids = eval(params[:store_id])
     params[:num] ||= "0"
@@ -79,6 +81,8 @@ class StatsController < ApplicationController
   end
   # }}}
   # {{{ def surveys
+  # GET /surveys
+  # GET /surveys.json
   def surveys
     params[:limit] ||= 20
     params[:offset] ||= 0
@@ -129,6 +133,8 @@ class StatsController < ApplicationController
   end
   # }}}
   # {{{ def survey
+  # GET /survey
+  # GET /survey.json
   def survey
     survey = MemberSurvey.find(params[:id])
     survey ||= {}
