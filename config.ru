@@ -1,4 +1,3 @@
-# This file is used by Rack-based servers to start the application.
+Dir["./apps/*.rb"].each {|file| require file }
 
-require ::File.expand_path('../config/environment',  __FILE__)
-run DataApi::Application
+map('/v0') { run Api::V0 }
