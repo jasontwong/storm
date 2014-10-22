@@ -22,7 +22,11 @@ module Api
     # {{{ before xhr: true, provides: :json do
     before xhr: true, provides: :json do
       keys = [ 'apikey' ]
-      error 401 unless keys.include? request.env['HTTP_AUTHORIZATION']
+      unless keys.include? request.env['HTTP_AUTHORIZATION']
+        error 401 do
+          { error: 'Invalid API Key' }.to_json
+        end
+      end
     end
 
     # }}}
