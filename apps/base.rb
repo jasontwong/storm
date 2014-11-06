@@ -16,6 +16,10 @@ module Api
   # }}}
   # {{{ class Base < Sinatra::Base
   class Base < Sinatra::Base
+    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i
+    # VALID_PASS_REGEX = /\A.*(?=.{10,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=]).*\z/
+    VALID_PASS_REGEX = /\A.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*\z/
+    
     # {{{ options
     # {{{ dev
     configure :development, :test do
