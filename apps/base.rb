@@ -2,7 +2,6 @@ require 'sinatra/base'
 
 module Api
   class Base < Sinatra::Base
-    set(:xhr) { |xhr| condition { request.xhr? == xhr } }
     # {{{ options
     # {{{ dev
     configure :development, :test do
@@ -19,13 +18,11 @@ module Api
 
     # }}}
     # }}}
-    # {{{ before xhr: true, provides: :json do
-    before xhr: true, provides: :json do
+    # {{{ before provides: :json do
+    before provides: :json do
       keys = [ 'apikey' ]
       unless keys.include? request.env['HTTP_AUTHORIZATION']
-        error 401 do
-          { error: 'Invalid API Key' }.to_json
-        end
+        halt 401, { error: 'Invalid API Key' }.to_json
       end
     end
 

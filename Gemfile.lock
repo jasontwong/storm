@@ -6,6 +6,7 @@ GEM
     dotenv (0.11.1)
       dotenv-deployment (~> 0.0.2)
     dotenv-deployment (0.0.2)
+    excon (0.41.0)
     faraday (0.9.0)
       multipart-post (>= 1.2, < 3)
     ffi (1.9.5)
@@ -18,6 +19,7 @@ GEM
       celluloid (>= 0.15.2)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
+    multi_json (1.10.1)
     multipart-post (2.0.0)
     net-http-persistent (2.9.4)
     orchestrate (0.9.0)
@@ -49,7 +51,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  excon (~> 0.4)
   foreman (~> 0.75)
+  multi_json (~> 1.10)
   orchestrate (~> 0.9)
   rerun (~> 0.10)
   sinatra (~> 1.4)
