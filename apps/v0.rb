@@ -67,10 +67,10 @@ module Api
           error: error
         }.to_json
       else
-        status 200
         data = member.value
         data[:email] = member.key
         data.delete_if { |key, value| ['password', 'salt'].include? key }
+        status 200
         body data.to_json
       end
     end
