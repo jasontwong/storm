@@ -24,8 +24,8 @@ module Storm
 
     # }}}
     # }}}
-    # {{{ before provides: :json do
-    before provides: :json do
+    # {{{ before do
+    before do
       keys = [ 'apikey' ]
       unless keys.include? request.env['HTTP_AUTHORIZATION']
         halt 401, { error: 'Invalid API Key' }.to_json
@@ -33,8 +33,8 @@ module Storm
     end
 
     # }}}
-    # {{{ error Storm::Error do
-    error Storm::Error do
+    # {{{ error Storm::Error, provides: :json do
+    error Storm::Error, provides: :json do
       e = env['sinatra.error']
       err = {
         message: e.message
