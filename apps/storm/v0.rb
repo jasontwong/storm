@@ -176,7 +176,10 @@ module Storm
       end
 
       status 200
-      response = { success: true }
+      response = { 
+        success: true,
+        fb_login: !member[:fb_id].nil?
+      }
       body response.to_json
     end
 
