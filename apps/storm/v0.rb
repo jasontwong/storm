@@ -204,9 +204,10 @@ module Storm
       }
       data[:items] = response.results.collect do |store|
         s = store['value']
+        s[:key] = store['path']['key']
         s['_links'] = {
-          rewards: "/#{self.class.name.demodulize.downcase}/rewards?store_key=#{store['path']['key']}",
-          points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{store['path']['key']}&email=",
+          rewards: "/#{self.class.name.demodulize.downcase}/rewards?store_key=#{s[:key]}",
+          points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{s[:key]}&email=",
         }
         s
       end
