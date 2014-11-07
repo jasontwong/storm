@@ -153,8 +153,8 @@ module Storm
     end
 
     # }}}
-    # {{{ get '/members/forget', provides: :json do
-    get '/members/forget', provides: :json do
+    # {{{ post '/members/forgot_pass', provides: :json do
+    post '/members/forgot_pass', provides: :json do
       unless params[:email].blank?
         # clean and validate email
         params[:email].strip!
