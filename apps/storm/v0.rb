@@ -203,7 +203,12 @@ module Storm
         total_count: response.total_count
       }
       data[:items] = response.results.collect do |store|
-        store['value']
+        s = store['value']
+        s['_links'] = {
+          rewards: "/#{self.class.name.demodulize.downcase}/rewards?store_key=#{store['path']['key']}",
+          points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{store['path']['key']}&email=",
+        }
+        s
       end
       
       status 200
