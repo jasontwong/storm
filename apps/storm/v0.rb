@@ -308,10 +308,7 @@ module Storm
           end
         end
       rescue Orchestrate::API::BaseError => e
-        case e.class.code
-        else
-          raise Storm::Error.new(422, 42203), e.message
-        end
+        raise Storm::Error.new(422, 42203), e.message
       end
 
       status 200
