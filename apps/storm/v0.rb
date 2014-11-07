@@ -165,7 +165,7 @@ module Storm
           member = @O_APP[:members][params[:email]]
           raise Storm::Error.new(404, 40401), 'Member not found' if member.nil?
           member[:temp_pass] = SecureRandom.hex
-          member[:temp_expiry] = Orchestrate::API::Helpers(Time.now + 1.day)
+          member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
           member.save!
         rescue Orchestrate::API::BaseError => e
           raise Storm::Error.new(422, 42202), msg
