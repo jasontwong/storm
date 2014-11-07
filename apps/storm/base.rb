@@ -46,6 +46,17 @@ module Storm
     end
 
     # }}}
+    # {{{ not_found do
+    not_found do
+      response.headers['Content-Type'] = 'application/json'
+      { 
+        error: {
+          message: 'Invalid endpoint'
+        }
+      }.to_json
+    end
+
+    # }}}
   end
 
 end
