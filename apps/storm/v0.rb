@@ -3,8 +3,8 @@ require 'multi_json'
 require 'excon'
 require 'securerandom'
 
-module Api
-  class V0 < Api::Base
+module Storm
+  class V0 < Storm::Base
     # {{{ before provides: :json do
     before provides: :json do
       halt 426 if !request.env['HTTP_X_IOS_SDK_VERSION'].nil? && request.env['HTTP_X_IOS_SDK_VERSION'].to_f < 1.7
@@ -72,7 +72,7 @@ module Api
       end
 
       unless error[:message].blank?
-        raise Api::Error.new(error[:status], error[:code]), error[:message]
+        raise Storm::Error.new(error[:status], error[:code]), error[:message]
       else
         data = member.value
         data[:email] = member.key
@@ -89,15 +89,15 @@ module Api
         # clean and validate email
         params[:email].strip!
         params[:email].downcase!
-        raise Api::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
+        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
 
         # check for type of login
         unless params[:fb_id].blank?
-          raise Api::Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+          raise Storm::Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
           params[:password] = SecureRandom.hex
         else
           # check for password strength
-          raise Api::Error.new(422, 42201), 'Password is not valid' unless Api::Base::VALID_PASS_REGEX.match(params[:password])
+          raise Storm::Error.new(422, 42201), 'Password is not valid' unless Api::Base::VALID_PASS_REGEX.match(params[:password])
         end
 
         # validate attributes key
@@ -134,11 +134,11 @@ module Api
           else
             msg = e.message
           end
-          raise Api::Error.new(422, 42202), msg
+          raise Storm::Error.new(422, 42202), msg
         end
 
       else
-        raise Api::Error.new(400, 40001), 'Missing required parameter: email'
+        raise Storm::Error.new(400, 40001), 'Missing required parameter: email'
       end
 
       data = member.value

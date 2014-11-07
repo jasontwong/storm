@@ -1,19 +1,6 @@
 require 'sinatra/base'
 
-module Api
-  # {{{ class Error < StandardError
-  class Error < StandardError
-    attr_reader :code, :status
-    # {{{ def initialize(status, code = nil)
-    def initialize(status, code = nil)
-      @status = status if status.is_a? Integer
-      @code = code if code.is_a? Integer
-    end
-
-    # }}}
-  end
-
-  # }}}
+module Storm
   # {{{ class Base < Sinatra::Base
   class Base < Sinatra::Base
     VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z]+)*\.[a-z]+\z/i
@@ -46,8 +33,8 @@ module Api
     end
 
     # }}}
-    # {{{ error Api::Error do
-    error Api::Error do
+    # {{{ error Storm::Error do
+    error Storm::Error do
       e = env['sinatra.error']
       err = {
         message: e.message
