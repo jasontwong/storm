@@ -169,7 +169,7 @@ module Storm
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
         member.save!
       rescue Orchestrate::API::BaseError => e
-        raise Storm::Error.new(422, 42202), msg
+        raise Storm::Error.new(422, 42202), e.message
       end
 
       status 200
@@ -212,6 +212,39 @@ module Storm
         s
       end
       
+      status 200
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ get '/rewards', provides: :json do
+    get '/rewards', provides: :json do
+      # check for required parameters
+      raise Storm::Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
+
+      data = []
+
+      begin
+        response = @O_CLIENT.get_relations(:stores, params[:store_key], :rewards)
+        loop do
+          break if response.nil?
+          response.results.each do |reward|
+            r = reward['value']
+            r[:key] = reward['path']['key']
+            data << r
+          end
+          response = response.next_results
+        end
+      rescue Orchestrate::API::BaseError => e
+        case e.class.code
+        when 'items_not_found'
+          raise Storm::Error.new(404, 40401), e.message
+        else
+          raise Storm::Error.new(422, 42201), e.message
+        end
+      end
+
+      data.sort! { |a,b| a['cost'] <=> b['cost'] }
       status 200
       body data.to_json
     end
