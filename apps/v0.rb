@@ -4,6 +4,17 @@ require 'multi_json'
 require 'excon'
 require 'securerandom'
 
+# {{{ class Object
+class Object
+  # {{{ def blank?
+  def blank?
+    respond_to?(:empty?) ? empty? : !self
+  end
+
+  # }}}
+end
+
+# }}}
 # {{{ class String
 class String
   # {{{ def numeric?
