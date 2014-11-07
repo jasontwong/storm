@@ -93,7 +93,7 @@ module Storm
         # clean and validate email
         params[:email].strip!
         params[:email].downcase!
-        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
+        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Storm::VALID_EMAIL_REGEX.match(params[:email])
 
         # check for type of login
         unless params[:fb_id].blank?
@@ -101,7 +101,7 @@ module Storm
           params[:password] = SecureRandom.hex
         else
           # check for password strength
-          raise Storm::Error.new(422, 42201), 'Password is not valid' unless Api::Base::VALID_PASS_REGEX.match(params[:password])
+          raise Storm::Error.new(422, 42201), 'Password is not valid' unless Storm::VALID_PASS_REGEX.match(params[:password])
         end
 
         # validate attributes key
@@ -159,7 +159,7 @@ module Storm
         # clean and validate email
         params[:email].strip!
         params[:email].downcase!
-        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
+        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Storm::VALID_EMAIL_REGEX.match(params[:email])
 
         begin
           member = @O_APP[:members][params[:email]]
