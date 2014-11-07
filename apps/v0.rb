@@ -12,6 +12,12 @@ class String
   end
 
   # }}}
+  # {{{ def blank?
+  def blank?
+    self !~ /\S/
+  end
+
+  # }}}
 end
 
 # }}}
@@ -33,7 +39,7 @@ module Api
     # {{{ post '/members/login', provides: :json do
     post '/members/login', provides: :json do
       error = { status: 401 }
-      if params[:fb_id]
+      if !params[:fb_id].blank?
         if params[:fb_id].numeric?
           response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
           unless response.results.empty?
@@ -47,7 +53,7 @@ module Api
           error[:code] = 40002
           error[:message] = 'Facebook ID is not a number'
         end
-      elsif params[:member_id]
+      elsif !params[:member_id].blank?
         if params[:member_id].numeric?
           response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
           unless response.results.empty?
@@ -61,7 +67,7 @@ module Api
           error[:code] = 40003
           error[:message] = 'Member ID is not a number'
         end
-      elsif params[:email] && params[:password]
+      elsif !params[:email].blank? && !params[:password].blank?
         member = @O_APP[:members][params[:email]]
         if member
           password = Digest::SHA256.new
@@ -83,7 +89,7 @@ module Api
         error[:message] = 'Missing parameters'
       end
 
-      if error[:message]
+      unless error[:message].blank?
         raise Api::Error.new(error[:status], error[:code]), error[:message]
       else
         data = member.value
@@ -97,14 +103,14 @@ module Api
     # }}}
     # {{{ post '/members/register', provides: :json do
     post '/members/register', provides: :json do
-      if params[:email]
+      unless params[:email].blank?
         # clean and validate email
         params[:email].strip!
         params[:email].downcase!
         raise Api::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
 
         # check for type of login
-        if params[:fb_id]
+        unless params[:fb_id].blank?
           raise Api::Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
           params[:password] = SecureRandom.hex
         else
@@ -113,7 +119,7 @@ module Api
         end
 
         # validate attributes key
-        if params[:attributes] && !params[:attributes].empty?
+        unless params[:attributes].blank?
           unless params[:attributes].is_a? Hash
             begin
               params[:attributes] = JSON.parse(params[:attributes], symbolize_names: true)
@@ -140,7 +146,13 @@ module Api
         begin
           member = @O_APP[:members].set(params[:email], member_data, false)
         rescue Orchestrate::API::BaseError => e
-          raise Api::Error.new(422, 42202), e.message
+          case e.class.code
+          when 'item_already_present'
+            msg = 'Member email already exists'
+          else
+            msg = e.message
+          end
+          raise Api::Error.new(422, 42202), msg
         end
 
       else
