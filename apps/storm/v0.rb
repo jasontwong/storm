@@ -2,6 +2,7 @@ require 'orchestrate'
 require 'multi_json'
 require 'excon'
 require 'securerandom'
+require 'active_support/all'
 
 module Storm
   class V0 < Storm::Base
@@ -27,7 +28,8 @@ module Storm
           unless response.results.empty?
             member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
           else
-            error[:code] = 40100
+            error[:status] = 404
+            error[:code] = 40400
             error[:message] = 'Facebook ID not found'
           end
         else
@@ -41,7 +43,8 @@ module Storm
           unless response.results.empty?
             member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
           else
-            error[:code] = 40101
+            error[:status] = 404
+            error[:code] = 40401
             error[:message] = 'Member not found'
           end
         else
@@ -62,7 +65,8 @@ module Storm
             error[:message] = 'Password incorrect'
           end
         else
-          error[:code] = 40101
+          error[:status] = 404
+          error[:code] = 40401
           error[:message] = 'Member not found'
         end
       else
@@ -144,8 +148,36 @@ module Storm
       data = member.value
       data[:email] = member.key
       data.delete_if { |key, value| ['password', 'salt'].include? key }
-      status 200
+      status 201
       body data.to_json
+    end
+
+    # }}}
+    # {{{ get '/members/forget', provides: :json do
+    get '/members/forget', provides: :json do
+      unless params[:email].blank?
+        # clean and validate email
+        params[:email].strip!
+        params[:email].downcase!
+        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Api::Base::VALID_EMAIL_REGEX.match(params[:email])
+
+        begin
+          member = @O_APP[:members][params[:email]]
+          raise Storm::Error.new(404, 40401), 'Member not found' if member.nil?
+          member[:temp_pass] = SecureRandom.hex
+          member[:temp_expiry] = Orchestrate::API::Helpers(Time.now + 1.day)
+          member.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Storm::Error.new(422, 42202), msg
+        end
+
+      else
+        raise Storm::Error.new(400, 40001), 'Missing required parameter: email'
+      end
+
+      status 200
+      response = { success: true }
+      body response.to_json
     end
 
     # }}}

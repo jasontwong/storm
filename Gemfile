@@ -6,6 +6,7 @@ gem 'unicorn', '~> 4.8'
 gem 'orchestrate', '~> 0.9'
 gem 'excon', '~> 0.4'
 gem 'multi_json', '~> 1.10'
+gem 'activesupport', '~> 4.1'
 
 group :development, :test do
   gem 'foreman', '~> 0.75'
