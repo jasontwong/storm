@@ -23,6 +23,7 @@ module Storm
     post '/members/login', provides: :json do
       error = { status: 401 }
       if !params[:fb_id].blank?
+        # FB login
         if params[:fb_id].numeric?
           response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
           unless response.results.empty?
@@ -38,6 +39,7 @@ module Storm
           error[:message] = 'Facebook ID is not a number'
         end
       elsif !params[:member_id].blank?
+        # Login from old version of app
         if params[:member_id].numeric?
           response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
           unless response.results.empty?
@@ -53,6 +55,7 @@ module Storm
           error[:message] = 'Member ID is not a number'
         end
       elsif !params[:email].blank? && !params[:password].blank?
+        # Email/Pass login
         member = @O_APP[:members][params[:email]]
         if member
           password = Digest::SHA256.new
@@ -145,6 +148,9 @@ module Storm
         raise Storm::Error.new(400, 40001), 'Missing required parameter: email'
       end
 
+      # TODO
+      # Send welcome/verification email to member
+      
       data = member.value
       data[:email] = member.key
       data.delete_if { |key, value| ['password', 'salt'].include? key }
@@ -168,6 +174,8 @@ module Storm
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
         member.save!
+        # TODO
+        # Send notification to member
       rescue Orchestrate::API::BaseError => e
         raise Storm::Error.new(422, 42202), e.message
       end
@@ -246,6 +254,68 @@ module Storm
 
       data.sort! { |a,b| a['cost'] <=> b['cost'] }
       status 200
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ post '/rewards', provides: :json do
+    post '/rewards', provides: :json do
+      # check for required parameters
+      raise Storm::Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+      raise Storm::Error.new(400, 40002), 'Missing required parameter: reward_key' if params[:reward_key].blank?
+      raise Storm::Error.new(400, 40003), 'Missing required parameter: store_key' if params[:store_key].blank?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Storm::Error.new(404, 40401), 'Member not found' if member.nil?
+
+      reward = @O_APP[:rewards][params[:reward_key]]
+      raise Storm::Error.new(404, 40402), 'Reward not found' if reward.nil?
+
+      store = @O_APP[:stores][params[:store_key]]
+      raise Storm::Error.new(404, 40403), 'Store not found' if store.nil?
+
+      begin
+        # get the member's points for this store
+        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        options = {
+          limit: 1
+        }
+        response = @O_CLIENT.search(:points, query, options)
+        if response.total_count.nil?
+          # TODO
+          # there is a bug so notify admins
+        else
+          points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
+          if reward[:cost] < points[:current]
+            begin
+              # TODO
+              # redeem reward
+              begin
+                points[:current] -= reward[:cost]
+                points.save!
+              rescue Orchestrate::API::BaseError => e
+                # TODO
+                # unable to subtract points
+              end
+            rescue Orchestrate::API::BaseError => e
+              # unable to redeem reward
+              raise Storm::Error.new(422, 42201), e.message
+            end
+          else
+            # not enough points to redeem
+            raise Storm::Error.new(422, 42202), e.message
+          end
+        end
+      rescue Orchestrate::API::BaseError => e
+        case e.class.code
+        else
+          raise Storm::Error.new(422, 42203), e.message
+        end
+      end
+
+      status 200
+      data = { success: true }
       body data.to_json
     end
 
