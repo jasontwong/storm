@@ -1,37 +1,8 @@
-require 'sinatra/base'
 require 'orchestrate'
 require 'multi_json'
 require 'excon'
 require 'securerandom'
 
-# {{{ class Object
-class Object
-  # {{{ def blank?
-  def blank?
-    respond_to?(:empty?) ? empty? : !self
-  end
-
-  # }}}
-end
-
-# }}}
-# {{{ class String
-class String
-  # {{{ def numeric?
-  def numeric?
-    true if Float(self) rescue false
-  end
-
-  # }}}
-  # {{{ def blank?
-  def blank?
-    self !~ /\S/
-  end
-
-  # }}}
-end
-
-# }}}
 module Api
   class V0 < Api::Base
     # {{{ before provides: :json do
