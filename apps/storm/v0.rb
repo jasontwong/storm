@@ -181,5 +181,35 @@ module Storm
     end
 
     # }}}
+    # {{{ get '/stores', provides: :json do
+    get '/stores', provides: :json do
+      # check for required parameters
+      raise Storm::Error.new(400, 40001), 'Missing required parameter: latitude' if params[:latitude].blank? || !params[:latitude].numeric?
+      raise Storm::Error.new(400, 40002), 'Missing required parameter: longitude' if params[:longitude].blank? || !params[:longitude].numeric?
+      
+      params[:distance] = '1mi' if params[:distance].blank?
+      params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
+      params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
+      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}}"
+      options = {
+        sort: 'location:distance:asc',
+        offset: params[:offset],
+        limit: params[:limit]
+      }
+      response = @O_CLIENT.search(:stores, query, options)
+
+      data = {
+        count: response.count,
+        total_count: response.total_count
+      }
+      data[:items] = response.results.collect do |store|
+        store['value']
+      end
+      
+      status 200
+      body data.to_json
+    end
+
+    # }}}
   end
 end
