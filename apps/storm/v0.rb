@@ -155,24 +155,21 @@ module Storm
     # }}}
     # {{{ post '/members/forgot_pass', provides: :json do
     post '/members/forgot_pass', provides: :json do
-      unless params[:email].blank?
-        # clean and validate email
-        params[:email].strip!
-        params[:email].downcase!
-        raise Storm::Error.new(422, 42201), 'Email is not valid' unless Storm::VALID_EMAIL_REGEX.match(params[:email])
+      raise Storm::Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
 
-        begin
-          member = @O_APP[:members][params[:email]]
-          raise Storm::Error.new(404, 40401), 'Member not found' if member.nil?
-          member[:temp_pass] = SecureRandom.hex
-          member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
-          member.save!
-        rescue Orchestrate::API::BaseError => e
-          raise Storm::Error.new(422, 42202), msg
-        end
+      # clean and validate email
+      params[:email].strip!
+      params[:email].downcase!
+      raise Storm::Error.new(422, 42201), 'Email is not valid' unless Storm::VALID_EMAIL_REGEX.match(params[:email])
 
-      else
-        raise Storm::Error.new(400, 40001), 'Missing required parameter: email'
+      begin
+        member = @O_APP[:members][params[:email]]
+        raise Storm::Error.new(404, 40401), 'Member not found' if member.nil?
+        member[:temp_pass] = SecureRandom.hex
+        member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
+        member.save!
+      rescue Orchestrate::API::BaseError => e
+        raise Storm::Error.new(422, 42202), msg
       end
 
       status 200
