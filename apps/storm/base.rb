@@ -1,7 +1,6 @@
 require 'sinatra/base'
 
 module Storm
-  # {{{ class Base < Sinatra::Base
   class Base < Sinatra::Base
     # {{{ options
     # {{{ dev
@@ -24,7 +23,13 @@ module Storm
     before do
       keys = [ 'apikey' ]
       unless keys.include? request.env['HTTP_AUTHORIZATION']
-        halt 401, { error: 'Invalid API Key' }.to_json
+        halt 401, {
+          'Content-Type' => 'application/json'
+        }, { 
+          error: {
+            message: 'Invalid API Key'
+          }
+        }.to_json
       end
     end
 
@@ -43,5 +48,4 @@ module Storm
     # }}}
   end
 
-  # }}}
 end
