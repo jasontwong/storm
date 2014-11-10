@@ -24,3 +24,6 @@ doc/
 
 # AWS 
 .elasticbeanstalk/
+
+# Figaro
+config/application.yml
