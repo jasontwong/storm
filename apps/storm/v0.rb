@@ -385,8 +385,8 @@ module Storm
 
       # validate params
       store = @O_APP[:stores][params[:store_key]]
-      raise Error.new(404, 40403), 'Store not found' if store.nil?
-      raise Error.new(404, 40405), 'Store found but not active' unless member[:active]
+      raise Error.new(404, 40401), 'Store not found' if store.nil?
+      raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
       begin
         data = []
@@ -398,7 +398,7 @@ module Storm
       rescue Orchestrate::API::BaseError => e
         case e.class.code
         when 'items_not_found'
-          raise Error.new(404, 40401), e.message
+          raise Error.new(404, 40403), e.message
         else
           raise Error.new(422, 42201), e.message
         end
@@ -427,7 +427,7 @@ module Storm
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
-      raise Error.new(404, 40405), 'Store found but not active' unless member[:active]
+      raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
 
       begin
         # get the member's points for this store
