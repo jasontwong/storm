@@ -599,5 +599,18 @@ module Storm
     end
 
     # }}}
+    # {{{ get '/surveys/:key', provides: :json do
+    get '/surveys/:key', provides: :json do
+      # validate params
+      survey = @O_APP[:surveys][params[:key]]
+      raise Error.new(404, 40401), "Survey email not found" if survey.nil?
+
+      data = survey.value
+      data[:key] = survey.key
+      status 200
+      body data.to_json
+    end
+
+    # }}}
   end
 end
