@@ -1,4 +1,5 @@
 require_relative "../lib/core_ext"
+require_relative "storm/helpers"
 require_relative "storm/error"
 require_relative "storm/base"
 require_relative "storm/v0"

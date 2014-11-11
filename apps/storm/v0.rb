@@ -277,7 +277,7 @@ module Storm
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40402), 'Store not found' if store.nil?
-      raise Error.new(404, 40404), 'Store found but not active' unless member[:active]
+      raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
       begin
         # get the member's points for this store
@@ -332,7 +332,7 @@ module Storm
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40402), 'Store not found' if store.nil?
-      raise Error.new(404, 40404), 'Store found but not active' unless member[:active]
+      raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
       begin
         # get the member's points for this store
@@ -341,35 +341,13 @@ module Storm
           limit: 1
         }
         response = @O_CLIENT.search(:points, query, options)
-        unless response.total_count.nil?
+        if response.count > 1
           # TODO
           # There is a bug that allowed two sets of points notify admin
         end
-        if response.results.empty?
-          # we couldn't find points that are associated with this key/member combination
-          point_data = {
-            current: 0,
-            total: 0,
-            member_key: member.key,
-            store_key: store.key
-          }
-          begin
-            @O_CLIENT.post(:points, point_data)
-          rescue Orchestrate::API::BaseError => e
-            # unable to redeem reward
-            raise Error.new(422, 42201), e.message
-          end
-        else
-          begin
-            point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
-            point[:current] += params[:points].to_i
-            point[:total] += params[:points].to_i if params[:points].to_i > 0
-            point.save!
-          rescue Orchestrate::API::BaseError => e
-            # unable to modify points
-            raise Error.new(422, 42202), "Unable to modify points"
-          end
-        end
+
+        Helpers.modify_points(member, store, params[:points].to_i)
+
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -391,8 +369,8 @@ module Storm
       begin
         data = []
         store.relations[:rewards].each do |reward|
-          r = reward['value']
-          r[:key] = reward['path']['key']
+          r = reward.value
+          r[:key] = reward.key
           data << r
         end
       rescue Orchestrate::API::BaseError => e
@@ -459,8 +437,7 @@ module Storm
               path = uri.path.split("/")[2..-1]
               redeem_key = path[1]
               begin
-                points[:current] -= reward[:cost]
-                points.save!
+                Helpers.modify_points(member, store, reward[:cost] * -1)
               rescue Orchestrate::API::BaseError => e
                 # unable to subtract points
                 @O_CLIENT.delete(:redeems, redeem_key, response.ref)
