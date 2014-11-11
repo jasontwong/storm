@@ -544,7 +544,7 @@ module Storm
           offset: offset,
           sort: 'created_at:desc'
         }
-        response = @O_CLIENT.search(:surveys, query, options)
+        response = @O_CLIENT.search(:member_surveys, query, options)
         data = {
           count: response.count,
           total_count: response.total_count || response.count,
@@ -597,7 +597,7 @@ module Storm
           store_key: store.key,
           created_at: Orchestrate::API::Helpers.timestamp(Time.now),
         }
-        response = @O_CLIENT.post(:surveys, data)
+        response = @O_CLIENT.post(:member_surveys, data)
         uri = URI(response.location)
         path = uri.path.split("/")[2..-1]
         data[:key] = path[1]
@@ -613,7 +613,7 @@ module Storm
     # {{{ get '/surveys/:key', provides: :json do
     get '/surveys/:key', provides: :json do
       # validate params
-      survey = @O_APP[:surveys][params[:key]]
+      survey = @O_APP[:member_surveys][params[:key]]
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
 
       data = survey.value
@@ -626,7 +626,7 @@ module Storm
     # {{{ patch '/surveys/:key', provides: :json do
     patch '/surveys/:key', provides: :json do
       # validate params
-      survey = @O_APP[:surveys][params[:key]]
+      survey = @O_APP[:member_surveys][params[:key]]
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
 
       unless params[:completed].blank?
