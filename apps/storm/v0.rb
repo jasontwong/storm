@@ -124,7 +124,7 @@ module Storm
         member_data = {
           salt: SecureRandom.hex,
           active: true,
-          fb_id: params[:fb_id],
+          fb_id: params[:fb_id].to_i,
           attributes: params[:attributes]
         }
 
@@ -189,39 +189,66 @@ module Storm
     end
 
     # }}}
-    # {{{ get '/stores', provides: :json do
-    get '/stores', provides: :json do
-      # check for required parameters
-      raise Error.new(400, 40001), 'Missing required parameter: latitude' if params[:latitude].blank? || !params[:latitude].numeric?
-      raise Error.new(400, 40002), 'Missing required parameter: longitude' if params[:longitude].blank? || !params[:longitude].numeric?
-      
-      params[:distance] = '1mi' if params[:distance].blank?
-      params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
-      params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
-      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}}"
-      options = {
-        sort: 'location:distance:asc',
-        offset: params[:offset],
-        limit: params[:limit]
-      }
-      response = @O_CLIENT.search(:stores, query, options)
+    # {{{ get '/members/:key', provides: :json do
+    get '/members/:key', provides: :json do
+      member = @O_APP[:members][params[:key]]
+      raise Error.new(404, 40401), "Member email not found" if member.nil?
 
-      data = {
-        count: response.count,
-        total_count: response.total_count
-      }
-      data[:items] = response.results.collect do |store|
-        s = store['value']
-        s[:key] = store['path']['key']
-        s['_links'] = {
-          rewards: "/#{self.class.name.demodulize.downcase}/rewards?store_key=#{s[:key]}",
-          points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{s[:key]}&email=",
-        }
-        s
-      end
-      
+      data = member.value
+      data[:email] = member.key
+      data.delete_if { |key, value| ['password', 'salt'].include? key }
       status 200
       body data.to_json
+    end
+
+    # }}}
+    # {{{ patch '/members/:key', provides: :json do
+    patch '/members/:key', provides: :json do
+      member = @O_APP[:members][params[:key]]
+      raise Error.new(404, 40401), "Member email not found" if member.nil?
+      
+      unless params[:email].blank?
+        # clean and validate email
+        params[:email].strip!
+        params[:email].downcase!
+        raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(params[:email])
+
+        begin
+          member2 = @O_APP[:members].set(params[:email], member.value, false)
+          member.destroy!
+          member = member2
+        rescue Orchestrate::API::BaseError => e
+          case e.class.code
+          when 'item_already_present'
+            msg = 'Email already in use'
+          else
+            msg = e.message
+          end
+          raise Error.new(422, 42202), msg
+        end
+      end
+
+      unless params[:attributes].blank?
+        attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
+        member[:attributes].merge!(attributes)
+        begin
+          member.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42203), "Unable to save attributes properly"
+        end
+      end
+
+      unless params[:fb_id].blank?
+        raise Error.new(400, 40001), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+        member[:fb_id] = params[:fb_id].to_i
+        begin
+          member.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42204), "Unable to save Facebook ID properly"
+        end
+      end
+
+      status 204
     end
 
     # }}}
@@ -323,6 +350,42 @@ module Storm
 
       status 200
       data = { success: true }
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ get '/stores', provides: :json do
+    get '/stores', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: latitude' if params[:latitude].blank? || !params[:latitude].numeric?
+      raise Error.new(400, 40002), 'Missing required parameter: longitude' if params[:longitude].blank? || !params[:longitude].numeric?
+      
+      params[:distance] = '1mi' if params[:distance].blank?
+      params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
+      params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
+      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}}"
+      options = {
+        sort: 'location:distance:asc',
+        offset: params[:offset],
+        limit: params[:limit]
+      }
+      response = @O_CLIENT.search(:stores, query, options)
+
+      data = {
+        count: response.count,
+        total_count: response.total_count
+      }
+      data[:items] = response.results.collect do |store|
+        s = store['value']
+        s[:key] = store['path']['key']
+        s['_links'] = {
+          rewards: "/#{self.class.name.demodulize.downcase}/rewards?store_key=#{s[:key]}",
+          points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{s[:key]}&email=",
+        }
+        s
+      end
+      
+      status 200
       body data.to_json
     end
 
