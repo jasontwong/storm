@@ -438,6 +438,8 @@ module Storm
               redeem_key = path[1]
               begin
                 Helpers.modify_points(member, store, reward[:cost] * -1)
+                @O_CLIENT.put_relation(:members, member.key, :redeems, :redeems, redeem_key)
+                @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
               rescue Orchestrate::API::BaseError => e
                 # unable to subtract points
                 @O_CLIENT.delete(:redeems, redeem_key, response.ref)
@@ -578,6 +580,12 @@ module Storm
         uri = URI(response.location)
         path = uri.path.split("/")[2..-1]
         data[:key] = path[1]
+        @O_CLIENT.put_relation(:codes, code.key, :member_surveys, :member_surveys, data[:key])
+        @O_CLIENT.put_relation(:stores, store.key, :member_surveys, :member_surveys, data[:key])
+        @O_CLIENT.put_relation(:member_surveys, data[:key], :code, :codes, code.key)
+        @O_CLIENT.put_relation(:member_surveys, data[:key], :store, :stores, store.key)
+        @O_CLIENT.put_relation(:member_surveys, data[:key], :member, :members, member.key)
+        @O_CLIENT.put_relation(:members, member.key, :surveys, :member_surveys, data[:key])
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
