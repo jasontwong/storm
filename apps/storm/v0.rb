@@ -347,7 +347,18 @@ module Storm
         end
         if response.results.empty?
           # we couldn't find points that are associated with this key/member combination
-          raise Error.new(422, 42202), "Not enough points to redeem reward"
+          point_data = {
+            current: 0,
+            total: 0,
+            member_key: member.key,
+            store_key: store.key
+          }
+          begin
+            @O_CLIENT.post(:points, point_data)
+          rescue Orchestrate::API::BaseError => e
+            # unable to redeem reward
+            raise Error.new(422, 42201), e.message
+          end
         else
           begin
             point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
@@ -356,7 +367,7 @@ module Storm
             point.save!
           rescue Orchestrate::API::BaseError => e
             # unable to modify points
-            raise Error.new(422, 42204), "Unable to modify points"
+            raise Error.new(422, 42202), "Unable to modify points"
           end
         end
       rescue Orchestrate::API::BaseError => e
@@ -603,12 +614,56 @@ module Storm
     get '/surveys/:key', provides: :json do
       # validate params
       survey = @O_APP[:surveys][params[:key]]
-      raise Error.new(404, 40401), "Survey email not found" if survey.nil?
+      raise Error.new(404, 40401), "Survey not found" if survey.nil?
 
       data = survey.value
       data[:key] = survey.key
       status 200
       body data.to_json
+    end
+
+    # }}}
+    # {{{ patch '/surveys/:key', provides: :json do
+    patch '/surveys/:key', provides: :json do
+      # validate params
+      survey = @O_APP[:surveys][params[:key]]
+      raise Error.new(404, 40401), "Survey not found" if survey.nil?
+
+      unless params[:completed].blank?
+        if params[:completed] == 'true'
+          begin
+            survey[:completed] = true
+            survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
+            survey.save!
+          rescue Orchestrate::API::BaseError => e
+            raise Error.new(422, 42204), "Unable to save completed properly"
+          end
+        end
+      end
+
+      unless params[:answers].blank?
+        begin
+          answers = JSON.parse(params[:answers], symbolize_names: true) if params[:answers].is_a? String
+          survey[:answers] = answers.collect do |answer|
+            answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
+            answer
+          end
+          survey.save!
+        rescue Orchestrate::API::BaseError, JSON::ParseError => e
+          raise Error.new(422, 42203), "Unable to save answers properly"
+        end
+      end
+
+      unless params[:comments].blank?
+        begin
+          survey[:comments] = params[:comments]
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42204), "Unable to save comments properly"
+        end
+      end
+
+      status 204
     end
 
     # }}}
