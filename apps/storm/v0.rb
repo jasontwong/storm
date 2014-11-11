@@ -77,6 +77,12 @@ module Storm
         error[:code] = 40001
         error[:message] = 'Missing parameters'
       end
+      
+      unless member[:active]
+        error[:status] = 404
+        error[:code] = 40402
+        error[:message] = 'Member found but inactive'
+      end
 
       unless error[:message].blank?
         raise Error.new(error[:status], error[:code]), error[:message]
@@ -104,7 +110,7 @@ module Storm
           params[:password] = SecureRandom.hex
         else
           # check for password strength
-          raise Error.new(422, 42201), 'Password is not valid' unless VALID_PASS_REGEX.match(params[:password])
+          raise Error.new(422, 42201), 'Password is not valid' unless params[:password].length >= 6
         end
 
         # validate attributes key
@@ -137,11 +143,10 @@ module Storm
         rescue Orchestrate::API::BaseError => e
           case e.class.code
           when 'item_already_present'
-            msg = 'Member email already exists'
+            raise Error.new(422, 42202), 'Member email already exists'
           else
-            msg = e.message
+            raise Error.new(422, 42203), e.message
           end
-          raise Error.new(422, 42202), msg
         end
 
       else
@@ -252,6 +257,105 @@ module Storm
     end
 
     # }}}
+    # {{{ get '/points', provides: :json do
+    get '/points', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: email' if params[:email].blank?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+
+      store = @O_APP[:stores][params[:store_key]]
+      raise Error.new(404, 40402), 'Store not found' if store.nil?
+
+      begin
+        # get the member's points for this store
+        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        options = {
+          limit: 1
+        }
+        response = @O_CLIENT.search(:points, query, options)
+        unless response.total_count.nil?
+          # TODO
+          # There is a bug that allowed two sets of points notify admin
+        end
+        if response.results.empty?
+          # we couldn't find points that are associated with this key/member combination
+          point_data = {
+            current: 0,
+            total: 0,
+            member_key: member.key,
+            store_key: store.key
+          }
+          begin
+            @O_CLIENT.post(:points, point_data)
+          rescue Orchestrate::API::BaseError => e
+            # unable to redeem reward
+            raise Error.new(422, 42201), e.message
+          end
+        else
+          point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
+        end
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42203), e.message
+      end
+
+      data = point.value
+      data.delete_if { |key, value| ['member_key', 'store_key'].include? key }
+      status 200
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ patch '/points', provides: :json do
+    patch '/points', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: email' if params[:email].blank?
+      raise Error.new(400, 40003), 'Missing required parameter: points' if params[:points].blank? || !params[:points].numeric?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+
+      store = @O_APP[:stores][params[:store_key]]
+      raise Error.new(404, 40402), 'Store not found' if store.nil?
+
+      begin
+        # get the member's points for this store
+        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        options = {
+          limit: 1
+        }
+        response = @O_CLIENT.search(:points, query, options)
+        unless response.total_count.nil?
+          # TODO
+          # There is a bug that allowed two sets of points notify admin
+        end
+        if response.results.empty?
+          # we couldn't find points that are associated with this key/member combination
+          raise Error.new(422, 42202), "Not enough points to redeem reward"
+        else
+          begin
+            point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
+            point[:current] += params[:points].to_i
+            point[:total] += params[:points].to_i if params[:points].to_i > 0
+            point.save!
+          rescue Orchestrate::API::BaseError => e
+            # unable to modify points
+            raise Error.new(422, 42204), "Unable to modify points"
+          end
+        end
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42203), e.message
+      end
+
+      status 204
+    end
+
+    # }}}
     # {{{ get '/rewards', provides: :json do
     get '/rewards', provides: :json do
       # check for required parameters
@@ -309,6 +413,10 @@ module Storm
           limit: 1
         }
         response = @O_CLIENT.search(:points, query, options)
+        unless response.total_count.nil?
+          # TODO
+          # There is a bug that allowed two sets of points notify admin
+        end
         if response.results.empty?
           # we couldn't find points that are associated with this key/member combination
           raise Error.new(422, 42202), "Not enough points to redeem reward"
@@ -363,7 +471,7 @@ module Storm
       params[:distance] = '1mi' if params[:distance].blank?
       params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
       params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
-      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}}"
+      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}} AND active:true"
       options = {
         sort: 'location:distance:asc',
         offset: params[:offset],
@@ -383,6 +491,48 @@ module Storm
           points: "/#{self.class.name.demodulize.downcase}/points?store_key=#{s[:key]}&email=",
         }
         s
+      end
+      
+      status 200
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ get '/surveys', provides: :json do
+    get '/surveys', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+
+      limit = 20 if params[:limit].blank? || !params[:limit].numeric?
+      offset = 0 if params[:offset].blank? || !params[:offset].numeric?
+
+      begin
+        now = Time.now
+        max = Orchestrate::API::Helpers.timestamp(now)
+        min = Orchestrate::API::Helpers.timestamp(now - SURVEY_EXP_DAYS.days)
+        query = "completed:false AND created_at:[#{min} TO #{max}] AND member_key:#{member.key}"
+        options = {
+          limit: limit,
+          offset: offset,
+          sort: 'created_at:desc'
+        }
+        response = @O_CLIENT.search(:surveys, query, options)
+        data = {
+          count: response.count,
+          total_count: response.total_count || response.count,
+          items: []
+        }
+        response.results.each do |survey|
+          s_data = survey['value']
+          s_data[:key] = survey['path']['key']
+          data[:items] << s_data
+        end
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42201), e.message
       end
       
       status 200
