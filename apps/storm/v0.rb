@@ -514,7 +514,7 @@ module Storm
         now = Time.now
         max = Orchestrate::API::Helpers.timestamp(now)
         min = Orchestrate::API::Helpers.timestamp(now - SURVEY_EXP_DAYS.days)
-        query = "completed:false AND created_at:[#{min} TO #{max}] AND member_key:#{member.key}"
+        query = "NOT completed:true AND created_at:[#{min} TO #{max}] AND member_key:#{member.key}"
         options = {
           limit: limit,
           offset: offset,
@@ -531,6 +531,51 @@ module Storm
           s_data[:key] = survey['path']['key']
           data[:items] << s_data
         end
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42201), e.message
+      end
+      
+      status 200
+      body data.to_json
+    end
+
+    # }}}
+    # {{{ post '/surveys', provides: :json do
+    post '/surveys', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+
+      begin
+        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        options = {
+          limit: 1,
+        }
+        response = @O_CLIENT.search(:codes, query, options)
+        raise Error.new(404, 40401), "Beacon not found" if response.count == 0
+        unless response.total_count.nil?
+          # TODO
+          # There's more than one code with that major/minor. Broken.
+        end
+        code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
+        store = code.relations[:store].first
+        type = store.relations[:type].first
+        data = {
+          answers: type[:questions],
+          worth: 5,
+          member_key: member.key,
+          store_key: store.key,
+          created_at: Orchestrate::API::Helpers.timestamp(Time.now),
+        }
+        response = @O_CLIENT.post(:surveys, data)
+        uri = URI(response.location)
+        path = uri.path.split("/")[2..-1]
+        data[:key] = path[1]
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
