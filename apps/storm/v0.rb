@@ -173,9 +173,12 @@ module Storm
       params[:email].downcase!
       raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(params[:email])
 
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
+
       begin
-        member = @O_APP[:members][params[:email]]
-        raise Error.new(404, 40401), 'Member not found' if member.nil?
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
         member.save!
@@ -196,8 +199,10 @@ module Storm
     # }}}
     # {{{ get '/members/:key', provides: :json do
     get '/members/:key', provides: :json do
+      # validate params
       member = @O_APP[:members][params[:key]]
       raise Error.new(404, 40401), "Member email not found" if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       data = member.value
       data[:email] = member.key
@@ -209,8 +214,10 @@ module Storm
     # }}}
     # {{{ patch '/members/:key', provides: :json do
     patch '/members/:key', provides: :json do
+      # validate params
       member = @O_APP[:members][params[:key]]
       raise Error.new(404, 40401), "Member email not found" if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
       
       unless params[:email].blank?
         # clean and validate email
@@ -266,9 +273,11 @@ module Storm
       # validate params
       member = @O_APP[:members][params[:email]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40403), 'Member found but not active' unless member[:active]
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40402), 'Store not found' if store.nil?
+      raise Error.new(404, 40404), 'Store found but not active' unless member[:active]
 
       begin
         # get the member's points for this store
@@ -319,9 +328,11 @@ module Storm
       # validate params
       member = @O_APP[:members][params[:email]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40403), 'Member found but not active' unless member[:active]
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40402), 'Store not found' if store.nil?
+      raise Error.new(404, 40404), 'Store found but not active' unless member[:active]
 
       begin
         # get the member's points for this store
@@ -361,18 +372,17 @@ module Storm
       # check for required parameters
       raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
 
-      data = []
+      # validate params
+      store = @O_APP[:stores][params[:store_key]]
+      raise Error.new(404, 40403), 'Store not found' if store.nil?
+      raise Error.new(404, 40405), 'Store found but not active' unless member[:active]
 
       begin
-        response = @O_CLIENT.get_relations(:stores, params[:store_key], :rewards)
-        loop do
-          break if response.nil?
-          response.results.each do |reward|
-            r = reward['value']
-            r[:key] = reward['path']['key']
-            data << r
-          end
-          response = response.next_results
+        data = []
+        store.relations[:rewards].each do |reward|
+          r = reward['value']
+          r[:key] = reward['path']['key']
+          data << r
         end
       rescue Orchestrate::API::BaseError => e
         case e.class.code
@@ -399,12 +409,14 @@ module Storm
       # validate params
       member = @O_APP[:members][params[:email]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40404), 'Member found but not active' unless member[:active]
 
       reward = @O_APP[:rewards][params[:reward_key]]
       raise Error.new(404, 40402), 'Reward not found' if reward.nil?
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
+      raise Error.new(404, 40405), 'Store found but not active' unless member[:active]
 
       begin
         # get the member's points for this store
@@ -506,6 +518,7 @@ module Storm
       # validate params
       member = @O_APP[:members][params[:email]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       limit = 20 if params[:limit].blank? || !params[:limit].numeric?
       offset = 0 if params[:offset].blank? || !params[:offset].numeric?
@@ -550,6 +563,7 @@ module Storm
       # validate params
       member = @O_APP[:members][params[:email]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       begin
         query = "major:#{params[:major]} AND minor:#{params[:minor]}"
