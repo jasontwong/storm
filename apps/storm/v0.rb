@@ -279,9 +279,12 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
+      company = company.relations[:company].first
+      raise Error.new(404, 40405), 'Company not found' if company.nil?
+
       begin
         # get the member's points for this store
-        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        query = "company_key:#{company.key} AND member_key:#{member.key}"
         options = {
           limit: 1
         }
@@ -292,18 +295,7 @@ module Storm
         end
         if response.results.empty?
           # we couldn't find points that are associated with this key/member combination
-          point_data = {
-            current: 0,
-            total: 0,
-            member_key: member.key,
-            store_key: store.key
-          }
-          begin
-            @O_CLIENT.post(:points, point_data)
-          rescue Orchestrate::API::BaseError => e
-            # unable to redeem reward
-            raise Error.new(422, 42201), e.message
-          end
+          Helpers.modify_points(member, company, 0)
         else
           point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
         end
@@ -312,7 +304,7 @@ module Storm
       end
 
       data = point.value
-      data.delete_if { |key, value| ['member_key', 'store_key'].include? key }
+      data.delete_if { |key, value| ['member_key', 'company_key'].include? key }
       status 200
       body data.to_json
     end
@@ -334,9 +326,12 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
+      company = company.relations[:company].first
+      raise Error.new(404, 40405), 'Company not found' if company.nil?
+
       begin
         # get the member's points for this store
-        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        query = "company_key:#{company.key} AND member_key:#{member.key}"
         options = {
           limit: 1
         }
@@ -346,7 +341,7 @@ module Storm
           # There is a bug that allowed two sets of points notify admin
         end
 
-        Helpers.modify_points(member, store, params[:points].to_i)
+        Helpers.modify_points(member, company, params[:points].to_i)
 
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
@@ -368,10 +363,15 @@ module Storm
 
       begin
         data = []
-        store.relations[:rewards].each do |reward|
-          r = reward.value
-          r[:key] = reward.key
-          data << r
+        response = @O_CLIENT.get_relations(:stores, store.key, :rewards)
+        loop do
+          response.results.each do |reward|
+            r = reward['value']
+            r[:key] = reward['path']['key']
+            data << r
+          end
+          response = response.next_results
+          break if response.nil?
         end
       rescue Orchestrate::API::BaseError => e
         case e.class.code
@@ -407,9 +407,12 @@ module Storm
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
 
+      company = company.relations[:company].first
+      raise Error.new(404, 40405), 'Company not found' if company.nil?
+
       begin
         # get the member's points for this store
-        query = "store_key:#{store.key} AND member_key:#{member.key}"
+        query = "company_key:#{company.key} AND member_key:#{member.key}"
         options = {
           limit: 1
         }
@@ -437,7 +440,7 @@ module Storm
               path = uri.path.split("/")[2..-1]
               redeem_key = path[1]
               begin
-                Helpers.modify_points(member, store, reward[:cost] * -1)
+                Helpers.modify_points(member, company, reward[:cost] * -1)
                 @O_CLIENT.put_relation(:members, member.key, :redeems, :redeems, redeem_key)
                 @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
               rescue Orchestrate::API::BaseError => e
