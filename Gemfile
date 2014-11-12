@@ -12,4 +12,5 @@ gem 'rake'
 group :development, :test do
   gem 'foreman', '~> 0.75'
   gem 'rerun', '~> 0.10'
+  gem 'rake-benchmark', require: false
 end
