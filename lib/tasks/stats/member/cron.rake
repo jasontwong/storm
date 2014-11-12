@@ -14,7 +14,7 @@ namespace :stats do
       desc "Member: Nightly cronjob"
       task :nightly do
         members = @O_APP[:members]
-        members.each do
+        members.each do |member|
           Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
           Rake::Task['stats:member:generate'].invoke(member.key)
         end
