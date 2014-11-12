@@ -621,7 +621,7 @@ module Storm
             survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
             survey.save!
           rescue Orchestrate::API::BaseError => e
-            raise Error.new(422, 42204), "Unable to save completed properly"
+            raise Error.new(422, 42201), "Unable to save completed properly"
           end
         end
       end
@@ -645,6 +645,15 @@ module Storm
           survey.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42204), "Unable to save comments properly"
+        end
+      end
+
+      unless params[:nps_score].blank?
+        begin
+          survey[:nps_score] = params[:nps_score].to_i
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42205), "Unable to save nps_score properly"
         end
       end
 
