@@ -1,11 +1,8 @@
 namespace :stats do
   namespace :member do
-    # {{{ desc "Generate stats for all members"
-    desc "Generate stats for all members"
-    task :generate do
-      puts "Generate stats"
-      # oapp = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY'])
-      # Rake::Task['stats:member:surveys:submitted'].invoke
+    # {{{ desc "Generate all stats for a member"
+    desc "Generate all stats for a member"
+    task :generate, [:email] => %w[points:available points:earned rewards:available rewards:redeemed stores:unique_visits stores:visits surveys:submitted] do |t, args|
     end
 
     # }}}
