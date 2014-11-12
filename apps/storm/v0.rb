@@ -361,9 +361,12 @@ module Storm
       raise Error.new(404, 40401), 'Store not found' if store.nil?
       raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
+      company = store.relations[:company].first
+      raise Error.new(404, 40403), 'Company not found' if company.nil?
+
       begin
         data = []
-        response = @O_CLIENT.get_relations(:stores, store.key, :rewards)
+        response = @O_CLIENT.get_relations(:companies, company.key, :rewards)
         loop do
           response.results.each do |reward|
             r = reward['value']
