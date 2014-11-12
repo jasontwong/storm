@@ -20,8 +20,11 @@ namespace :stats do
               data = member[:stats] || {}
               data['points'] ||= {}
               data['points']['available'] = 0
-              member.relations[:points].each do |point|
-                data['points']['available'] += point[:current]
+              response = oclient.get_relations(:members, member.key, :points)
+              loop do
+                response.results.each { |point| data['points']['available'] += point['value']['current'] }
+                response = response.next_results
+                break if response.nil?
               end
               member[:stats] = data
               member.save!
@@ -44,8 +47,11 @@ namespace :stats do
               data = member[:stats] || {}
               data['points'] ||= {}
               data['points']['earned'] = 0
-              member.relations[:points].each do |point|
-                data['points']['earned'] += point[:total]
+              response = oclient.get_relations(:members, member.key, :points)
+              loop do
+                response.results.each { |point| data['points']['earned'] += point['value']['total'] }
+                response = response.next_results
+                break if response.nil?
               end
               member[:stats] = data
               member.save!

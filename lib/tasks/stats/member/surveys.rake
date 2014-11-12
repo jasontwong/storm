@@ -19,12 +19,9 @@ namespace :stats do
             unless member.nil?
               data = member[:stats] || {}
               data['surveys'] ||= {}
-              data['surveys']['submitted'] = 0
-              # TODO
-              # search over graph when available
-              member.relations[:surveys].each do |survey|
-                data['surveys']['submitted'] += 1 if survey[:completed]
-              end
+              query = "member_key:#{member.key} AND completed:true"
+              response = oclient.search(:surveys, query, { limit: 1 })
+              data['surveys']['submitted'] = response.total_count || response.count
               member[:stats] = data
               member.save!
             end

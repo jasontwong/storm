@@ -20,11 +20,23 @@ namespace :stats do
               data = member[:stats] || {}
               data['rewards'] ||= {}
               data['rewards']['available'] = 0
-              member.relations[:points].each do |point|
-                response = oclient.get_relations(:stores, point[:store_key], :rewards)
-                response.results.each do |reward|
-                  data['rewards']['available'] += 1 if reward['value']['cost'] <= point[:current]
+              # TODO
+              # Search over graph for all rewards > store > points
+              # where member_key = member
+              response = oclient.get_relations(:members, member.key, :points)
+              loop do
+                response.results.each do |point|
+                  response2 = oclient.get_relations(:stores, point['value']['store_key'], :rewards)
+                  loop do
+                    response2.results.each do |reward|
+                      data['rewards']['available'] += 1 if reward['value']['cost'] <= point['value']['current']
+                    end
+                    response2 = response2.next_results
+                    break if response2.nil?
+                  end
                 end
+                response = response.next_results
+                break if response.nil?
               end
               member[:stats] = data
               member.save!
@@ -46,7 +58,8 @@ namespace :stats do
             unless member.nil?
               data = member[:stats] || {}
               data['rewards'] ||= {}
-              response = oclient.get_relations(:members, member.key, :redeemed)
+              query = "member_key:#{member.key}"
+              response = oclient.search(:redeems, query, { limit: 1 })
               data['rewards']['redeemed'] = response.total_count || response.count
               member[:stats] = data
               member.save!

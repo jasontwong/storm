@@ -19,8 +19,15 @@ namespace :stats do
             unless member.nil?
               data = member[:stats] || {}
               data['stores'] ||= {}
-              response = oclient.get_relations(:members, member.key, :points)
-              data['stores']['unique_visits'] = response.total_count || response.count
+              data['stores']['unique_visits'] = 0
+              response = oclient.get_relations(:members, member.key, :surveys)
+              keys = []
+              loop do
+                response.results.each { |survey| keys << survey['value']['store_key'] }
+                response = response.next_results
+                break if response.nil?
+              end
+              data['stores']['unique_visits'] = keys.uniq.length
               member[:stats] = data
               member.save!
             end
@@ -41,8 +48,13 @@ namespace :stats do
             unless member.nil?
               data = member[:stats] || {}
               data['stores'] ||= {}
+              data['stores']['visits'] = 0
               response = oclient.get_relations(:members, member.key, :surveys)
-              data['stores']['visits'] = response.total_count || response.count
+              loop do
+                response.results.each { |survey| data['stores']['visits'] += 1 }
+                response = response.next_results
+                break if response.nil?
+              end
               member[:stats] = data
               member.save!
             end
