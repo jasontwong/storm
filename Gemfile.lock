@@ -38,6 +38,7 @@ GEM
     rack-protection (1.5.3)
       rack
     raindrops (0.13.0)
+    rake (10.3.2)
     rb-fsevent (0.9.4)
     rb-inotify (0.9.5)
       ffi (>= 0.5.0)
@@ -68,6 +69,7 @@ DEPENDENCIES
   foreman (~> 0.75)
   multi_json (~> 1.10)
   orchestrate (~> 0.9)
+  rake
   rerun (~> 0.10)
   sinatra (~> 1.4)
   unicorn (~> 4.8)
