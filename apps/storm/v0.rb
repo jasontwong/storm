@@ -665,6 +665,8 @@ module Storm
         end
       end
 
+      # TODO
+      # Figure out a better way to handle answers, large payload
       unless params[:answers].blank?
         begin
           answers = JSON.parse(params[:answers], symbolize_names: true) if params[:answers].is_a? String
