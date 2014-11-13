@@ -21,7 +21,6 @@ module Storm
     # }}}
     # {{{ post '/members/login', provides: :json do
     post '/members/login', provides: :json do
-      error = { status: 401 }
       if !params[:fb_id].blank?
         # FB login
         if params[:fb_id].numeric?
@@ -29,14 +28,10 @@ module Storm
           unless response.results.empty?
             member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
           else
-            error[:status] = 404
-            error[:code] = 40400
-            error[:message] = 'Facebook ID not found'
+            raise Error.new(404, 40400), 'Facebook ID not found'
           end
         else
-          error[:status] = 400
-          error[:code] = 40002
-          error[:message] = 'Facebook ID is not a number'
+          raise Error.new(400, 40002), 'Facebook ID is not a number'
         end
       elsif !params[:member_id].blank?
         # Login from old version of app
@@ -45,14 +40,10 @@ module Storm
           unless response.results.empty?
             member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
           else
-            error[:status] = 404
-            error[:code] = 40401
-            error[:message] = 'Member not found'
+            raise Error.new(404, 40401), 'Member not found'
           end
         else
-          error[:status] = 400
-          error[:code] = 40003
-          error[:message] = 'Member ID is not a number'
+          raise Error.new(400, 40003), 'Member ID is not a number'
         end
       elsif !params[:email].blank? && !params[:password].blank?
         # Email/Pass login
@@ -64,35 +55,22 @@ module Storm
           if member[:password] == password.hexdigest
             @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
           else
-            error[:code] = 40102
-            error[:message] = 'Password incorrect'
+            raise Error.new(401, 40102), 'Password incorrect'
           end
         else
-          error[:status] = 404
-          error[:code] = 40401
-          error[:message] = 'Member not found'
+          raise Error.new(404, 40401), 'Member not found'
         end
       else
-        error[:status] = 400
-        error[:code] = 40001
-        error[:message] = 'Missing parameters'
+        raise Error.new(400, 40001), 'Missing parameters'
       end
       
-      unless member[:active]
-        error[:status] = 404
-        error[:code] = 40402
-        error[:message] = 'Member found but inactive'
-      end
+      raise Error.new(404, 40402), 'Member found but inactive' unless member[:active]
 
-      unless error[:message].blank?
-        raise Error.new(error[:status], error[:code]), error[:message]
-      else
-        data = member.value
-        data[:email] = member.key
-        data.delete_if { |key, value| ['password', 'salt'].include? key }
-        status 200
-        body data.to_json
-      end
+      data = member.value
+      data[:email] = member.key
+      data.delete_if { |key, value| ['password', 'salt'].include? key }
+      status 200
+      body data.to_json
     end
 
     # }}}
@@ -104,13 +82,21 @@ module Storm
         params[:email].downcase!
         raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(params[:email])
 
+        member_data = {
+          salt: SecureRandom.hex,
+          active: true,
+        }
+
         # check for type of login
         unless params[:fb_id].blank?
           raise Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+          response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
+          raise Error.new(422, 42205), 'Facebook ID already in use' unless response.results.empty?
           params[:password] = SecureRandom.hex
+          member_data[:fb_id] = params[:fb_id].to_i if params[:fb_id]
         else
           # check for password strength
-          raise Error.new(422, 42201), 'Password is not valid' unless params[:password].length >= 6
+          raise Error.new(422, 42204), 'Password is not valid' unless !params[:password].blank? && params[:password].length >= 6
         end
 
         # validate attributes key
@@ -127,13 +113,7 @@ module Storm
         end
 
         # param data is valid
-        member_data = {
-          salt: SecureRandom.hex,
-          active: true,
-          fb_id: params[:fb_id].to_i,
-          attributes: params[:attributes]
-        }
-
+        member_data[:attributes] = params[:attributes]
         password = Digest::SHA256.new
         password.update params[:password] + member_data[:salt]
         member_data[:password] = password.hexdigest
@@ -189,9 +169,10 @@ module Storm
       end
 
       status 200
+      puts member.value.inspect
       response = { 
         success: true,
-        fb_login: !member[:fb_id].nil?
+        fb_login: !member[:fb_id].blank?
       }
       body response.to_json
     end
@@ -241,19 +222,23 @@ module Storm
       end
 
       unless params[:attributes].blank?
-        attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
-        member[:attributes].merge!(attributes)
         begin
+          attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
+          member[:attributes].merge!(attributes)
           member.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42203), "Unable to save attributes properly"
+        rescue JSON::ParseError => e
+          raise Error.new(400, 40002), "Unable to parse attributes properly"
         end
       end
 
       unless params[:fb_id].blank?
         raise Error.new(400, 40001), 'Facebook ID is not a number' unless params[:fb_id].numeric?
-        member[:fb_id] = params[:fb_id].to_i
+        response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
+        raise Error.new(422, 42205), 'Facebook ID already in use' unless response.results.empty?
         begin
+          member[:fb_id] = params[:fb_id].to_i
           member.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42204), "Unable to save Facebook ID properly"
@@ -279,7 +264,7 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
-      company = company.relations[:company].first
+      company = store.relations[:company].first
       raise Error.new(404, 40405), 'Company not found' if company.nil?
 
       begin
@@ -289,21 +274,17 @@ module Storm
           limit: 1
         }
         response = @O_CLIENT.search(:points, query, options)
-        unless response.total_count.nil?
+        unless response.count > 1
           # TODO
           # There is a bug that allowed two sets of points notify admin
         end
-        if response.results.empty?
-          # we couldn't find points that are associated with this key/member combination
-          Helpers.modify_points(member, company, 0)
-        else
-          point = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
-        end
+        # we couldn't find points that are associated with this key/member combination
+        raise Error.new(404, 40406), "Member does not have any points at this company" if response.results.empty?
       rescue Orchestrate::API::BaseError => e
-        raise Error.new(422, 42203), e.message
+        raise Error.new(422, 42201), e.message
       end
 
-      data = point.value
+      data = response.results.first['value']
       data.delete_if { |key, value| ['member_key', 'company_key'].include? key }
       status 200
       body data.to_json
@@ -326,7 +307,7 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
-      company = company.relations[:company].first
+      company = store.relations[:company].first
       raise Error.new(404, 40405), 'Company not found' if company.nil?
 
       begin
@@ -341,8 +322,19 @@ module Storm
           # There is a bug that allowed two sets of points notify admin
         end
 
-        Helpers.modify_points(member, company, params[:points].to_i)
-
+        points_keys = Helpers.modify_points(member, company, params[:points].to_i)
+        begin
+          event = {
+            points: params[:points].to_i,
+            member_key: member.key,
+            company_key: company.key,
+            store_key: store.key
+          }
+          points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
+        rescue Orchestrate::API::BaseError => e
+          # TODO
+          # Log issue with posting event, but don't break workflow
+        end
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -410,8 +402,21 @@ module Storm
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
 
-      company = company.relations[:company].first
+      company = store.relations[:company].first
       raise Error.new(404, 40405), 'Company not found' if company.nil?
+
+      found = false
+      response = @O_CLIENT.get_relations(:companies, company.key, :rewards)
+      loop do
+        response.results.each do |listing|
+          if params[:reward_key] == listing['path']['key']
+            found = true
+            break
+          end
+        end
+        break if response.nil? || found
+      end
+      raise Error.new(404, 40406), 'Reward does not match company' unless found
 
       begin
         # get the member's points for this store
@@ -424,47 +429,49 @@ module Storm
           # TODO
           # There is a bug that allowed two sets of points notify admin
         end
-        if response.results.empty?
-          # we couldn't find points that are associated with this key/member combination
-          raise Error.new(422, 42202), "Not enough points to redeem reward"
-        else
-          points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
-          if reward[:cost] < points[:current]
+        # we couldn't find points that are associated with this key/member combination
+        raise Error.new(422, 42202), "Not enough points to redeem reward" if response.results.empty?
+        points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
+        if reward[:cost] < points[:current]
+          begin
+            # redeem reward
+            rw_data = {
+              title: reward[:title],
+              cost: reward[:cost],
+              member_key: member.key,
+              store_key: store.key
+            }
+            response = @O_CLIENT.post(:redeems, rw_data)
+            uri = URI(response.location)
+            path = uri.path.split("/")[2..-1]
+            redeem_key = path[1]
             begin
-              # redeem reward
-              rw_data = {
-                title: reward[:title],
-                cost: reward[:cost],
-                member_key: member.key,
-                store_key: store.key
-              }
-              response = @O_CLIENT.post(:redeems, rw_data)
-              uri = URI(response.location)
-              path = uri.path.split("/")[2..-1]
-              redeem_key = path[1]
-              begin
-                Helpers.modify_points(member, company, reward[:cost] * -1)
-                @O_CLIENT.put_relation(:members, member.key, :redeems, :redeems, redeem_key)
-                @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
-              rescue Orchestrate::API::BaseError => e
-                # unable to subtract points
-                @O_CLIENT.delete(:redeems, redeem_key, response.ref)
-                raise Error.new(422, 42204), "Reward not redeemed"
-              end
+              Helpers.modify_points(member, company, reward[:cost] * -1)
+
+              # TODO
+              # Is there a way to make this faster?!?1
+              @O_CLIENT.post_event(:rewards, reward.key, :redeems, rw_data)
+              @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
+              @O_CLIENT.put_relation(:members, member.key, :redeems, :redeems, redeem_key)
+              @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
             rescue Orchestrate::API::BaseError => e
-              # unable to redeem reward
-              raise Error.new(422, 42201), e.message
+              # unable to subtract points
+              @O_CLIENT.delete(:redeems, redeem_key, response.ref)
+              raise Error.new(422, 42204), "Reward not redeemed"
             end
-          else
-            # not enough points to redeem
-            raise Error.new(422, 42202), "Not enough points to redeem reward"
+          rescue Orchestrate::API::BaseError => e
+            # unable to redeem reward
+            raise Error.new(422, 42201), e.message
           end
+        else
+          # not enough points to redeem
+          raise Error.new(422, 42202), "Not enough points to redeem reward"
         end
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
 
-      status 200
+      status 201
       data = { success: true }
       body data.to_json
     end
@@ -506,6 +513,20 @@ module Storm
     end
 
     # }}}
+    # {{{ get '/stores/:key', provides: :json do
+    get '/stores/:key', provides: :json do
+      # validate params
+      store = @O_APP[:stores][params[:key]]
+      raise Error.new(404, 40401), "Store not found" if store.nil?
+      raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
+
+      data = store.value
+      data[:key] = store.key
+      status 200
+      body data.to_json
+    end
+
+    # }}}
     # {{{ get '/surveys', provides: :json do
     get '/surveys', provides: :json do
       # check for required parameters
@@ -538,6 +559,9 @@ module Storm
         response.results.each do |survey|
           s_data = survey['value']
           s_data[:key] = survey['path']['key']
+          s_data['_links'] = {
+            store: "/#{self.class.name.demodulize.downcase}/stores/#{s_data['store_key']}",
+          }
           data[:items] << s_data
         end
       rescue Orchestrate::API::BaseError => e
@@ -586,6 +610,12 @@ module Storm
         uri = URI(response.location)
         path = uri.path.split("/")[2..-1]
         data[:key] = path[1]
+        data['_links'] = {
+          store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
+        }
+
+        # TODO
+        # Is there a faster way to do this?!?!
         @O_CLIENT.put_relation(:codes, code.key, :member_surveys, :member_surveys, data[:key])
         @O_CLIENT.put_relation(:stores, store.key, :member_surveys, :member_surveys, data[:key])
         @O_CLIENT.put_relation(:member_surveys, data[:key], :code, :codes, code.key)
@@ -609,6 +639,9 @@ module Storm
 
       data = survey.value
       data[:key] = survey.key
+      data['_links'] = {
+        store: "/#{self.class.name.demodulize.downcase}/stores/#{survey[:store_key]}",
+      }
       status 200
       body data.to_json
     end
@@ -640,8 +673,10 @@ module Storm
             answer
           end
           survey.save!
-        rescue Orchestrate::API::BaseError, JSON::ParseError => e
-          raise Error.new(422, 42203), "Unable to save answers properly"
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42202), "Unable to save answers properly"
+        rescue JSON::ParseError => e
+          raise Error.new(400, 40001), "Unable to parse answers properly"
         end
       end
 
@@ -650,16 +685,16 @@ module Storm
           survey[:comments] = params[:comments]
           survey.save!
         rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42204), "Unable to save comments properly"
+          raise Error.new(422, 42203), "Unable to save comments properly"
         end
       end
 
-      unless params[:nps_score].blank?
+      if !params[:nps_score].blank? && params[:nps_score].numeric?
         begin
           survey[:nps_score] = params[:nps_score].to_i
           survey.save!
         rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42205), "Unable to save nps_score properly"
+          raise Error.new(422, 42204), "Unable to save nps_score properly"
         end
       end
 

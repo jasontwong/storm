@@ -22,8 +22,9 @@ module Storm
 
       point_data[:current] += num
       point_data[:total] += num if num > 0
+      point_data[:last_earned] = Orchestrate::API::Helpers.timestamp(Time.now) if num > 0
 
-      response = o_client.get_relations(:companys, company.key, :group)
+      response = o_client.get_relations(:companies, company.key, :group)
       if response.count == 0
         company_keys = [company.key]
       else
@@ -39,7 +40,9 @@ module Storm
           points = Orchestrate::KeyValue.from_listing(o_app[:points], response.results.first, response)
           points[:current] += num
           points[:total] += num if num > 0
+          points[:last_earned] = point_data[:last_earned] unless point_data[:last_earned].nil?
           points.save!
+          points.key
         else
           # we couldn't find points that are associated with this key/member combination
           resp = o_client.post(:points, point_data)
@@ -48,6 +51,7 @@ module Storm
           points_key = path[1]
           o_client.put_relation(:members, member.key, :points, :points, points_key)
           o_client.put_relation(:companies, key, :points, :points, points_key)
+          points_key
         end
       end
 
