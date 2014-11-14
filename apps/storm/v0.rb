@@ -338,19 +338,40 @@ module Storm
         end
 
         points_keys = Helpers.modify_points(member, company, params[:points].to_i)
-        if params[:points].to_i > 0
-          begin
-            event = {
-              points: params[:points].to_i,
-              member_key: member.key,
-              company_key: company.key,
-              store_key: store.key
+
+        sqs = AWS::SQS.new
+        queue = sqs.queues.named('storm-generate-member-stats')
+        queue.send_message(
+          'Points modified',
+          message_attributes: {
+            "member_key" => {
+              "string_value" => member.key,
+              "data_type" => "String",
             }
-            points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
-          rescue Orchestrate::API::BaseError => e
-            # TODO
-            # Log issue with posting event, but don't break workflow
-          end
+          }
+        )
+
+        if params[:points].to_i > 0
+          event = {
+            points: params[:points].to_i,
+            member_key: member.key,
+            company_key: company.key,
+            store_key: store.key
+          }
+          queue = sqs.queues.named('storm-generate-events')
+          queue.send_message(
+            { keys: points_keys, data: event }.to_json,
+            message_attributes: {
+              "collection" => {
+                "string_value" => 'points',
+                "data_type" => "String",
+              },
+              "event_name" => {
+                "string_value" => 'earned',
+                "data_type" => "String",
+              },
+            }
+          )
         end
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
@@ -464,13 +485,57 @@ module Storm
             redeem_key = path[1]
             begin
               Helpers.modify_points(member, company, reward[:cost] * -1)
+              # {{{ member stat generation
+              sqs = AWS::SQS.new
+              queue = sqs.queues.named('storm-generate-member-stats')
+              queue.send_message(
+                'Points modified',
+                message_attributes: {
+                  "member_key" => {
+                    "string_value" => member.key,
+                    "data_type" => "String",
+                  }
+                }
+              )
 
-              # TODO
-              # Is there a way to make this faster?!?1
-              @O_CLIENT.post_event(:rewards, reward.key, :redeems, rw_data)
-              @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
-              @O_CLIENT.put_relation(:members, member.key, :redeems, :redeems, redeem_key)
-              @O_CLIENT.put_relation(:stores, store.key, :redeems, :redeems, redeem_key)
+              # }}}
+              # {{{ events
+              queue = sqs.queues.named('storm-generate-events')
+              queue.send_message(
+                { keys: [reward.key], data: rw_data }.to_json,
+                message_attributes: {
+                  "collection" => {
+                    "string_value" => 'rewards',
+                    "data_type" => "String",
+                  },
+                  "event_name" => {
+                    "string_value" => 'redeems',
+                    "data_type" => "String",
+                  },
+                }
+              )
+
+              # }}}
+              # {{{ relations
+              relations = [{
+                from_collection: 'stores',
+                from_key: store.key,
+                from_name: 'redeems',
+                to_collection: 'redeems',
+                to_key: redeem_key
+              },{
+                from_collection: 'members',
+                from_key: member.key,
+                from_name: 'redeems',
+                to_collection: 'redeems',
+                to_key: redeem_key
+              }]
+              queue = sqs.queues.named('storm-generate-relations')
+              queue.send_message(
+                relations.to_json,
+              )
+
+              # }}}
             rescue Orchestrate::API::BaseError => e
               # unable to subtract points
               @O_CLIENT.delete(:redeems, redeem_key, response.ref)
@@ -630,15 +695,59 @@ module Storm
         data['_links'] = {
           store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
         }
-
         # TODO
         # Is there a faster way to do this?!?!
-        @O_CLIENT.put_relation(:codes, code.key, :member_surveys, :member_surveys, data[:key])
-        @O_CLIENT.put_relation(:stores, store.key, :member_surveys, :member_surveys, data[:key])
-        @O_CLIENT.put_relation(:member_surveys, data[:key], :code, :codes, code.key)
-        @O_CLIENT.put_relation(:member_surveys, data[:key], :store, :stores, store.key)
-        @O_CLIENT.put_relation(:member_surveys, data[:key], :member, :members, member.key)
-        @O_CLIENT.put_relation(:members, member.key, :surveys, :member_surveys, data[:key])
+        # @O_CLIENT.put_relation(:codes, code.key, :member_surveys, :member_surveys, data[:key])
+        # @O_CLIENT.put_relation(:stores, store.key, :member_surveys, :member_surveys, data[:key])
+        # @O_CLIENT.put_relation(:member_surveys, data[:key], :code, :codes, code.key)
+        # @O_CLIENT.put_relation(:member_surveys, data[:key], :store, :stores, store.key)
+        # @O_CLIENT.put_relation(:member_surveys, data[:key], :member, :members, member.key)
+        # @O_CLIENT.put_relation(:members, member.key, :surveys, :member_surveys, data[:key])
+        # {{{ relations
+        relations = [{
+          from_collection: 'codes',
+          from_key: code.key,
+          from_name: 'member_surveys',
+          to_collection: 'member_surveys',
+          to_key: data[:key]
+        },{
+          from_collection: 'members',
+          from_key: member.key,
+          from_name: 'surveys',
+          to_collection: 'member_surveys',
+          to_key: data[:key]
+        },{
+          from_collection: 'stores',
+          from_key: store.key,
+          from_name: 'member_surveys',
+          to_collection: 'member_surveys',
+          to_key: data[:key]
+        },{
+          from_collection: 'member_surveys',
+          from_key: data[:key],
+          from_name: 'member',
+          to_collection: 'members',
+          to_key: member.key
+        },{
+          from_collection: 'member_surveys',
+          from_key: data[:key],
+          from_name: 'store',
+          to_collection: 'stores',
+          to_key: store.key
+        },{
+          from_collection: 'member_surveys',
+          from_key: data[:key],
+          from_name: 'code',
+          to_collection: 'codes',
+          to_key: code.key
+        }]
+        sqs = AWS::SQS.new
+        queue = sqs.queues.named('storm-generate-relations')
+        queue.send_message(
+          relations.to_json,
+        )
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
@@ -676,18 +785,39 @@ module Storm
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
           survey.save!
           points_keys = Helpers.modify_points(member, company, survey[:worth])
-          begin
-            event = {
-              points: survey[:worth],
-              member_key: member.key,
-              company_key: company.key,
-              store_key: store.key
+
+          sqs = AWS::SQS.new
+          queue = sqs.queues.named('storm-generate-member-stats')
+          queue.send_message(
+            'Points modified',
+            message_attributes: {
+              "member_key" => {
+                "string_value" => member.key,
+                "data_type" => "String",
+              }
             }
-            points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
-          rescue Orchestrate::API::BaseError => e
-            # TODO
-            # Log issue with posting event, but don't break workflow
-          end
+          )
+
+          event = {
+            points: survey[:worth],
+            member_key: member.key,
+            company_key: company.key,
+            store_key: store.key
+          }
+          queue = sqs.queues.named('storm-generate-events')
+          queue.send_message(
+            { keys: points_keys, data: event }.to_json,
+            message_attributes: {
+              "collection" => {
+                "string_value" => 'points',
+                "data_type" => "String",
+              },
+              "event_name" => {
+                "string_value" => 'earned',
+                "data_type" => "String",
+              },
+            }
+          )
           # TODO
           # Send out notification to store owners
         rescue Orchestrate::API::BaseError => e
