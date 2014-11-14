@@ -10,7 +10,7 @@ namespace :relations do
 
     # }}}
     # {{{ desc "Events: Generate relations via SQS"
-    desc "Events: Generate relations via SQS"
+    desc "Relations: Generate relations via SQS"
     task :sqs_relations do
       sqs = AWS::SQS.new
       queue = sqs.queues.named('storm-generate-relations')
