@@ -6,8 +6,8 @@ require 'active_support/all'
 
 module Storm
   class V0 < Base
-    # {{{ before provides: :json do
-    before provides: :json do
+    # {{{ before do
+    before do
       halt 426 if !request.env['HTTP_X_IOS_SDK_VERSION'].nil? && request.env['HTTP_X_IOS_SDK_VERSION'].to_f < 1.7
       halt 426 if !request.env['HTTP_X_ANDROID_SDK_VERSION'].nil? && request.env['HTTP_X_ANDROID_SDK_VERSION'].to_f < 1.7
       @O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
@@ -15,6 +15,20 @@ module Storm
       end
       @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
         conn.adapter :excon
+      end
+      allow = false
+      allow = request.env['HTTP_AUTHORIZATION'] == DEV_KEY unless settings.production?
+      unless allow
+        key = @O_APP[:api_keys][request.env['HTTP_AUTHORIZATION']]
+        if key.nil?
+          halt 401, {
+            'Content-Type' => 'application/json'
+          }, { 
+            error: {
+              message: 'Invalid API Key'
+            }
+          }.to_json
+        end
       end
     end
 
@@ -84,7 +98,7 @@ module Storm
 
         member_data = {
           salt: SecureRandom.hex,
-          active: true,
+          active: true
         }
 
         # check for type of login
@@ -93,7 +107,8 @@ module Storm
           response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
           raise Error.new(422, 42205), 'Facebook ID already in use' unless response.results.empty?
           params[:password] = SecureRandom.hex
-          member_data[:fb_id] = params[:fb_id].to_i if params[:fb_id]
+          member_data[:fb_id] = params[:fb_id].to_i
+          member_data[:verifed] = true
         else
           # check for password strength
           raise Error.new(422, 42204), 'Password is not valid' unless !params[:password].blank? && params[:password].length >= 6
@@ -323,17 +338,19 @@ module Storm
         end
 
         points_keys = Helpers.modify_points(member, company, params[:points].to_i)
-        begin
-          event = {
-            points: params[:points].to_i,
-            member_key: member.key,
-            company_key: company.key,
-            store_key: store.key
-          }
-          points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
-        rescue Orchestrate::API::BaseError => e
-          # TODO
-          # Log issue with posting event, but don't break workflow
+        if params[:points].to_i > 0
+          begin
+            event = {
+              points: params[:points].to_i,
+              member_key: member.key,
+              company_key: company.key,
+              store_key: store.key
+            }
+            points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
+          rescue Orchestrate::API::BaseError => e
+            # TODO
+            # Log issue with posting event, but don't break workflow
+          end
         end
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
@@ -653,15 +670,28 @@ module Storm
       survey = @O_APP[:member_surveys][params[:key]]
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
 
-      unless params[:completed].blank?
-        if params[:completed] == 'true'
+      if params[:completed].blank? && params[:completed] == 'true' && (survey[:completed].blank? || survey[:completed] != true)
+        begin
+          survey[:completed] = true
+          survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
+          survey.save!
+          points_keys = Helpers.modify_points(member, company, survey[:worth])
           begin
-            survey[:completed] = true
-            survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
-            survey.save!
+            event = {
+              points: survey[:worth],
+              member_key: member.key,
+              company_key: company.key,
+              store_key: store.key
+            }
+            points_keys.each { |pk| @O_CLIENT.post_event(:points, pk, :earned, event) }
           rescue Orchestrate::API::BaseError => e
-            raise Error.new(422, 42201), "Unable to save completed properly"
+            # TODO
+            # Log issue with posting event, but don't break workflow
           end
+          # TODO
+          # Send out notification to store owners
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42201), "Unable to save completed properly"
         end
       end
 

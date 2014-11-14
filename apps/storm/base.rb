@@ -19,21 +19,6 @@ module Storm
 
     # }}}
     # }}}
-    # {{{ before do
-    before do
-      keys = [ 'apikey' ]
-      unless keys.include? request.env['HTTP_AUTHORIZATION']
-        halt 401, {
-          'Content-Type' => 'application/json'
-        }, { 
-          error: {
-            message: 'Invalid API Key'
-          }
-        }.to_json
-      end
-    end
-
-    # }}}
     # {{{ error Storm::Error, provides: :json do
     error Storm::Error, provides: :json do
       e = env['sinatra.error']
