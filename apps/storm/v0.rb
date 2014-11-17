@@ -834,14 +834,7 @@ module Storm
       # Figure out a better way to handle answers, large payload
       unless params[:answers].blank?
         begin
-          answers = JSON.parse(params[:answers], symbolize_names: true) if params[:answers].is_a? String
-          if answers.nil?
-            sqs = AWS::SQS.new
-            queue = sqs.queues.named('storm-logging')
-            queue.send_message(
-              params[:answers].to_json
-            )
-          end
+          answers = params[:answers].is_a? String ? JSON.parse(params[:answers], symbolize_names: true) : params[:answers]
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
             answer
