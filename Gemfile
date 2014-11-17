@@ -8,6 +8,7 @@ gem 'excon', '~> 0.4'
 gem 'multi_json', '~> 1.10'
 gem 'activesupport', '~> 4.1'
 gem 'aws-sdk', '~> 1.58'
+gem 'mandrill-api', '~> 1.0'
 gem 'rake'
 
 group :development, :test do

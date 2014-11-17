@@ -4,6 +4,7 @@ require 'excon'
 require 'securerandom'
 require 'active_support/all'
 require 'aws-sdk'
+require 'mandrill'
 
 module Storm
   class V0 < Base
@@ -35,6 +36,7 @@ module Storm
         :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
         :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
       )
+      @MANDRILL = Mandrill::API.new ENV['MANDRILL_APIKEY']
     end
 
     # }}}
@@ -103,7 +105,8 @@ module Storm
 
         member_data = {
           salt: SecureRandom.hex,
-          active: true
+          active: true,
+          verified: false
         }
 
         # check for type of login
@@ -140,6 +143,27 @@ module Storm
 
         begin
           member = @O_APP[:members].set(params[:email], member_data, false)
+          unless member_data[:verified]
+            template_name = 'email-verification'
+            template_content = []
+            message = {
+              to: [{
+                email: params[:email],
+                type: 'to'
+              }],
+              headers: {
+                "Reply-To" => 'info@getyella.com'
+              },
+              important: true,
+              track_opens: true,
+              track_clicks: true,
+              url_strip_qs: true,
+              tags: ['email-verification'],
+              google_analytics_domains: ['getyella.com'],
+            }
+            async = true
+            result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+          end
         rescue Orchestrate::API::BaseError => e
           case e.class.code
           when 'item_already_present'
@@ -147,15 +171,14 @@ module Storm
           else
             raise Error.new(422, 42203), e.message
           end
+        rescue Mandrill::Error => e
+          raise Error.new(422, 42204), e.message
         end
 
       else
         raise Error.new(400, 40001), 'Missing required parameter: email'
       end
 
-      # TODO
-      # Send welcome/verification email to member
-      
       data = member.value
       data[:email] = member.key
       data.delete_if { |key, value| ['password', 'salt'].include? key }
@@ -182,14 +205,39 @@ module Storm
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
         member.save!
-        # TODO
-        # Send notification to member
+        template_name = "forgot-pw"
+        template_content = []
+        message = {
+          to: [{
+            email: params[:email],
+            type: 'to'
+          }],
+          headers: {
+            "Reply-To" => 'info@getyella.com'
+          },
+          important: true,
+          track_opens: true,
+          track_clicks: true,
+          url_strip_qs: true,
+          merge_vars: [{
+            rcpt: member.key,
+            vars: [{
+              name: "temp_pass",
+              content: member[:temp_pass],
+            }]
+          }],
+          tags: ['password-reset'],
+          google_analytics_domains: ['getyella.com'],
+        }
+        async = false
+        result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42202), e.message
+      rescue Mandrill::Error => e
+        raise Error.new(422, 42203), e.message
       end
 
       status 200
-      puts member.value.inspect
       response = { 
         success: true,
         fb_login: !member[:fb_id].blank?
@@ -783,8 +831,9 @@ module Storm
       # validate params
       survey = @O_APP[:member_surveys][params[:key]]
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
+      raise Error.new(422, 42205), "Survey is already completed" if !survey[:completed].blank? && survey[:completed] == true
 
-      if params[:completed].blank? && params[:completed] == 'true' && (survey[:completed].blank? || survey[:completed] != true)
+      if params[:completed].blank? && params[:completed] == 'true'
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
