@@ -834,7 +834,11 @@ module Storm
       # Figure out a better way to handle answers, large payload
       unless params[:answers].blank?
         begin
-          answers = params[:answers].is_a? String ? JSON.parse(params[:answers], symbolize_names: true) : params[:answers]
+          if params[:answers].is_a? String
+            answers = JSON.parse(params[:answers], symbolize_names: true)
+          else
+            answers = params[:answers]
+          end
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
             answer
