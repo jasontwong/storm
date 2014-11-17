@@ -831,6 +831,7 @@ module Storm
         begin
           answers = JSON.parse(params[:answers], symbolize_names: true) if params[:answers].is_a? String
           if answers.nil?
+            sqs = AWS::SQS.new
             queue = sqs.queues.named('storm-logging')
             queue.send_message(
               params[:answers].to_json
