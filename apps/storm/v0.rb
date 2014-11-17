@@ -3,6 +3,7 @@ require 'multi_json'
 require 'excon'
 require 'securerandom'
 require 'active_support/all'
+require 'aws-sdk'
 
 module Storm
   class V0 < Base
