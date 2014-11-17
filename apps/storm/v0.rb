@@ -119,7 +119,7 @@ module Storm
           unless params[:attributes].is_a? Hash
             begin
               params[:attributes] = JSON.parse(params[:attributes], symbolize_names: true)
-            rescue JSON::ParseError => e
+            rescue JSON::ParserError => e
               params[:attributes] = {}
             end
           end
@@ -243,7 +243,7 @@ module Storm
           member.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42203), "Unable to save attributes properly"
-        rescue JSON::ParseError => e
+        rescue JSON::ParserError => e
           raise Error.new(400, 40002), "Unable to parse attributes properly"
         end
       end
@@ -837,7 +837,7 @@ module Storm
           survey.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42202), "Unable to save answers properly"
-        rescue JSON::ParseError => e
+        rescue JSON::ParserError => e
           raise Error.new(400, 40001), "Unable to parse answers properly"
         end
       end
