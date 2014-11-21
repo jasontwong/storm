@@ -1,3 +1,5 @@
+require "rubygems"
+require "bundler/setup"
 require_relative "../lib/core_ext"
 require_relative "storm/helpers"
 require_relative "storm/error"

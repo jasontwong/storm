@@ -12,7 +12,5 @@ gem 'mandrill-api', '~> 1.0'
 gem 'rake'
 
 group :development, :test do
-  gem 'foreman', '~> 0.75'
-  gem 'rerun', '~> 0.10'
-  gem 'rake-benchmark', require: false
+  gem 'rake-benchmark'
 end
