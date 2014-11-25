@@ -8,16 +8,25 @@ namespace :stats do
       conn.adapter :excon
     end
     # }}}
-    # {{{ desc "Store: Surveys"
-    desc "Store: Surveys"
-    task :surveys, [:key] do |t, args|
+    # {{{ desc "Store: Members"
+    desc "Store: Members"
+    task :members, [:key] do |t, args|
       begin
         query = "store_key:#{args[:key]} AND completed:true"
-        response = oclient.search("member_surveys", query, { limit: 1 })
+        response = oclient.search("member_surveys", query, { limit: 100 })
+        members = []
+        loop do
+          response.results.each do |survey|
+            members << survey['value']['member_key']
+          end
+          response = response.next_results
+          break if response.nil?
+        end
+
         store = oapp[:stores][args[:key]]
         store[:stats] ||= {}
-        store[:stats]['surveys'] ||= {}
-        store[:stats]['surveys']['submitted'] = response.total_count || response.count
+        store[:stats]['members'] ||= {}
+        store[:stats]['members']['submitted'] = members.uniq.length
         store.save!
       rescue Orchestrate::API::BaseError => e
         puts e.inspect # Log orchestrate error
