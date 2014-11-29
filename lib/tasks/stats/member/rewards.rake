@@ -31,7 +31,7 @@ namespace :stats do
                 response2 = oclient.get_relations(:companies, point['value']['company_key'], :rewards)
                 loop do
                   response2.results.each do |reward|
-                    rewards_available += 1 if reward['value']['cost'] <= point['value']['current']
+                    rewards_available += 1 if reward['value']['cost'].to_i <= point['value']['current'].to_i
                   end
 
                   response2 = response2.next_results
