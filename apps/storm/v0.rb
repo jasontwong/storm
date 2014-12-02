@@ -72,8 +72,16 @@ module Storm
         if member
           password = Digest::SHA256.new
           password.update params[:password] + member[:salt]
+          old_pass = Digest::SHA256.new
+          old_pass.update params[:password]
+          dhash = Digest::SHA256.new
+          dhash.update old_pass.hexdigest + member[:salt]
 
           if member[:password] == password.hexdigest
+            @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
+          elsif member[:password] == dhash.hexdigest
+            member[:password] = password.hexdigest
+            member.save!
             @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
           else
             raise Error.new(401, 40102), 'Password incorrect'
