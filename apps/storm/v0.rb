@@ -321,6 +321,18 @@ module Storm
         end
       end
 
+      unless params[:password].blank?
+        raise Error.new(422, 42205), 'Password is not valid' unless params[:password].length >= 6
+        begin
+          password = Digest::SHA256.new
+          password.update params[:password] + member[:salt]
+          member[:password] = password.hexdigest
+          member.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42206), "Unable to save password properly"
+        end
+      end
+
       status 204
     end
 
