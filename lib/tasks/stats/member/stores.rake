@@ -31,8 +31,9 @@ namespace :stats do
           member = oapp[:members][args[:email]]
           member[:stats] ||= {}
           member[:stats]['stores'] ||= {}
-          member[:stats]['stores']['my_places'] = keys.uniq.collect { |key| key[:key] }
-          member[:stats]['stores']['unique_visits'] = keys.uniq.length
+          member[:stats]['stores']['my_places'] = keys.collect { |key| key[:key] }
+          member[:stats]['stores']['my_places'].uniq!
+          member[:stats]['stores']['unique_visits'] = member[:stats]['stores']['my_places'].length
           member[:stats]['stores']['visits'] = keys.length
           member.save!
         rescue Orchestrate::API::BaseError => e
