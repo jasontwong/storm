@@ -853,7 +853,7 @@ module Storm
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
       raise Error.new(422, 42205), "Survey is already completed" if !survey[:completed].blank? && survey[:completed] == true
 
-      if params[:completed].blank? && params[:completed] == 'true'
+      if !params[:completed].blank? && params[:completed] == 'true'
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
