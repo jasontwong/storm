@@ -15,10 +15,11 @@ namespace :stats do
       task :all_stats do
         members = oapp[:members]
         members.each do |member|
+          puts member.key.inspect
           Rake::Task['stats:member:generate'].reenable
           Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
           Rake::Task['stats:member:generate'].invoke(member.key)
-          sleep(3)
+          sleep(1)
         end
       end
 
