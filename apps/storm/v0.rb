@@ -853,6 +853,45 @@ module Storm
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
       raise Error.new(422, 42205), "Survey is already completed" if !survey[:completed].blank? && survey[:completed] == true
 
+      # TODO
+      # Figure out a better way to handle answers, large payload
+      unless params[:answers].blank?
+        begin
+          if params[:answers].is_a? String
+            answers = JSON.parse(params[:answers], symbolize_names: true)
+          else
+            answers = params[:answers]
+          end
+          survey[:answers] = answers.collect do |answer|
+            answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
+            answer
+          end
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42202), "Unable to save answers properly"
+        rescue JSON::ParserError => e
+          raise Error.new(400, 40001), "Unable to parse answers properly"
+        end
+      end
+
+      unless params[:comments].blank?
+        begin
+          survey[:comments] = params[:comments]
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42203), "Unable to save comments properly"
+        end
+      end
+
+      if !params[:nps_score].blank? && params[:nps_score].numeric?
+        begin
+          survey[:nps_score] = params[:nps_score].to_i
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42204), "Unable to save nps_score properly"
+        end
+      end
+
       if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true)
         begin
           survey[:completed] = true
@@ -896,45 +935,6 @@ module Storm
           # Send out notification to store owners
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42201), "Unable to save completed properly"
-        end
-      end
-
-      # TODO
-      # Figure out a better way to handle answers, large payload
-      unless params[:answers].blank?
-        begin
-          if params[:answers].is_a? String
-            answers = JSON.parse(params[:answers], symbolize_names: true)
-          else
-            answers = params[:answers]
-          end
-          survey[:answers] = answers.collect do |answer|
-            answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
-            answer
-          end
-          survey.save!
-        rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42202), "Unable to save answers properly"
-        rescue JSON::ParserError => e
-          raise Error.new(400, 40001), "Unable to parse answers properly"
-        end
-      end
-
-      unless params[:comments].blank?
-        begin
-          survey[:comments] = params[:comments]
-          survey.save!
-        rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42203), "Unable to save comments properly"
-        end
-      end
-
-      if !params[:nps_score].blank? && params[:nps_score].numeric?
-        begin
-          survey[:nps_score] = params[:nps_score].to_i
-          survey.save!
-        rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42204), "Unable to save nps_score properly"
         end
       end
 
