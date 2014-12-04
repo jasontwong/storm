@@ -19,7 +19,6 @@ namespace :stats do
           Rake::Task['stats:member:generate'].reenable
           Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
           Rake::Task['stats:member:generate'].invoke(member.key)
-          sleep(1)
         end
       end
 
