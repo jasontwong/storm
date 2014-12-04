@@ -895,6 +895,10 @@ module Storm
       if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true || (params[:completed].numeric? && params[:completed].to_i == 1))
         member = @O_APP[:members][survey[:member_key]]
         raise Error.new(422, 42205), "Unable to find member associated with this survey" if member.nil?
+        store = @O_APP[:stores][survey[:store_key]]
+        raise Error.new(422, 42206), "Unable to find store associated with this survey" if store.nil?
+        company = store.relations[:company].first
+        raise Error.new(422, 42207), "Unable to find company associated with this survey" if company.nil?
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
