@@ -892,7 +892,7 @@ module Storm
         end
       end
 
-      if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true)
+      if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true || (params[:completed].numeric? && params[:completed].to_i == 1))
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
