@@ -18,7 +18,6 @@ namespace :stats do
           Rake::Task['stats:store:generate'].reenable
           Rake::Task['stats:store:generate'].all_prerequisite_tasks.each &:reenable
           Rake::Task['stats:store:generate'].invoke(store.key)
-          sleep(3)
         end
       end
 
