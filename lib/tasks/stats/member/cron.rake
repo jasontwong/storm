@@ -27,16 +27,47 @@ namespace :stats do
       task :sqs_stats do
         sqs = AWS::SQS.new
         queue = sqs.queues.named('storm-generate-member-stats')
-        attributes = %w[member_key]
-        keys = []
+        attributes = %w[member_key store_key]
+        skeys = []
+        mkeys = []
         queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
-          keys << msg.message_attributes['member_key'][:string_value]
+          mkey = msg.message_attributes['member_key'][:string_value]
+          mkeys << mkey
+          if msg.message_attributes.has_key? 'store_key'
+            skey = msg.message_attributes['store_key'][:string_value]
+            unless skeys.include? skey
+              skeys << skey
+              Rake::Task['stats:member:stores:places'].reenable
+              Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
+              Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
+            end
+          end
         end
 
-        keys.uniq.each do |key|
+        mkeys.uniq.each do |mkey|
           Rake::Task['stats:member:generate'].reenable
           Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
-          Rake::Task['stats:member:generate'].invoke(key)
+          Rake::Task['stats:member:generate'].invoke(mkey)
+        end
+      end
+
+      # }}}
+      # {{{ desc "Member: Visit SQS"
+      desc "Member: Visit SQS"
+      task :sqs_visited do
+        sqs = AWS::SQS.new
+        queue = sqs.queues.named('storm-member-visit')
+        attributes = %w[member_key store_key]
+        keys = []
+        queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
+          mkey = msg.message_attributes['member_key'][:string_value]
+          skey = msg.message_attributes['store_key'][:string_value]
+          unless keys.include? skey
+            keys << skey
+            Rake::Task['stats:member:stores:places'].reenable
+            Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
+            Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
+          end
         end
       end
 

@@ -436,6 +436,10 @@ module Storm
             "member_key" => {
               "string_value" => member.key,
               "data_type" => "String",
+            },
+            "store_key" => {
+              "string_value" => store.key,
+              "data_type" => "String",
             }
           }
         )
@@ -582,6 +586,10 @@ module Storm
                 message_attributes: {
                   "member_key" => {
                     "string_value" => member.key,
+                    "data_type" => "String",
+                  },
+                  "store_key" => {
+                    "string_value" => store.key,
                     "data_type" => "String",
                   }
                 }
@@ -837,6 +845,21 @@ module Storm
         )
 
         # }}}
+        queue = sqs.queues.named('storm-member-visit')
+        queue.send_message(
+          'Store Visited',
+          message_attributes: {
+            "member_key" => {
+              "string_value" => member.key,
+              "data_type" => "String",
+            },
+            "store_key" => {
+              "string_value" => store.key,
+              "data_type" => "String",
+            }
+          }
+        )
+
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
@@ -928,6 +951,10 @@ module Storm
             message_attributes: {
               "member_key" => {
                 "string_value" => member.key,
+                "data_type" => "String",
+              },
+              "store_key" => {
+                "string_value" => store.key,
                 "data_type" => "String",
               }
             }

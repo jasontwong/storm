@@ -21,28 +21,9 @@ namespace :stats do
       task :available, [:email] do |t, args|
         unless args[:email].nil?
           begin
-            # TODO
-            # Search over graph for all rewards > store > points
-            # where member_key = member
             rewards_available = 0
-            response = oclient.get_relations(:members, args[:email], :points)
-            loop do
-              response.results.each do |point|
-                response2 = oclient.get_relations(:companies, point['value']['company_key'], :rewards)
-                loop do
-                  response2.results.each do |reward|
-                    rewards_available += 1 if reward['value']['cost'].to_i <= point['value']['current'].to_i
-                  end
-
-                  response2 = response2.next_results
-                  break if response2.nil?
-                end
-              end
-
-              response = response.next_results
-              break if response.nil?
-            end
-
+            places = oapp[:member_palces][args[:email]]
+            places['visited'].each { |place| rewards_availables += place['rewards'] } unless places.nil?
             member = oapp[:members][args[:email]]
             member[:stats] ||= {}
             member[:stats]['rewards'] ||= {}
@@ -63,7 +44,6 @@ namespace :stats do
           begin
             query = "member_key:#{args[:email]}"
             response = oclient.search(:redeems, query, { limit: 1 })
-
             member = oapp[:members][args[:email]]
             member[:stats] ||= {}
             member[:stats]['rewards'] ||= {}
