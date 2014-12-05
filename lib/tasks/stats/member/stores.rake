@@ -107,7 +107,7 @@ namespace :stats do
             m_places = oapp[:member_places][args[:email]]
             m_places = oapp[:member_places].create(args[:email], {}) if m_places.nil?
             m_places[:visited] ||= []
-            (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}
+            m_places[:visited] = (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}.inspect
             m_places.save!
           rescue Orchestrate::API::BaseError => e
             # Log orchestrate error
