@@ -337,6 +337,22 @@ module Storm
     end
 
     # }}}
+    # {{{ get '/members/:key/places', provides: :json do
+    get '/members/:key/places', provides: :json do
+      # validate params
+      member = @O_APP[:members][params[:key]]
+      raise Error.new(404, 40401), "Member email not found" if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
+
+      data = []
+      places = @O_APP[:places][params[:key]]
+      data = places['visited'] unless places.nil?
+
+      status 200
+      body data.to_json
+    end
+
+    # }}}
     # {{{ get '/points', provides: :json do
     get '/points', provides: :json do
       # check for required parameters
