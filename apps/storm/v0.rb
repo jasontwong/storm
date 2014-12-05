@@ -345,7 +345,7 @@ module Storm
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       data = []
-      places = @O_APP[:places][params[:key]]
+      places = @O_APP[:member_places][params[:key]]
       data = places['visited'] unless places.nil?
 
       status 200
