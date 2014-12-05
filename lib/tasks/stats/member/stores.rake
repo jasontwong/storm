@@ -78,28 +78,27 @@ namespace :stats do
               response = oclient.get_relations(:stores, store_key, :company)
               unless response.results.empty?
                 company = response.results.first
-                if companies.has_key? company['path']['key']
-                  data = companies[company['path']['key']]
+                company_key = company['path']['key']
+                if companies.has_key? company_key
+                  data = companies[company_key]
                 else
-                  query = "company_key:#{company['path']['key']} AND member_key:#{args[:email]}"
+                  query = "company_key:#{company_key} AND member_key:#{args[:email]}"
                   response = oclient.search(:points, query, { limit: 1 })
                   unless response.results.empty?
                     points = response.results.first
                     data[:points] = points['value']['current']
-                    response = oclient.get_relations(:companies, company['path']['key'], :rewards)
+                    response = oclient.get_relations(:companies, company_key, :rewards)
                     loop do
-                      response.results.each do |rw|
-                        data[:rewards] += 1 if rw['value']['cost'].to_i <= data[:points].to_i
-                      end
-
+                      response.results.each { |rw| data[:rewards] += 1 if rw['value']['cost'].to_i <= data[:points].to_i }
                       response = response.next_results
                       break if response.nil?
                     end
                   end
 
-                  companies[company['path']['key']] = data
+                  companies[company_key] = data
                 end
 
+                data[:company_key] = company_key
                 data[:store_key] = store_key
                 places << data
               end
@@ -107,7 +106,8 @@ namespace :stats do
 
             m_places = oapp[:member_places][args[:email]]
             m_places = oapp[:member_places].create(args[:email], {}) if m_places.nil?
-            m_places[:visited] = places
+            m_places[:visited] ||= []
+            (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}
             m_places.save!
           rescue Orchestrate::API::BaseError => e
             # Log orchestrate error
