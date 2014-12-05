@@ -22,6 +22,18 @@ namespace :stats do
       end
 
       # }}}
+      # {{{ desc "Member: Generate places for all"
+      desc "Member: Generate places for all"
+      task :all_places do
+        members = oapp[:members]
+        members.each do |member|
+          Rake::Task['stats:member:stores:places'].reenable
+          Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
+          Rake::Task['stats:member:stores:places'].invoke(member.key)
+        end
+      end
+
+      # }}}
       # {{{ desc "Member: Generate stats for members via SQS"
       desc "Member: Generate stats for members via SQS"
       task :sqs_stats do
