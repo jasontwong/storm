@@ -23,7 +23,7 @@ namespace :stats do
           begin
             rewards_available = 0
             places = oapp[:member_places][args[:email]]
-            places['visited'].each { |place| rewards_availables += place['rewards'] } unless places.nil?
+            places['visited'].each { |place| rewards_available += place['rewards'].to_i } unless places.nil?
             member = oapp[:members][args[:email]]
             member[:stats] ||= {}
             member[:stats]['rewards'] ||= {}
