@@ -50,32 +50,37 @@ namespace :stats do
         unless args[:email].nil?
           begin
             keys = []
-            if args[:store].nil?
-              query = "member_key:#{args[:email]}"
-              options = {
-                limit: 100,
-                sort: 'created_at:desc'
-              }
-              response = oclient.search(:member_surveys, query, options)
-              loop do
-                response.results.each { |survey| keys << survey['value']['store_key'] }
-                response = response.next_results
-                break if response.nil?
+            query = "member_key:#{args[:email]}"
+            options = {
+              limit: 100,
+              sort: 'created_at:desc'
+            }
+            unless args[:store].nil?
+              query += "AND store_key:#{args[:store]}"
+              options[:limit] = 1
+            end
+            response = oclient.search(:member_surveys, query, options)
+            loop do
+              response.results.each do |survey|
+                keys << {
+                  key: survey['value']['store_key'],
+                  created_at: survey['value']['created_at']
+                }
               end
 
-              keys.uniq!
-            else
-              keys = [args[:store]]
+              response = response.next_results
+              break if response.nil? || options[:limit] == 1
             end
 
+            keys.uniq! { |k| k[:key] }
             places = []
             companies = {}
-            keys.each do |store_key|
+            keys.each do |store|
               data = {
                 points: 0,
                 rewards: 0
               }
-              response = oclient.get_relations(:stores, store_key, :company)
+              response = oclient.get_relations(:stores, store[:key], :company)
               unless response.results.empty?
                 company = response.results.first
                 company_key = company['path']['key']
@@ -98,8 +103,9 @@ namespace :stats do
                   companies[company_key] = data
                 end
 
+                data['last_visited_at'] = store[:created_at]
                 data[:company_key] = company_key
-                data[:store_key] = store_key
+                data[:store_key] = store[:key]
                 places << data
               end
             end
@@ -108,7 +114,7 @@ namespace :stats do
             if m_places.nil?
               m_places = oapp[:member_places].create(args[:email], { visited: places })
             else
-              m_places[:visited] = (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}.inspect
+              m_places[:visited] = (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
               m_places.save!
             end
           rescue Orchestrate::API::BaseError => e
