@@ -570,7 +570,8 @@ module Storm
               title: reward[:title],
               cost: reward[:cost],
               member_key: member.key,
-              store_key: store.key
+              store_key: store.key,
+              redeemed_at: Orchestrate::API::Helpers.timestamp(Time.now)
             }
             response = @O_CLIENT.post(:redeems, rw_data)
             uri = URI(response.location)
