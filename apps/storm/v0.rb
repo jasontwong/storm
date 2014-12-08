@@ -528,13 +528,14 @@ module Storm
 
       reward = @O_APP[:rewards][params[:reward_key]]
       raise Error.new(404, 40402), 'Reward not found' if reward.nil?
+      raise Error.new(404, 40407), 'Reward found but not active' unless reward[:active]
 
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
 
       company = store.relations[:company].first
-      raise Error.new(404, 40405), 'Company not found' if company.nil?
+      raise Error.new(404, 40406), 'Company not found' if company.nil?
 
       found = false
       response = @O_CLIENT.get_relations(:companies, company.key, :rewards)
@@ -781,7 +782,7 @@ module Storm
         type = store.relations[:type].first
         data = {
           answers: type[:questions],
-          worth: 5,
+          worth: SURVEY_WORTH,
           member_key: member.key,
           store_key: store.key,
           created_at: Orchestrate::API::Helpers.timestamp(Time.now),

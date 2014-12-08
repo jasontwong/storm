@@ -12,4 +12,6 @@ module Storm
   VALID_PASS_REGEX = /\A.*(?=.{6,})(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*\z/
   SURVEY_EXP_DAYS = 14
   DEV_KEY = 'apikey'
+  SURVEY_WORTH = 5
+  CHECKIN_WORTH = 1
 end
