@@ -717,8 +717,8 @@ module Storm
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
-      limit = 20 if params[:limit].blank? || !params[:limit].numeric?
-      offset = 0 if params[:offset].blank? || !params[:offset].numeric?
+      params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
+      params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
 
       begin
         now = Time.now
@@ -726,8 +726,8 @@ module Storm
         min = Orchestrate::API::Helpers.timestamp(now - SURVEY_EXP_DAYS.days)
         query = "NOT completed:true AND created_at:[#{min} TO #{max}] AND member_key:#{member.key}"
         options = {
-          limit: limit,
-          offset: offset,
+          limit: params[:limit],
+          offset: params[:offset],
           sort: 'created_at:desc'
         }
         response = @O_CLIENT.search(:member_surveys, query, options)

@@ -6,12 +6,6 @@ class String
   end
 
   # }}}
-  # {{{ def blank?
-  def blank?
-    self !~ /\S/
-  end
-
-  # }}}
 end
 
 # }}}
