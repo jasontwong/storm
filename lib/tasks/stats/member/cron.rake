@@ -83,9 +83,10 @@ namespace :stats do
         keys = []
         queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
           mkey = msg.message_attributes['member_key'][:string_value]
+          keys[mkey] ||= []
           skey = msg.message_attributes['store_key'][:string_value]
-          unless keys.include? skey
-            keys << skey
+          unless keys[mkey].include? skey
+            keys[mkey] << skey
             Rake::Task['stats:member:stores:places'].reenable
             Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
             Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
