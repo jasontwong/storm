@@ -15,9 +15,11 @@ module Storm
       @O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
         conn.adapter :excon
       end
+
       @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
         conn.adapter :excon
       end
+
       allow = false
       allow = request.env['HTTP_AUTHORIZATION'] == DEV_KEY unless settings.production?
       unless allow
@@ -32,6 +34,7 @@ module Storm
           }.to_json
         end
       end
+
       AWS.config(
         :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
         :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']

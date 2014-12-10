@@ -50,27 +50,31 @@ namespace :stats do
         sqs = AWS::SQS.new
         queue = sqs.queues.named('storm-generate-member-stats')
         attributes = %w[member_key store_key]
-        skeys = []
+        keys = []
         mkeys = []
         queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
           mkey = msg.message_attributes['member_key'][:string_value]
           mkeys << mkey
-          if msg.message_attributes.has_key? 'store_key'
-            skey = msg.message_attributes['store_key'][:string_value]
-            unless skeys.include? skey
-              skeys << skey
-              Rake::Task['stats:member:stores:places'].reenable
-              Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
-              Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
-            end
+          keys[mkey] ||= []
+          skey = msg.message_attributes['store_key'][:string_value]
+          unless keys[mkey].include? skey
+            keys[mkey] << skey
+            Rake::Task['stats:member:stores:places'].reenable
+            Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
+            Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
           end
         end
 
+        tp = ThreadPool.new(10)
         mkeys.uniq.each do |mkey|
-          Rake::Task['stats:member:generate'].reenable
-          Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
-          Rake::Task['stats:member:generate'].invoke(mkey)
+          tp.schedule(mkey) do |mkey|
+            Rake::Task['stats:member:generate'].reenable
+            Rake::Task['stats:member:generate'].all_prerequisite_tasks.each &:reenable
+            Rake::Task['stats:member:generate'].invoke(mkey)
+          end
         end
+
+        at_exit { tp.shutdown }
       end
 
       # }}}
