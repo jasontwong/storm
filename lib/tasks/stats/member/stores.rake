@@ -77,8 +77,8 @@ namespace :stats do
             companies = {}
             keys.each do |store|
               data = {
-                points: 0,
-                rewards: 0
+                'points' => 0,
+                'rewards' => 0
               }
               response = oclient.get_relations(:stores, store[:key], :company)
               unless response.results.empty?
@@ -91,10 +91,10 @@ namespace :stats do
                   response = oclient.search(:points, query, { limit: 1 })
                   unless response.results.empty?
                     points = response.results.first
-                    data[:points] = points['value']['current']
+                    data['points'] = points['value']['current']
                     response = oclient.get_relations(:companies, company_key, :rewards)
                     loop do
-                      response.results.each { |rw| data[:rewards] += 1 if rw['value']['cost'].to_i <= data[:points].to_i }
+                      response.results.each { |rw| data['rewards'] += 1 if rw['value']['cost'].to_i <= data[:points].to_i }
                       response = response.next_results
                       break if response.nil?
                     end
@@ -104,17 +104,27 @@ namespace :stats do
                 end
 
                 data['last_visited_at'] = store[:created_at]
-                data[:company_key] = company_key
-                data[:store_key] = store[:key]
+                data['company_key'] = company_key
+                data['store_key'] = store[:key]
                 places << data
               end
             end
 
             m_places = oapp[:member_places][args[:email]]
             if m_places.nil?
-              m_places = oapp[:member_places].create(args[:email], { visited: places })
+              m_places = oapp[:member_places].create(args[:email], { visited: places.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']} })
             else
-              m_places[:visited] = (m_places[:visited] + places).group_by{|h| h[:store_key]}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
+              found = []
+              places.each do |place|
+                new_places = m_places['visited'].select { |old_place| old_place['company_key'] == place['company_key'] }
+                new_places.each do |new_place|
+                  new_place['rewards'] = place['rewards']
+                  new_place['points'] = place['points']
+                end
+                found += new_places
+              end
+              places = (found + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
+              m_places[:visited] = (m_places[:visited] + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
               m_places.save!
             end
           rescue Orchestrate::API::BaseError => e
