@@ -780,6 +780,7 @@ module Storm
           # TODO
           # There's more than one code with that major/minor. Broken.
         end
+
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
         type = store.relations[:type].first
@@ -797,14 +798,6 @@ module Storm
         data['_links'] = {
           store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
         }
-        # TODO
-        # Is there a faster way to do this?!?!
-        # @O_CLIENT.put_relation(:codes, code.key, :member_surveys, :member_surveys, data[:key])
-        # @O_CLIENT.put_relation(:stores, store.key, :member_surveys, :member_surveys, data[:key])
-        # @O_CLIENT.put_relation(:member_surveys, data[:key], :code, :codes, code.key)
-        # @O_CLIENT.put_relation(:member_surveys, data[:key], :store, :stores, store.key)
-        # @O_CLIENT.put_relation(:member_surveys, data[:key], :member, :members, member.key)
-        # @O_CLIENT.put_relation(:members, member.key, :surveys, :member_surveys, data[:key])
         # {{{ relations
         relations = [{
           from_collection: 'codes',
@@ -850,26 +843,11 @@ module Storm
         )
 
         # }}}
-        queue = sqs.queues.named('storm-member-visit')
-        queue.send_message(
-          'Store Visited',
-          message_attributes: {
-            "member_key" => {
-              "string_value" => member.key,
-              "data_type" => "String",
-            },
-            "store_key" => {
-              "string_value" => store.key,
-              "data_type" => "String",
-            }
-          }
-        )
-
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
       
-      status 200
+      status 201
       body data.to_json
     end
 
@@ -993,6 +971,111 @@ module Storm
       end
 
       status 204
+    end
+
+    # }}}
+    # {{{ post '/checkins', provides: :json do
+    post '/checkins', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+
+      # validate params
+      member = @O_APP[:members][params[:email]]
+      raise Error.new(404, 40401), 'Member not found' if member.nil?
+      raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
+
+      begin
+        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        options = {
+          limit: 1,
+        }
+        response = @O_CLIENT.search(:codes, query, options)
+        raise Error.new(404, 40401), "Beacon not found" if response.count == 0
+        unless response.total_count.nil?
+          # TODO
+          # There's more than one code with that major/minor. Broken.
+        end
+
+        code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
+        store = code.relations[:store].first
+        data = {
+          worth: CHECKIN_WORTH,
+          member_key: member.key,
+          store_key: store.key,
+          created_at: Orchestrate::API::Helpers.timestamp(Time.now),
+        }
+        checkin = @O_APP[:checkins].create(data)
+        data[:key] = checkin.key
+        data['_links'] = {
+          store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
+        }
+        # {{{ relations
+        relations = [{
+          from_collection: 'codes',
+          from_key: code.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'members',
+          from_key: member.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'stores',
+          from_key: store.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'member',
+          to_collection: 'members',
+          to_key: member.key
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'store',
+          to_collection: 'stores',
+          to_key: store.key
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'code',
+          to_collection: 'codes',
+          to_key: code.key
+        }]
+        sqs = AWS::SQS.new
+        queue = sqs.queues.named('storm-generate-relations')
+        queue.send_message(
+          relations.to_json,
+        )
+
+        # }}}
+        queue = sqs.queues.named('storm-member-visit')
+        queue.send_message(
+          'Store Visited',
+          message_attributes: {
+            "member_key" => {
+              "string_value" => member.key,
+              "data_type" => "String",
+            },
+            "store_key" => {
+              "string_value" => store.key,
+              "data_type" => "String",
+            }
+          }
+        )
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42201), e.message
+      end
+      
+      status 200
+      body data.to_json
     end
 
     # }}}
