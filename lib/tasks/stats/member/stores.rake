@@ -15,7 +15,7 @@ namespace :stats do
       unless args[:email].nil?
         begin
           keys = []
-          response = oclient.get_relations(:members, args[:email], :surveys)
+          response = oclient.get_relations(:members, args[:email], :checkins)
           loop do
             response.results.each do |survey|
               keys << {
@@ -59,7 +59,7 @@ namespace :stats do
               query += "AND store_key:#{args[:store]}"
               options[:limit] = 1
             end
-            response = oclient.search(:member_surveys, query, options)
+            response = oclient.search(:checkins, query, options)
             loop do
               response.results.each do |survey|
                 keys << {
