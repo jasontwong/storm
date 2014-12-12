@@ -549,8 +549,10 @@ module Storm
             break
           end
         end
+
         break if response.nil? || found
       end
+
       raise Error.new(404, 40406), 'Reward does not match company' unless found
 
       begin
@@ -564,6 +566,7 @@ module Storm
           # TODO
           # There is a bug that allowed two sets of points notify admin
         end
+
         # we couldn't find points that are associated with this key/member combination
         raise Error.new(422, 42202), "Not enough points to redeem reward" if response.results.empty?
         points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
