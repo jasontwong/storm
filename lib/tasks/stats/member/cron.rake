@@ -50,7 +50,7 @@ namespace :stats do
         sqs = AWS::SQS.new
         queue = sqs.queues.named('storm-generate-member-stats')
         attributes = %w[member_key store_key]
-        keys = []
+        keys = {}
         mkeys = []
         queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
           mkey = msg.message_attributes['member_key'][:string_value]
@@ -84,7 +84,7 @@ namespace :stats do
         sqs = AWS::SQS.new
         queue = sqs.queues.named('storm-member-visit')
         attributes = %w[member_key store_key]
-        keys = []
+        keys = {}
         queue.poll(idle_timeout: 5, message_attribute_names: attributes) do |msg|
           mkey = msg.message_attributes['member_key'][:string_value]
           keys[mkey] ||= []
