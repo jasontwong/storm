@@ -94,7 +94,7 @@ namespace :stats do
                     data['points'] = points['value']['current']
                     response = oclient.get_relations(:companies, company_key, :rewards)
                     loop do
-                      response.results.each { |rw| data['rewards'] += 1 if rw['value']['cost'].to_i <= data[:points].to_i }
+                      response.results.each { |rw| data['rewards'] += 1 if rw['value']['cost'].to_i <= data['points'].to_i }
                       response = response.next_results
                       break if response.nil?
                     end
