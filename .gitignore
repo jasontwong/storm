@@ -20,3 +20,5 @@
 # Ignore local ruby-gemset
 .ruby-gemset
 .elasticbeanstalk/
+
+.env

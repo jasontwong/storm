@@ -38,14 +38,17 @@ class StatsController < ApplicationController
         @questions[answer.question] ||= { points: [] }
         @questions[answer.question][:type] ||= answer.survey_question.answer_type
         points = answer.answer
+        next if points.nil?
         if @questions[answer.question][:type] != 'switch'
           points = points.to_f 
           total_qs += 1
         end
+
         total_points += points if @questions[answer.question][:type] == 'slider'
         total_points += (points * 2) if @questions[answer.question][:type] == 'star_rating'
         @questions[answer.question][:points] << points
       end
+
       if total_qs > 0
         @performance[survey.created_at] ||= []
         @performance[survey.created_at] << total_points / total_qs
@@ -63,18 +66,18 @@ class StatsController < ApplicationController
 
     @questions.each do |q, data|
       data[:question] = q
+
+      data[:avg_points] = 0 if data[:points].size == 0
       if data[:type] == 'switch'
-        data[:avg_points] = data[:points].count { |x| x.upcase == 'YES' } / data[:points].size.to_f
+        data[:avg_points] ||= data[:points].count { |x| x.upcase == 'YES' } / data[:points].size.to_f
       else
-        data[:avg_points] = data[:points].inject(0.0) { |sum, el| sum + el } / data[:points].size
+        data[:avg_points] ||= data[:points].inject(0.0) { |sum, el| sum + el } / data[:points].size
       end
+
       survey_data[:questions] << data
     end
 
     survey_data[:members][:count] = @user_ids.uniq.length
-
-    puts survey_data.inspect
-
     render json: survey_data
   end
   # }}}
