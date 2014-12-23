@@ -778,7 +778,7 @@ module Storm
           limit: 1,
         }
         response = @O_CLIENT.search(:codes, query, options)
-        raise Error.new(404, 40401), "Beacon not found" if response.count == 0
+        raise Error.new(404, 40403), "Beacon not found" if response.count == 0
         unless response.total_count.nil?
           # TODO
           # There's more than one code with that major/minor. Broken.
@@ -787,6 +787,7 @@ module Storm
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
         type = store.relations[:type].first
+        raise Error.new(404, 40404), "Store type not found" if type.nil?
         data = {
           answers: type[:questions],
           worth: SURVEY_WORTH,
