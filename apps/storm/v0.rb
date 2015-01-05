@@ -298,12 +298,7 @@ module Storm
           # points
           response = @O_CLIENT.search(:points, "member_key:#{params[:key]}")
           loop do
-            response.results.each do |points|
-              @O_CLIENT.patch(:points, points['path']['key'], [
-                { op: "replace", path: "member_key", value: params[:email] }
-              ])
-            end
-
+            response.results.each { |points| @O_CLIENT.patch_merge(:points, points['path']['key'], { member_key: params[:email] }) }
             response = response.next_results
             break if response.nil?
           end
@@ -311,12 +306,7 @@ module Storm
           # redeems
           response = @O_CLIENT.search(:redeems, "member_key:#{params[:key]}")
           loop do
-            response.results.each do |redeems|
-              @O_CLIENT.patch(:redeems, redeems['path']['key'], [
-                { op: "replace", path: "member_key", value: params[:email] }
-              ])
-            end
-
+            response.results.each { |redeems| @O_CLIENT.patch_merge(:redeems, redeems['path']['key'], { member_key: params[:email] }) }
             response = response.next_results
             break if response.nil?
           end
@@ -324,12 +314,7 @@ module Storm
           # member_surveys
           response = @O_CLIENT.search(:member_surveys, "member_key:#{params[:key]}")
           loop do
-            response.results.each do |member_surveys|
-              @O_CLIENT.patch(:member_surveys, member_surveys['path']['key'], [
-                { op: "replace", path: "member_key", value: params[:email] }
-              ])
-            end
-
+            response.results.each { |member_surveys| @O_CLIENT.patch_merge(:member_surveys, member_surveys['path']['key'], { member_key: params[:email] }) }
             response = response.next_results
             break if response.nil?
           end
@@ -337,16 +322,10 @@ module Storm
           # checkins
           response = @O_CLIENT.search(:checkins, "member_key:#{params[:key]}")
           loop do
-            response.results.each do |checkins|
-              @O_CLIENT.patch(:checkins, checkins['path']['key'], [
-                { op: "replace", path: "member_key", value: params[:email] }
-              ])
-            end
-
+            response.results.each { |checkins| @O_CLIENT.patch_merge(:checkins, checkins['path']['key'], { member_key: params[:email] }) }
             response = response.next_results
             break if response.nil?
           end
-
         rescue Orchestrate::API::BaseError => e
           case e.class.code
           when 'item_already_present'
