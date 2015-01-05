@@ -326,6 +326,7 @@ module Storm
             response = response.next_results
             break if response.nil?
           end
+
         rescue Orchestrate::API::BaseError => e
           case e.class.code
           when 'item_already_present'
