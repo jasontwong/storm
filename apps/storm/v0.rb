@@ -289,6 +289,64 @@ module Storm
           member2 = @O_APP[:members].set(params[:email], member.value, false)
           member.destroy!
           member = member2
+          member_places = @O_APP[:member_places][params[:key]]
+          unless member_places.nil?
+            member_places2 = @O_APP[:member_places].set(params[:email], member_places.value, false)
+            member_places.destroy!
+          end
+
+          # points
+          response = @O_CLIENT.search(:points, "member_key:#{params[:key]}")
+          loop do
+            response.results.each do |points|
+              @O_CLIENT.patch(:points, points['path']['key'], [
+                { op: "replace", path: "member_key", value: params[:email] }
+              ])
+            end
+
+            response = response.next_results
+            break if response.nil?
+          end
+
+          # redeems
+          response = @O_CLIENT.search(:redeems, "member_key:#{params[:key]}")
+          loop do
+            response.results.each do |redeems|
+              @O_CLIENT.patch(:redeems, redeems['path']['key'], [
+                { op: "replace", path: "member_key", value: params[:email] }
+              ])
+            end
+
+            response = response.next_results
+            break if response.nil?
+          end
+
+          # member_surveys
+          response = @O_CLIENT.search(:member_surveys, "member_key:#{params[:key]}")
+          loop do
+            response.results.each do |member_surveys|
+              @O_CLIENT.patch(:member_surveys, member_surveys['path']['key'], [
+                { op: "replace", path: "member_key", value: params[:email] }
+              ])
+            end
+
+            response = response.next_results
+            break if response.nil?
+          end
+
+          # checkins
+          response = @O_CLIENT.search(:checkins, "member_key:#{params[:key]}")
+          loop do
+            response.results.each do |checkins|
+              @O_CLIENT.patch(:checkins, checkins['path']['key'], [
+                { op: "replace", path: "member_key", value: params[:email] }
+              ])
+            end
+
+            response = response.next_results
+            break if response.nil?
+          end
+
         rescue Orchestrate::API::BaseError => e
           case e.class.code
           when 'item_already_present'
