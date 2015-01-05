@@ -45,13 +45,10 @@ module Storm
           points.key
         else
           # we couldn't find points that are associated with this key/member combination
-          resp = o_client.post(:points, point_data)
-          uri = URI(resp.location)
-          path = uri.path.split("/")[2..-1]
-          points_key = path[1]
-          o_client.put_relation(:members, member.key, :points, :points, points_key)
-          o_client.put_relation(:companies, key, :points, :points, points_key)
-          points_key
+          points = o_app[:points].create(point_data)
+          o_client.put_relation(:members, member.key, :points, :points, points.key)
+          o_client.put_relation(:companies, key, :points, :points, points.key)
+          points.key
         end
       end
 

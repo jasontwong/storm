@@ -618,10 +618,7 @@ module Storm
               store_key: store.key,
               redeemed_at: Orchestrate::API::Helpers.timestamp(Time.now)
             }
-            response = @O_CLIENT.post(:redeems, rw_data)
-            uri = URI(response.location)
-            path = uri.path.split("/")[2..-1]
-            redeem_key = path[1]
+            redeem = @O_APP[:redeems].create(rw_data)
             begin
               Helpers.modify_points(member, company, reward[:cost] * -1)
               # {{{ member stat generation
@@ -665,13 +662,13 @@ module Storm
                 from_key: store.key,
                 from_name: 'redeems',
                 to_collection: 'redeems',
-                to_key: redeem_key
+                to_key: redeem.key
               },{
                 from_collection: 'members',
                 from_key: member.key,
                 from_name: 'redeems',
                 to_collection: 'redeems',
-                to_key: redeem_key
+                to_key: redeem.key
               }]
               queue = sqs.queues.named('storm-generate-relations')
               queue.send_message(
@@ -681,7 +678,7 @@ module Storm
               # }}}
             rescue Orchestrate::API::BaseError => e
               # unable to subtract points
-              @O_CLIENT.delete(:redeems, redeem_key, response.ref)
+              @O_CLIENT.delete(:redeems, redeem.key, response.ref)
               raise Error.new(422, 42204), "Reward not redeemed"
             end
           rescue Orchestrate::API::BaseError => e
@@ -833,10 +830,8 @@ module Storm
           store_key: store.key,
           created_at: Orchestrate::API::Helpers.timestamp(Time.now),
         }
-        response = @O_CLIENT.post(:member_surveys, data)
-        uri = URI(response.location)
-        path = uri.path.split("/")[2..-1]
-        data[:key] = path[1]
+        member_survey = @O_APP[:member_surveys].create(data)
+        data[:key] = member_survey.key
         data['_links'] = {
           store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
         }
