@@ -959,6 +959,15 @@ module Storm
 
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
+        unless params[:battery].blank?
+          batt_lvl = @O_APP[:battery_levels].create({
+            level: params[:battery],
+            store: store.key,
+            read_at: Orchestrate::API::Helpers.timestamp(Time.now),
+          })
+          store.relations[:battery_levels] << batt_lvl
+        end
+
         data = {
           worth: CHECKIN_WORTH,
           member_key: member.key,
