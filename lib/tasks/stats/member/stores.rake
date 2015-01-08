@@ -11,16 +11,16 @@ namespace :stats do
     # }}}
     # {{{ desc "Member: Stores"
     desc "Member: Stores"
-    task :stores, [:email] do |t, args|
-      unless args[:email].nil?
+    task :stores, [:member] do |t, args|
+      unless args[:member].nil?
         begin
           keys = []
-          response = oclient.get_relations(:members, args[:email], :checkins)
+          response = oclient.get_relations(:members, args[:member], :checkins)
           loop do
-            response.results.each do |survey|
+            response.results.each do |checkin|
               keys << {
-                key: survey['value']['store_key'],
-                created: survey['value']['created_at'], 
+                key: checkin['value']['store_key'],
+                created: checkin['value']['created_at'], 
               }
             end
 
@@ -29,12 +29,10 @@ namespace :stats do
           end
 
           u_visits = keys.uniq { |k| k[:key] }.sort { |a,b| b[:created_at] <=> a[:created_at] }
-          member = oapp[:members][args[:email]]
-          member[:stats] ||= {}
-          member[:stats]['stores'] ||= {}
-          member[:stats]['stores']['unique_visits'] = u_visits.length
-          member[:stats]['stores']['visits'] = keys.length
-          member.save!
+          oclient.patch('members', args[:member], [
+            { op: 'add', path: 'stats.stores.unique_visits', value: u_visits.length },
+            { op: 'add', path: 'stats.stores.visits', value: keys.length },
+          ])
         rescue Orchestrate::API::BaseError => e
           # Log orchestrate error
           puts e.inspect
@@ -46,11 +44,11 @@ namespace :stats do
     namespace :stores do
       # {{{ desc "Member: Stores Places"
       desc "Member: Stores Places"
-      task :places, [:email, :store] do |t, args|
-        unless args[:email].nil?
+      task :places, [:member, :store] do |t, args|
+        unless args[:member].nil?
           begin
             keys = []
-            query = "member_key:#{args[:email]}"
+            query = "member_key:#{args[:member]}"
             options = {
               limit: 100,
               sort: 'created_at:desc'
@@ -59,6 +57,7 @@ namespace :stats do
               query += "AND store_key:#{args[:store]}"
               options[:limit] = 1
             end
+
             response = oclient.search(:checkins, query, options)
             loop do
               response.results.each do |survey|
@@ -87,7 +86,7 @@ namespace :stats do
                 if companies.has_key? company_key
                   data = companies[company_key]
                 else
-                  query = "company_key:#{company_key} AND member_key:#{args[:email]}"
+                  query = "company_key:#{company_key} AND member_key:#{args[:member]}"
                   response = oclient.search(:points, query, { limit: 1 })
                   unless response.results.empty?
                     points = response.results.first
@@ -110,9 +109,9 @@ namespace :stats do
               end
             end
 
-            m_places = oapp[:member_places][args[:email]]
+            m_places = oapp[:member_places][args[:member]]
             if m_places.nil?
-              m_places = oapp[:member_places].create(args[:email], { visited: places.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']} })
+              m_places = oapp[:member_places].create(args[:member], { visited: places.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']} })
             else
               found = []
               places.each do |place|
@@ -124,8 +123,8 @@ namespace :stats do
                 found += new_places
               end
               places = (found + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
-              m_places[:visited] = (m_places[:visited] + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
-              m_places.save!
+              m_places.add('visited', (m_places[:visited] + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']})
+                .update
             end
           rescue Orchestrate::API::BaseError => e
             # Log orchestrate error

@@ -11,16 +11,14 @@ namespace :stats do
     # }}}
     # {{{ desc "Member: Surveys"
     desc "Member: Surveys"
-    task :surveys, [:email] do |t, args|
-      unless args[:email].nil?
+    task :surveys, [:member] do |t, args|
+      unless args[:member].nil?
         begin
-          query = "member_key:#{args[:email]} AND completed:true"
+          query = "member_key:#{args[:member]} AND completed:true"
           response = oclient.search(:member_surveys, query, { limit: 1 })
-          member = oapp[:members][args[:email]]
-          member[:stats] ||= {}
-          member[:stats]['surveys'] ||= {}
-          member[:stats]['surveys']['submitted'] = response.total_count || response.count
-          member.save!
+          oclient.patch('members', args[:member], [
+            { op: 'add', path: 'stats.surveys.submitted', value: response.total_count || response.count }
+          ])
         rescue Orchestrate::API::BaseError => e
           # Log orchestrate error
           puts e.inspect

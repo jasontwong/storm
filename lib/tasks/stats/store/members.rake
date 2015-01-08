@@ -19,15 +19,14 @@ namespace :stats do
           response.results.each do |survey|
             members << survey['value']['member_key']
           end
+
           response = response.next_results
           break if response.nil?
         end
 
-        store = oapp[:stores][args[:key]]
-        store[:stats] ||= {}
-        store[:stats]['members'] ||= {}
-        store[:stats]['members']['submitted'] = members.uniq.length
-        store.save!
+        oclient.patch('stores', args[:key], [
+          { op: 'add', path: 'stats.members.submitted', value: members.uniq.length },
+        ])
       rescue Orchestrate::API::BaseError => e
         puts e.inspect # Log orchestrate error
       end

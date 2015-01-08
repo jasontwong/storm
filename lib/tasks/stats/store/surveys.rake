@@ -14,11 +14,9 @@ namespace :stats do
       begin
         query = "store_key:#{args[:key]} AND completed:true"
         response = oclient.search("member_surveys", query, { limit: 1 })
-        store = oapp[:stores][args[:key]]
-        store[:stats] ||= {}
-        store[:stats]['surveys'] ||= {}
-        store[:stats]['surveys']['submitted'] = response.total_count || response.count
-        store.save!
+        oclient.patch('stores', args[:key], [
+          { op: 'add', path: 'stats.surveys.submitted', value: response.total_count || response.count },
+        ])
       rescue Orchestrate::API::BaseError => e
         puts e.inspect # Log orchestrate error
       end

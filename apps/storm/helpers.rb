@@ -51,8 +51,6 @@ module Storm
           points.key
         end
       end
-
     end
-
   end
 end
