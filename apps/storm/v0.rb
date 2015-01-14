@@ -199,10 +199,10 @@ module Storm
           track_clicks: true,
           url_strip_qs: true,
           merge_vars: [{
-            rcpt: member.key,
+            rcpt: member[:email],
             vars: [{
-              name: "temp_pass",
-              content: member[:temp_pass],
+              name: "pass_reset_url",
+              content: "http://www.getyella.com/pass_reset?email=#{member[:email]}&temp_pass=#{member[:temp_pass]}",
             }]
           }],
           tags: ['password-reset'],
