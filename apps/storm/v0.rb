@@ -529,6 +529,7 @@ module Storm
 
         # we couldn't find points that are associated with this key/member combination
         raise Error.new(422, 42202), "Not enough points to redeem reward" if response.results.empty?
+
         points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
         if reward[:cost] < points[:current]
           begin
@@ -598,6 +599,82 @@ module Storm
               )
 
               # }}}
+              begin
+                # {{{ redemption email
+                # TODO
+                # Find all clients that have redemption email perms
+                emails = %w[jwong@getyella.com]
+                merge_vars = []
+                address = store['address']
+                merge_vars << {
+                  name: "store_name",
+                  content: store['name']
+                }
+                merge_vars << {
+                  name: "store_addr",
+                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+                }
+                query = "store_key:#{store.key} AND member_key:#{member.key}"
+                options = {
+                  limit: 1
+                }
+                checkins_response = @O_CLIENT.search(:checkins, query, options)
+                merge_vars << {
+                  name: "store_visits",
+                  content: checkins_response.total_count || checkins_response.count
+                }
+                merge_vars << {
+                  name: "reward_name",
+                  content: reward['title'],
+                }
+                merge_vars << {
+                  name: "reward_cost",
+                  content: reward['cost'],
+                }
+                # TODO
+                # get client time zone
+                # Time.zone = @client['time_zone'] unless @client['time_zone'].nil?
+                redeem_time = Time.zone.at(redeem['redeemed_at'])
+                merge_vars << {
+                  name: "reward_time",
+                  content: redeem_time.strftime('%l:%M %p'),
+                }
+                merge_vars << {
+                  name: "reward_date",
+                  content: redeem_time.strftime('%m/%d/%y'),
+                }
+                emails.each do |email|
+                  template_name = "new-redeem"
+                  template_content = []
+                  message = {
+                    to: [{
+                      email: email,
+                      type: 'to'
+                    }],
+                    headers: {
+                      "Reply-To" => 'merchantsupport@getyella.com'
+                    },
+                    important: true,
+                    track_opens: true,
+                    track_clicks: true,
+                    url_strip_qs: true,
+                    merge_vars: [{
+                      rcpt: email,
+                      vars: merge_vars
+                    }],
+                    tags: ['reward-redemption'],
+                    google_analytics_domains: ['getyella.com'],
+                  }
+                  async = false
+                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+                 
+                  # }}}
+                end
+              rescue Orchestrate::API::BaseError => e
+                raise Error.new(422, 42205), e.message
+              rescue Mandrill::Error => e
+                raise Error.new(422, 42206), e.message
+              end
             rescue Orchestrate::API::BaseError => e
               # unable to subtract points
               @O_CLIENT.delete(:redeems, redeem.key, response.ref)
