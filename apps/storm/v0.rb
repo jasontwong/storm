@@ -47,24 +47,20 @@ module Storm
     post '/members/login', provides: :json do
       if !params[:fb_id].blank?
         # FB login
-        if params[:fb_id].numeric?
-          response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
-          raise Error.new(404, 40400), 'Facebook ID not found' unless response.results.empty?
+        raise Error.new(400, 40002), 'Facebook ID is not a number' if params[:fb_id].numeric?
 
-          member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
-        else
-          raise Error.new(400, 40002), 'Facebook ID is not a number'
-        end
+        response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
+        raise Error.new(404, 40400), 'Facebook ID not found' unless response.results.empty?
+
+        member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !params[:member_id].blank?
         # Login from old version of app
-        if params[:member_id].numeric?
-          response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
-          raise Error.new(404, 40401), 'Member not found' unless response.results.empty?
+        raise Error.new(400, 40003), 'Member ID is not a number' if params[:member_id].numeric?
 
-          member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
-        else
-          raise Error.new(400, 40003), 'Member ID is not a number'
-        end
+        response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
+        raise Error.new(404, 40401), 'Member not found' unless response.results.empty?
+
+        member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !params[:email].blank? && !params[:password].blank?
         # Email/Pass login
         response = @O_CLIENT.search(:members, "email:#{params[:email]}")
@@ -179,7 +175,7 @@ module Storm
 
       member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
-
+      # {{{ send out email
       begin
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
@@ -191,8 +187,9 @@ module Storm
             email: params[:email],
             type: 'to'
           }],
+          from_email: "hello@getyella.com",
           headers: {
-            "Reply-To" => 'info@getyella.com'
+            "Reply-To" => 'hello@getyella.com'
           },
           important: true,
           track_opens: true,
@@ -216,6 +213,7 @@ module Storm
         raise Error.new(422, 42203), e.message
       end
 
+      # }}}
       status 200
       response = { 
         success: true,
@@ -245,7 +243,7 @@ module Storm
       member = @O_APP[:members][params[:key]]
       raise Error.new(404, 40401), "Member not found" if member.nil?
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
-
+      # {{{ update email
       unless params[:email].blank?
         email = params[:email].downcase.strip
         raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(:email)
@@ -260,6 +258,8 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update attributes
       unless params[:attributes].blank?
         begin
           attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
@@ -272,6 +272,8 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update fb_id
       unless params[:fb_id].blank?
         raise Error.new(400, 40001), 'Facebook ID is not a number' unless params[:fb_id].numeric?
 
@@ -286,6 +288,8 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update password
       unless params[:password].blank?
         raise Error.new(422, 42205), 'Password is not valid' unless params[:password].length >= 6
         begin
@@ -298,6 +302,7 @@ module Storm
         end
       end
 
+      # }}}
       status 204
     end
 
@@ -392,6 +397,7 @@ module Storm
 
         points_keys = Helpers.modify_points(member, company, params[:points].to_i)
         sqs = AWS::SQS.new
+        # {{{ generate member stats
         queue = sqs.queues.named('storm-generate-member-stats')
         queue.send_message(
           'Points modified',
@@ -406,6 +412,9 @@ module Storm
             }
           }
         )
+        
+        # }}}
+        # {{{ generate events
         if params[:points].to_i > 0
           event = {
             points: params[:points].to_i,
@@ -428,6 +437,8 @@ module Storm
             }
           )
         end
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -479,12 +490,11 @@ module Storm
     # }}}
     # {{{ post '/rewards', provides: :json do
     post '/rewards', provides: :json do
-      # check for required parameters
+      # {{{ validate parameters
       raise Error.new(400, 40001), 'Missing required parameter: member_key' if params[:member_key].blank?
       raise Error.new(400, 40002), 'Missing required parameter: reward_key' if params[:reward_key].blank?
       raise Error.new(400, 40003), 'Missing required parameter: store_key' if params[:store_key].blank?
 
-      # validate params
       member = @O_APP[:members][params[:member_key]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40404), 'Member found but not active' unless member[:active]
@@ -515,6 +525,7 @@ module Storm
 
       raise Error.new(404, 40406), 'Reward does not match company' unless found
 
+      # }}}
       begin
         # get the member's points for this store
         query = "company_key:#{company.key} AND member_key:#{member.key}"
@@ -531,163 +542,162 @@ module Storm
         raise Error.new(422, 42202), "Not enough points to redeem reward" if response.results.empty?
 
         points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
-        if reward[:cost] < points[:current]
+        # not enough points to redeem
+        raise Error.new(422, 42202), "Not enough points to redeem reward" if reward[:cost] < points[:current]
+        # {{{ redeem reward
+        begin
+          rw_data = {
+            title: reward[:title],
+            cost: reward[:cost],
+            member_key: member.key,
+            store_key: store.key,
+            redeemed_at: Orchestrate::API::Helpers.timestamp(Time.now)
+          }
+          redeem = @O_APP[:redeems].create(rw_data)
           begin
-            # redeem reward
-            rw_data = {
-              title: reward[:title],
-              cost: reward[:cost],
-              member_key: member.key,
-              store_key: store.key,
-              redeemed_at: Orchestrate::API::Helpers.timestamp(Time.now)
-            }
-            redeem = @O_APP[:redeems].create(rw_data)
+            Helpers.modify_points(member, company, reward[:cost] * -1)
+            # {{{ member stat generation
+            sqs = AWS::SQS.new
+            queue = sqs.queues.named('storm-generate-member-stats')
+            queue.send_message(
+              'Points modified',
+              message_attributes: {
+                "member_key" => {
+                  "string_value" => member.key,
+                  "data_type" => "String",
+                },
+                "store_key" => {
+                  "string_value" => store.key,
+                  "data_type" => "String",
+                }
+              }
+            )
+
+            # }}}
+            # {{{ events
+            queue = sqs.queues.named('storm-generate-events')
+            queue.send_message(
+              { keys: [reward.key], data: rw_data }.to_json,
+              message_attributes: {
+                "collection" => {
+                  "string_value" => 'rewards',
+                  "data_type" => "String",
+                },
+                "event_name" => {
+                  "string_value" => 'redeems',
+                  "data_type" => "String",
+                },
+              }
+            )
+
+            # }}}
+            # {{{ relations
+            relations = [{
+              from_collection: 'stores',
+              from_key: store.key,
+              from_name: 'redeems',
+              to_collection: 'redeems',
+              to_key: redeem.key
+            },{
+              from_collection: 'members',
+              from_key: member.key,
+              from_name: 'redeems',
+              to_collection: 'redeems',
+              to_key: redeem.key
+            }]
+            queue = sqs.queues.named('storm-generate-relations')
+            queue.send_message(
+              relations.to_json,
+            )
+
+            # }}}
+            # {{{ redemption email
             begin
-              Helpers.modify_points(member, company, reward[:cost] * -1)
-              # {{{ member stat generation
-              sqs = AWS::SQS.new
-              queue = sqs.queues.named('storm-generate-member-stats')
-              queue.send_message(
-                'Points modified',
-                message_attributes: {
-                  "member_key" => {
-                    "string_value" => member.key,
-                    "data_type" => "String",
+              # TODO
+              # Find all clients that have redemption email perms
+              emails = %w[jwong@getyella.com]
+              merge_vars = []
+              address = store['address']
+              merge_vars << {
+                name: "store_name",
+                content: store['name']
+              }
+              merge_vars << {
+                name: "store_addr",
+                content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+              }
+              query = "store_key:#{store.key} AND member_key:#{member.key}"
+              options = {
+                limit: 1
+              }
+              checkins_response = @O_CLIENT.search(:checkins, query, options)
+              merge_vars << {
+                name: "store_visits",
+                content: checkins_response.total_count || checkins_response.count
+              }
+              merge_vars << {
+                name: "reward_name",
+                content: reward['title'],
+              }
+              merge_vars << {
+                name: "reward_cost",
+                content: reward['cost'],
+              }
+              # TODO
+              # get client time zone
+              # Time.zone = @client['time_zone'] unless @client['time_zone'].nil?
+              redeem_time = Time.zone.at(redeem['redeemed_at'])
+              merge_vars << {
+                name: "reward_time",
+                content: redeem_time.strftime('%l:%M %p'),
+              }
+              merge_vars << {
+                name: "reward_date",
+                content: redeem_time.strftime('%m/%d/%y'),
+              }
+              emails.each do |email|
+                template_name = "new-redeem"
+                template_content = []
+                message = {
+                  to: [{
+                    email: email,
+                    type: 'to'
+                  }],
+                  headers: {
+                    "Reply-To" => 'merchantsupport@getyella.com'
                   },
-                  "store_key" => {
-                    "string_value" => store.key,
-                    "data_type" => "String",
-                  }
+                  important: true,
+                  track_opens: true,
+                  track_clicks: true,
+                  url_strip_qs: true,
+                  merge_vars: [{
+                    rcpt: email,
+                    vars: merge_vars
+                  }],
+                  tags: ['reward-redemption'],
+                  google_analytics_domains: ['getyella.com'],
                 }
-              )
-
-              # }}}
-              # {{{ events
-              queue = sqs.queues.named('storm-generate-events')
-              queue.send_message(
-                { keys: [reward.key], data: rw_data }.to_json,
-                message_attributes: {
-                  "collection" => {
-                    "string_value" => 'rewards',
-                    "data_type" => "String",
-                  },
-                  "event_name" => {
-                    "string_value" => 'redeems',
-                    "data_type" => "String",
-                  },
-                }
-              )
-
-              # }}}
-              # {{{ relations
-              relations = [{
-                from_collection: 'stores',
-                from_key: store.key,
-                from_name: 'redeems',
-                to_collection: 'redeems',
-                to_key: redeem.key
-              },{
-                from_collection: 'members',
-                from_key: member.key,
-                from_name: 'redeems',
-                to_collection: 'redeems',
-                to_key: redeem.key
-              }]
-              queue = sqs.queues.named('storm-generate-relations')
-              queue.send_message(
-                relations.to_json,
-              )
-
-              # }}}
-              begin
-                # {{{ redemption email
-                # TODO
-                # Find all clients that have redemption email perms
-                emails = %w[jwong@getyella.com]
-                merge_vars = []
-                address = store['address']
-                merge_vars << {
-                  name: "store_name",
-                  content: store['name']
-                }
-                merge_vars << {
-                  name: "store_addr",
-                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
-                }
-                query = "store_key:#{store.key} AND member_key:#{member.key}"
-                options = {
-                  limit: 1
-                }
-                checkins_response = @O_CLIENT.search(:checkins, query, options)
-                merge_vars << {
-                  name: "store_visits",
-                  content: checkins_response.total_count || checkins_response.count
-                }
-                merge_vars << {
-                  name: "reward_name",
-                  content: reward['title'],
-                }
-                merge_vars << {
-                  name: "reward_cost",
-                  content: reward['cost'],
-                }
-                # TODO
-                # get client time zone
-                # Time.zone = @client['time_zone'] unless @client['time_zone'].nil?
-                redeem_time = Time.zone.at(redeem['redeemed_at'])
-                merge_vars << {
-                  name: "reward_time",
-                  content: redeem_time.strftime('%l:%M %p'),
-                }
-                merge_vars << {
-                  name: "reward_date",
-                  content: redeem_time.strftime('%m/%d/%y'),
-                }
-                emails.each do |email|
-                  template_name = "new-redeem"
-                  template_content = []
-                  message = {
-                    to: [{
-                      email: email,
-                      type: 'to'
-                    }],
-                    headers: {
-                      "Reply-To" => 'merchantsupport@getyella.com'
-                    },
-                    important: true,
-                    track_opens: true,
-                    track_clicks: true,
-                    url_strip_qs: true,
-                    merge_vars: [{
-                      rcpt: email,
-                      vars: merge_vars
-                    }],
-                    tags: ['reward-redemption'],
-                    google_analytics_domains: ['getyella.com'],
-                  }
-                  async = false
-                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
-                 
-                  # }}}
-                end
-              rescue Orchestrate::API::BaseError => e
-                raise Error.new(422, 42205), e.message
-              rescue Mandrill::Error => e
-                raise Error.new(422, 42206), e.message
+                async = false
+                result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
               end
             rescue Orchestrate::API::BaseError => e
-              # unable to subtract points
-              @O_CLIENT.delete(:redeems, redeem.key, response.ref)
-              raise Error.new(422, 42204), "Reward not redeemed"
+              raise Error.new(422, 42205), e.message
+            rescue Mandrill::Error => e
+              raise Error.new(422, 42206), e.message
             end
+             
+            # }}}
           rescue Orchestrate::API::BaseError => e
-            # unable to redeem reward
-            raise Error.new(422, 42201), e.message
+            # unable to subtract points
+            @O_CLIENT.delete(:redeems, redeem.key, response.ref)
+            raise Error.new(422, 42204), "Reward not redeemed"
           end
-        else
-          # not enough points to redeem
-          raise Error.new(422, 42202), "Not enough points to redeem reward"
+        rescue Orchestrate::API::BaseError => e
+          # unable to redeem reward
+          raise Error.new(422, 42201), e.message
         end
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -760,7 +770,6 @@ module Storm
 
       params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
       params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
-
       begin
         now = Time.now
         max = Orchestrate::API::Helpers.timestamp(now)
@@ -822,6 +831,7 @@ module Storm
         store = code.relations[:store].first
         type = store.relations[:type].first
         raise Error.new(404, 40404), "Store type not found" if type.nil?
+
         data = {
           answers: type[:questions],
           worth: SURVEY_WORTH,
@@ -913,6 +923,7 @@ module Storm
 
       # TODO
       # Figure out a better way to handle answers, large payload
+      # {{{ updates answers
       unless params[:answers].blank?
         begin
           if params[:answers].is_a? String
@@ -932,6 +943,8 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update comments
       unless params[:comments].blank?
         begin
           survey[:comments] = params[:comments]
@@ -941,6 +954,8 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update nps_score
       if !params[:nps_score].blank? && params[:nps_score].numeric?
         begin
           survey[:nps_score] = params[:nps_score].to_i
@@ -950,19 +965,25 @@ module Storm
         end
       end
 
+      # }}}
+      # {{{ update completed
       if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true || (params[:completed].numeric? && params[:completed].to_i == 1))
         member = @O_APP[:members][survey[:member_key]]
         raise Error.new(422, 42205), "Unable to find member associated with this survey" if member.nil?
+
         store = @O_APP[:stores][survey[:store_key]]
         raise Error.new(422, 42206), "Unable to find store associated with this survey" if store.nil?
+
         company = store.relations[:company].first
         raise Error.new(422, 42207), "Unable to find company associated with this survey" if company.nil?
+
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
           survey.save!
           points_keys = Helpers.modify_points(member, company, survey[:worth])
 
+          # {{{ generate member stats
           sqs = AWS::SQS.new
           queue = sqs.queues.named('storm-generate-member-stats')
           queue.send_message(
@@ -979,6 +1000,8 @@ module Storm
             }
           )
 
+          # }}}
+          # {{{ generate events
           event = {
             points: survey[:worth],
             member_key: member.key,
@@ -999,6 +1022,8 @@ module Storm
               },
             }
           )
+
+          # }}}
           # TODO
           # Send out notification to store owners
         rescue Orchestrate::API::BaseError => e
@@ -1006,6 +1031,7 @@ module Storm
         end
       end
 
+      # }}}
       status 204
     end
 
@@ -1036,6 +1062,7 @@ module Storm
 
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
+        # {{{ update battery levels
         unless params[:battery].blank?
           batt_lvl = @O_APP[:battery_levels].create({
             level: params[:battery],
@@ -1045,6 +1072,7 @@ module Storm
           store.relations[:battery_levels] << batt_lvl
         end
 
+        # }}}
         data = {
           worth: CHECKIN_WORTH,
           member_key: member.key,
@@ -1101,6 +1129,7 @@ module Storm
         )
 
         # }}}
+        # {{{ member visits
         queue = sqs.queues.named('storm-member-visit')
         queue.send_message(
           'Store Visited',
@@ -1115,6 +1144,8 @@ module Storm
             }
           }
         )
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
