@@ -982,7 +982,6 @@ module Storm
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
           survey.save!
           points_keys = Helpers.modify_points(member, company, survey[:worth])
-
           # {{{ generate member stats
           sqs = AWS::SQS.new
           queue = sqs.queues.named('storm-generate-member-stats')
@@ -1024,8 +1023,19 @@ module Storm
           )
 
           # }}}
-          # TODO
-          # Send out notification to store owners
+          # {{{ merchant survey queue
+          queue = sqs.queues.named('storm-merchant-survey-queue')
+          queue.send_message(
+            'Survey completed',
+            message_attributes: {
+              "member_survey_key" => {
+                "string_value" => survey.key,
+                "data_type" => "String",
+              },
+            }
+          )
+
+          # }}}
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42201), "Unable to save completed properly"
         end
