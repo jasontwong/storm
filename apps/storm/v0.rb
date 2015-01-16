@@ -50,7 +50,7 @@ module Storm
         raise Error.new(400, 40002), 'Facebook ID is not a number' if params[:fb_id].numeric?
 
         response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
-        raise Error.new(404, 40400), 'Facebook ID not found' unless response.results.empty?
+        raise Error.new(404, 40400), 'Facebook ID not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !params[:member_id].blank?
@@ -58,13 +58,13 @@ module Storm
         raise Error.new(400, 40003), 'Member ID is not a number' if params[:member_id].numeric?
 
         response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
-        raise Error.new(404, 40401), 'Member not found' unless response.results.empty?
+        raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !params[:email].blank? && !params[:password].blank?
         # Email/Pass login
         response = @O_CLIENT.search(:members, "email:#{params[:email]}")
-        raise Error.new(404, 40401), 'Member not found' unless response.results.empty?
+        raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
         password = Digest::SHA256.new
