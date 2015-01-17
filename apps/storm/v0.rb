@@ -39,7 +39,7 @@ module Storm
         :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
         :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
       )
-      @MANDRILL = Mandrill::API.new ENV['MANDRILL_APIKEY']
+      @MANDRILL = Mandrill::API.new ENV['MANDRILL_API_KEY']
     end
 
     # }}}
