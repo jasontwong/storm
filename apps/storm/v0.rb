@@ -47,7 +47,7 @@ module Storm
     post '/members/login', provides: :json do
       if !params[:fb_id].blank?
         # FB login
-        raise Error.new(400, 40002), 'Facebook ID is not a number' if params[:fb_id].numeric?
+        raise Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
 
         response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
         raise Error.new(404, 40400), 'Facebook ID not found' if response.results.empty?
