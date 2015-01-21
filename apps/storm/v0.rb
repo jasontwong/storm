@@ -43,6 +43,7 @@ module Storm
     end
 
     # }}}
+    # members
     # {{{ post '/members/login', provides: :json do
     post '/members/login', provides: :json do
       if !params[:fb_id].blank?
@@ -322,6 +323,7 @@ module Storm
     end
 
     # }}}
+    # points
     # {{{ get '/points', provides: :json do
     get '/points', provides: :json do
       # check for required parameters
@@ -447,6 +449,7 @@ module Storm
     end
 
     # }}}
+    # rewards
     # {{{ get '/rewards', provides: :json do
     get '/rewards', provides: :json do
       # check for required parameters
@@ -613,77 +616,90 @@ module Storm
             # }}}
             # {{{ redemption email
             begin
-              # TODO
-              # Find all clients that have redemption email perms
-              emails = %w[jwong@getyella.com]
-              merge_vars = []
-              address = store['address']
-              merge_vars << {
-                name: "store_name",
-                content: store['name']
-              }
-              merge_vars << {
-                name: "store_addr",
-                content: "#{address['line1']} - #{address['city']}, #{address['state']}"
-              }
-              query = "store_key:#{store.key} AND member_key:#{member.key}"
-              options = {
-                limit: 1
-              }
-              checkins_response = @O_CLIENT.search(:checkins, query, options)
-              merge_vars << {
-                name: "store_visits",
-                content: checkins_response.total_count || checkins_response.count
-              }
-              merge_vars << {
-                name: "reward_name",
-                content: reward['title'],
-              }
-              merge_vars << {
-                name: "reward_cost",
-                content: reward['cost'],
-              }
-              # TODO
-              # get client time zone
-              # Time.zone = @client['time_zone'] unless @client['time_zone'].nil?
-              redeem_time = Time.zone.at(redeem['redeemed_at'])
-              merge_vars << {
-                name: "reward_time",
-                content: redeem_time.strftime('%l:%M %p'),
-              }
-              merge_vars << {
-                name: "reward_date",
-                content: redeem_time.strftime('%m/%d/%y'),
-              }
-              emails.each do |email|
-                template_name = "new-redeem"
-                template_content = []
-                message = {
-                  to: [{
-                    email: email,
-                    type: 'to'
-                  }],
-                  headers: {
-                    "Reply-To" => 'merchantsupport@getyella.com'
-                  },
-                  important: true,
-                  track_opens: true,
-                  track_clicks: true,
-                  url_strip_qs: true,
-                  merge_vars: [{
-                    rcpt: email,
-                    vars: merge_vars
-                  }],
-                  tags: ['reward-redemption'],
-                  google_analytics_domains: ['getyella.com'],
-                }
-                async = false
-                result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+              clients = []
+              query = "store_keys:#{store.key} AND permissions:\"Redemption Notification\""
+              clients_response = @O_CLIENT.search(:clients, query)
+              loop do
+                clients_response.results.each do |client|
+                  @O_CLIENT.patch_merge(:clients, client['path']['key'], { permissions: plan[:permissions] })
+                  clients << Orchestrate::KeyValue.from_listing(@O_APP[:clients], client, response)
+                end
+
+                clients_response = clients_response.next_results
+                break if response.nil?
               end
-            rescue Orchestrate::API::BaseError => e
-              raise Error.new(422, 42205), e.message
-            rescue Mandrill::Error => e
-              raise Error.new(422, 42206), e.message
+              
+              unless clients.empty?
+                # {{{ merge vars
+                merge_vars = []
+                address = store['address']
+                merge_vars << {
+                  name: "store_name",
+                  content: store['name']
+                }
+                merge_vars << {
+                  name: "store_addr",
+                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+                }
+                query = "store_key:#{store.key} AND member_key:#{member.key}"
+                options = {
+                  limit: 1
+                }
+                checkins_response = @O_CLIENT.search(:checkins, query, options)
+                merge_vars << {
+                  name: "store_visits",
+                  content: checkins_response.total_count || checkins_response.count
+                }
+                merge_vars << {
+                  name: "reward_name",
+                  content: reward['title'],
+                }
+                merge_vars << {
+                  name: "reward_cost",
+                  content: reward['cost'],
+                }
+
+                # }}}
+                clients.each do |client|
+                  redeem_time = Time.at(redeem['redeemed_at'])
+                  redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
+                  merge_vars << {
+                    name: "reward_time",
+                    content: redeem_time.strftime('%l:%M %p'),
+                  }
+                  merge_vars << {
+                    name: "reward_date",
+                    content: redeem_time.strftime('%m/%d/%y'),
+                  }
+                  template_name = "new-redeem"
+                  template_content = []
+                  message = {
+                    to: [{
+                      email: client[:email],
+                      type: 'to'
+                    }],
+                    headers: {
+                      "Reply-To" => 'merchantsupport@getyella.com'
+                    },
+                    important: true,
+                    track_opens: true,
+                    track_clicks: true,
+                    url_strip_qs: true,
+                    merge_vars: [{
+                      rcpt: client[:email],
+                      vars: merge_vars
+                    }],
+                    tags: ['reward-redemption'],
+                    google_analytics_domains: ['getyella.com'],
+                  }
+                  async = false
+                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+                end
+              rescue Orchestrate::API::BaseError => e
+                raise Error.new(422, 42205), e.message
+              rescue Mandrill::Error => e
+                raise Error.new(422, 42206), e.message
+              end
             end
              
             # }}}
@@ -708,6 +724,7 @@ module Storm
     end
 
     # }}}
+    # stores
     # {{{ get '/stores', provides: :json do
     get '/stores', provides: :json do
       # check for required parameters
@@ -758,6 +775,7 @@ module Storm
     end
 
     # }}}
+    # surveys
     # {{{ get '/surveys', provides: :json do
     get '/surveys', provides: :json do
       # check for required parameters
@@ -1046,6 +1064,7 @@ module Storm
     end
 
     # }}}
+    # checkins
     # {{{ post '/checkins', provides: :json do
     post '/checkins', provides: :json do
       # check for required parameters
