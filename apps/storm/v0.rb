@@ -672,42 +672,41 @@ module Storm
                     content: reward['cost'],
                   }
 
-                  # }}}
+                  client_emails = []
+                  client_merge_vars = []
                   clients.each do |client|
                     redeem_time = Time.at(redeem['redeemed_at'])
                     redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
-                    merge_vars << {
+                    vars = [{
                       name: "reward_time",
                       content: redeem_time.strftime('%l:%M %p'),
-                    }
-                    merge_vars << {
+                    },{
                       name: "reward_date",
                       content: redeem_time.strftime('%m/%d/%y'),
-                    }
-                    template_name = "new-redeem"
-                    template_content = []
-                    message = {
-                      to: [{
-                        email: client[:email],
-                        type: 'to'
-                      }],
-                      headers: {
-                        "Reply-To" => 'merchantsupport@getyella.com'
-                      },
-                      important: true,
-                      track_opens: true,
-                      track_clicks: true,
-                      url_strip_qs: true,
-                      merge_vars: [{
-                        rcpt: client[:email],
-                        vars: merge_vars
-                      }],
-                      tags: ['reward-redemption'],
-                      google_analytics_domains: ['getyella.com'],
-                    }
-                    async = false
-                    result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+                    }]
+                    client_emails << { email: client['email'] }
+                    client_merge_vars << { rcpt: client['email'], vars: merge_vars + vars }
                   end
+
+                  # }}}
+                  # send email
+                  template_name = "new-redeem"
+                  template_content = []
+                  message = {
+                    to: client_emails,
+                    headers: {
+                      "Reply-To" => 'merchantsupport@getyella.com'
+                    },
+                    important: true,
+                    track_opens: true,
+                    track_clicks: true,
+                    url_strip_qs: true,
+                    merge_vars: client_merge_vars,
+                    tags: ['reward-redemption'],
+                    google_analytics_domains: ['getyella.com'],
+                  }
+                  async = false
+                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
                 end
               end
             rescue Orchestrate::API::BaseError => e
