@@ -695,11 +695,11 @@ module Storm
                   async = false
                   result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
                 end
-              rescue Orchestrate::API::BaseError => e
-                raise Error.new(422, 42205), e.message
-              rescue Mandrill::Error => e
-                raise Error.new(422, 42206), e.message
               end
+            rescue Orchestrate::API::BaseError => e
+              raise Error.new(422, 42205), e.message
+            rescue Mandrill::Error => e
+              raise Error.new(422, 42206), e.message
             end
              
             # }}}
