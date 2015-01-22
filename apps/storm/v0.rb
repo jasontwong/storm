@@ -1094,8 +1094,8 @@ module Storm
         # {{{ update battery levels
         unless params[:battery].blank?
           batt_lvl = @O_APP[:battery_levels].create({
-            level: params[:battery],
-            store: store.key,
+            level: params[:battery].to_i,
+            store_key: store.key,
             read_at: Orchestrate::API::Helpers.timestamp(Time.now),
           })
           store.relations[:battery_levels] << batt_lvl
