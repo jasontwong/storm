@@ -630,70 +630,84 @@ module Storm
               end
               
               unless clients.empty?
-                # {{{ merge vars
-                merge_vars = []
-                address = store['address']
-                merge_vars << {
-                  name: "store_name",
-                  content: store['name']
-                }
-                merge_vars << {
-                  name: "store_addr",
-                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
-                }
-                query = "store_key:#{store.key} AND member_key:#{member.key}"
-                options = {
-                  limit: 1
-                }
                 checkins_response = @O_CLIENT.search(:checkins, query, options)
-                merge_vars << {
-                  name: "store_visits",
-                  content: checkins_response.total_count || checkins_response.count
-                }
-                merge_vars << {
-                  name: "reward_name",
-                  content: reward['title'],
-                }
-                merge_vars << {
-                  name: "reward_cost",
-                  content: reward['cost'],
-                }
+                visits = checkins_response.total_count || checkins_response.count
+                if visits > 0
+                  # {{{ merge vars
+                  merge_vars = []
+                  visits_content = ""
+                  case visits
+                  when 0...20
+                    visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
+                  when 20...50
+                    visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
+                  when 50...100
+                    visits_content = "Congratulations - this customer has yella'd here #{visits} times. Wow."
+                  else
+                    visits_content = "Loyal? More like obsessed! This customer has yella'd here #{visits} times."
+                  end
+                  address = store['address']
+                  merge_vars << {
+                    name: "store_name",
+                    content: store['name']
+                  }
+                  merge_vars << {
+                    name: "store_addr",
+                    content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+                  }
+                  query = "store_key:#{store.key} AND member_key:#{member.key}"
+                  options = {
+                    limit: 1
+                  }
+                  merge_vars << {
+                    name: "store_visits",
+                    content: visits_content
+                  }
+                  merge_vars << {
+                    name: "reward_name",
+                    content: reward['title'],
+                  }
+                  merge_vars << {
+                    name: "reward_cost",
+                    content: reward['cost'],
+                  }
 
-                # }}}
-                clients.each do |client|
-                  redeem_time = Time.at(redeem['redeemed_at'])
-                  redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
-                  merge_vars << {
-                    name: "reward_time",
-                    content: redeem_time.strftime('%l:%M %p'),
-                  }
-                  merge_vars << {
-                    name: "reward_date",
-                    content: redeem_time.strftime('%m/%d/%y'),
-                  }
-                  template_name = "new-redeem"
-                  template_content = []
-                  message = {
-                    to: [{
-                      email: client[:email],
-                      type: 'to'
-                    }],
-                    headers: {
-                      "Reply-To" => 'merchantsupport@getyella.com'
-                    },
-                    important: true,
-                    track_opens: true,
-                    track_clicks: true,
-                    url_strip_qs: true,
-                    merge_vars: [{
-                      rcpt: client[:email],
-                      vars: merge_vars
-                    }],
-                    tags: ['reward-redemption'],
-                    google_analytics_domains: ['getyella.com'],
-                  }
-                  async = false
-                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+                  # }}}
+                  clients.each do |client|
+                    redeem_time = Time.at(redeem['redeemed_at'])
+                    redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
+                    merge_vars << {
+                      name: "reward_time",
+                      content: redeem_time.strftime('%l:%M %p'),
+                    }
+                    merge_vars << {
+                      name: "reward_date",
+                      content: redeem_time.strftime('%m/%d/%y'),
+                    }
+                    template_name = "new-redeem"
+                    template_content = []
+                    message = {
+                      to: [{
+                        email: client[:email],
+                        type: 'to'
+                      }],
+                      headers: {
+                        "Reply-To" => 'merchantsupport@getyella.com'
+                      },
+                      important: true,
+                      track_opens: true,
+                      track_clicks: true,
+                      url_strip_qs: true,
+                      merge_vars: [{
+                        rcpt: client[:email],
+                        vars: merge_vars
+                      }],
+                      tags: ['reward-redemption'],
+                      google_analytics_domains: ['getyella.com'],
+                    }
+                    async = false
+                    result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+                  end
                 end
               end
             rescue Orchestrate::API::BaseError => e
