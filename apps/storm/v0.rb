@@ -74,14 +74,12 @@ module Storm
         old_pass.update params[:password]
         dhash = Digest::SHA256.new
         dhash.update old_pass.hexdigest + member[:salt]
-        if member[:password] == password.hexdigest
-          @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
-        elsif member[:password] == dhash.hexdigest
+        if member[:password] == dhash.hexdigest
+          # reverting double hash to single hash
           member[:password] = password.hexdigest
           member.save!
-          @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
         else
-          raise Error.new(401, 40102), 'Password incorrect'
+          raise Error.new(401, 40102), 'Password incorrect' unless member[:password] == password.hexdigest
         end
       else
         raise Error.new(400, 40001), 'Missing parameters'
@@ -89,6 +87,7 @@ module Storm
       
       raise Error.new(404, 40402), 'Member found but inactive' unless member[:active]
 
+      @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
       data = member.value
       data[:key] = member.key
       data.delete_if { |k, v| ['password', 'salt'].include? k }
