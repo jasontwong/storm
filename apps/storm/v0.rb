@@ -522,6 +522,7 @@ module Storm
           end
         end
 
+        response = response.next_results
         break if response.nil? || found
       end
 
