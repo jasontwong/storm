@@ -545,7 +545,7 @@ module Storm
 
         points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
         # not enough points to redeem
-        raise Error.new(422, 42202), "Not enough points to redeem reward" if reward[:cost] < points[:current]
+        raise Error.new(422, 42202), "Not enough points to redeem reward" unless reward[:cost] < points[:current]
         # {{{ redeem reward
         begin
           rw_data = {
