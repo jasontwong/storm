@@ -24,7 +24,7 @@ module Storm
       allow = request.env['HTTP_AUTHORIZATION'] == DEV_KEY unless settings.production?
       unless allow
         key = @O_APP[:api_keys][request.env['HTTP_AUTHORIZATION']]
-        if key.nil?
+        if key.nil? || request.env['HTTP_AUTHORIZATION'].nil?
           halt 401, {
             'Content-Type' => 'application/json'
           }, { 
