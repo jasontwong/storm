@@ -525,7 +525,7 @@ module Storm
         break if response.nil? || found
       end
 
-      raise Error.new(404, 40406), 'Reward does not match company' unless found
+      raise Error.new(404, 40408), 'Reward does not match company' unless found
 
       # }}}
       begin
@@ -557,7 +557,7 @@ module Storm
           }
           redeem = @O_APP[:redeems].create(rw_data)
           begin
-            Helpers.modify_points(member, company, reward[:cost] * -1)
+            points.decrement('current', reward[:cost]).update()
             # {{{ member stat generation
             sqs = AWS::SQS.new
             queue = sqs.queues.named('storm-generate-member-stats')
@@ -607,30 +607,31 @@ module Storm
               to_collection: 'redeems',
               to_key: redeem.key
             }]
-            queue = sqs.queues.named('storm-generate-relations')
-            queue.send_message(
-              relations.to_json,
-            )
+            # queue = sqs.queues.named('storm-generate-relations')
+            # queue.send_message(
+            #   relations.to_json,
+            # )
+            Resque.enqueue(Relation, relations)
 
             # }}}
             # {{{ redemption email
             begin
               clients = []
               query = "store_keys:#{store.key} AND permissions:\"Redemption Notification\""
-              clients_response = @O_CLIENT.search(:clients, query)
+              response = @O_CLIENT.search(:clients, query)
               loop do
-                clients_response.results.each do |client|
+                response.results.each do |client|
                   @O_CLIENT.patch_merge(:clients, client['path']['key'], { permissions: plan[:permissions] })
                   clients << Orchestrate::KeyValue.from_listing(@O_APP[:clients], client, response)
                 end
 
-                clients_response = clients_response.next_results
+                response = response.next_results
                 break if response.nil?
               end
               
               unless clients.empty?
-                checkins_response = @O_CLIENT.search(:checkins, query, options)
-                visits = checkins_response.total_count || checkins_response.count
+                response = @O_CLIENT.search(:checkins, query, options)
+                visits = response.total_count || response.count
                 if visits > 0
                   # {{{ merge vars
                   merge_vars = []

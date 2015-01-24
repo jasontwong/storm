@@ -5,12 +5,20 @@ require 'excon'
 require 'aws-sdk'
 require 'thread'
 require 'rake/benchmark' if ENV['RACK_ENV'] == 'development'
+require_relative "lib/jobs"
+require 'resque'
+require 'resque/tasks'
 
 AWS.config(
   :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
   :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
 )
 Dir.glob('lib/tasks/**/*.rake').each { |r| load r}
+
+redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
+uri = URI.parse(redis_url)
+Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+Resque.redis.namespace = "resque:storm"
 
 class ThreadPool
   def initialize(size)
@@ -37,4 +45,8 @@ class ThreadPool
     end
     @pool.map(&:join)
   end
+end
+
+task "resque:setup" do
+  ENV['QUEUE'] = '*'
 end

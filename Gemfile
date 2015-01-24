@@ -10,6 +10,7 @@ gem 'activesupport', '~> 4.2'
 gem 'aws-sdk', '~> 1.6'
 gem 'mandrill-api', '~> 1.0'
 gem 'rake', '~> 10.4'
+gem 'resque', '~> 1.25'
 
 group :development, :test do
   gem 'rake-benchmark'
