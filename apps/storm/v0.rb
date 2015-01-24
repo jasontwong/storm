@@ -120,8 +120,20 @@ class Point
       },
       'value': points.value
     }
-    @o_client.put_relation(:members, member_key, :points, :points, @pkey)
-    @o_client.put_relation(:companies, company_key, :points, :points, @pkey)
+    relations = [{
+      from_collection: 'members',
+      from_key: member_key,
+      from_name: 'points',
+      to_collection: 'points',
+      to_key: @pkey
+    },{
+      from_collection: 'companies',
+      from_key: company_key,
+      from_name: 'points',
+      to_collection: 'points',
+      to_key: @pkey
+    }]
+    Resque.enqueue(Relation, relations)
   end
 
   # }}}
@@ -852,6 +864,7 @@ module Storm
         }
         response = @O_CLIENT.search(:codes, query, options)
         raise Error.new(404, 40403), "Beacon not found" if response.count == 0
+
         unless response.total_count.nil?
           # TODO
           # There's more than one code with that major/minor. Broken.
@@ -912,11 +925,7 @@ module Storm
           to_collection: 'codes',
           to_key: code.key
         }]
-        sqs = AWS::SQS.new
-        queue = sqs.queues.named('storm-generate-relations')
-        queue.send_message(
-          relations.to_json,
-        )
+        Resque.enqueue(Relation, relations)
 
         # }}}
       rescue Orchestrate::API::BaseError => e
@@ -1120,11 +1129,7 @@ module Storm
           to_collection: 'codes',
           to_key: code.key
         }]
-        sqs = AWS::SQS.new
-        queue = sqs.queues.named('storm-generate-relations')
-        queue.send_message(
-          relations.to_json,
-        )
+        Resque.enqueue(Relation, relations)
 
         # }}}
         # {{{ member visits
