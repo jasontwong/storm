@@ -6,6 +6,128 @@ require 'active_support/all'
 require 'aws-sdk'
 require 'mandrill'
 
+# {{{ class Point
+class Point
+  attr_reader :pkey, :points
+  # {{{ def initialize(mkey, ckey)
+  def initialize(mkey, ckey)
+    @pkey = nil
+    @points = nil
+    @mkey = mkey
+    @ckey = ckey
+    @o_app = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
+      conn.adapter :excon
+    end
+    @o_client = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
+      conn.adapter :excon
+    end
+    query = "company_key:#{ckey} AND member_key:#{mkey}"
+    options = {
+      limit: 1
+    }
+    response = @o_client.search(:points, query, options)
+    unless response.total_count.nil?
+      # TODO
+      # There is a bug that allowed two sets of points notify admin
+    end
+    unless response.results.empty?
+      @points = response.results.first
+      @pkey = @points['path']['key']
+    end
+  end
+
+  # }}}
+  # {{{ def modify_points(num)
+  def modify_points(num)
+    pkey = get_pkey
+    num = num.to_i
+    ops = []
+    if num > 0
+      ops << {
+        op: 'add',
+        path: 'last_earned',
+        value: Orchestrate::API::Helpers.timestamp(Time.now)
+      }
+      ops << {
+        op: 'inc',
+        path: 'total',
+        value: num
+      }
+    end
+    ops << {
+      op: 'inc',
+      path: 'current',
+      value: num
+    }
+    @o_client.patch(:points, pkey, ops)
+    # TODO
+    # Queue up member stats and event generation
+    # queue = sqs.queues.named('storm-generate-member-stats')
+    # queue.send_message(
+    #   'Points modified',
+    #   message_attributes: {
+    #     "member_key" => {
+    #       "string_value" => member.key,
+    #       "data_type" => "String",
+    #     },
+    #     "store_key" => {
+    #       "string_value" => store.key,
+    #       "data_type" => "String",
+    #     }
+    #   }
+    # )
+    # 
+    # if params[:points].to_i > 0
+    #   event = {
+    #     points: params[:points].to_i,
+    #     member_key: member.key,
+    #     company_key: store[:company_key],
+    #     store_key: store.key
+    #   }
+    #   queue = sqs.queues.named('storm-generate-events')
+    #   queue.send_message(
+    #     { keys: points_keys, data: event }.to_json,
+    #     message_attributes: {
+    #       "collection" => {
+    #         "string_value" => 'points',
+    #         "data_type" => "String",
+    #       },
+    #       "event_name" => {
+    #         "string_value" => 'earned',
+    #         "data_type" => "String",
+    #       },
+    #     }
+    #   )
+    # end
+  end
+
+  # }}}
+  private
+  # {{{ def get_pkey
+  def get_pkey
+    return @pkey unless @pkey.nil?
+    point_data = {
+      current: 0,
+      total: 0,
+      member_key: @mkey,
+      company_key: @ckey
+    }
+    points = @o_app[:points].create(point_data)
+    @pkey = points.key
+    @points = {
+      'path': {
+        'key': @pkey
+      },
+      'value': points.value
+    }
+    @o_client.put_relation(:members, member_key, :points, :points, @pkey)
+    @o_client.put_relation(:companies, company_key, :points, :points, @pkey)
+  end
+
+  # }}}
+end
+
+# }}}
 module Storm
   class V0 < Base
     # {{{ before do
@@ -338,27 +460,15 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
-      company = store.relations[:company].first
-      raise Error.new(404, 40405), 'Company not found' if company.nil?
-
       begin
-        # get the member's points for this store
-        query = "company_key:#{company.key} AND member_key:#{member.key}"
-        options = {
-          limit: 1
-        }
-        response = @O_CLIENT.search(:points, query, options)
-        unless response.count > 1
-          # TODO
-          # There is a bug that allowed two sets of points notify admin
-        end
+        point = Point.new(member.key, store[:company_key])
         # we couldn't find points that are associated with this key/member combination
-        raise Error.new(404, 40406), "Member does not have any points at this company" if response.results.empty?
+        raise Error.new(404, 40406), "Member does not have any points at this company" if point.pkey.nil?
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
 
-      data = response.results.first['value']
+      data = point.points['value']
       data.delete_if { |k, v| ['member_key', 'company_key'].include? k }
       status 200
       body data.to_json
@@ -381,65 +491,9 @@ module Storm
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
-      company = store.relations[:company].first
-      raise Error.new(404, 40405), 'Company not found' if company.nil?
-
       begin
-        # get the member's points for this store
-        query = "company_key:#{company.key} AND member_key:#{member.key}"
-        options = {
-          limit: 1
-        }
-        response = @O_CLIENT.search(:points, query, options)
-        if response.count > 1
-          # TODO
-          # There is a bug that allowed two sets of points notify admin
-        end
-
-        points_keys = Helpers.modify_points(member, company, params[:points].to_i)
-        sqs = AWS::SQS.new
-        # {{{ generate member stats
-        queue = sqs.queues.named('storm-generate-member-stats')
-        queue.send_message(
-          'Points modified',
-          message_attributes: {
-            "member_key" => {
-              "string_value" => member.key,
-              "data_type" => "String",
-            },
-            "store_key" => {
-              "string_value" => store.key,
-              "data_type" => "String",
-            }
-          }
-        )
-        
-        # }}}
-        # {{{ generate events
-        if params[:points].to_i > 0
-          event = {
-            points: params[:points].to_i,
-            member_key: member.key,
-            company_key: company.key,
-            store_key: store.key
-          }
-          queue = sqs.queues.named('storm-generate-events')
-          queue.send_message(
-            { keys: points_keys, data: event }.to_json,
-            message_attributes: {
-              "collection" => {
-                "string_value" => 'points',
-                "data_type" => "String",
-              },
-              "event_name" => {
-                "string_value" => 'earned',
-                "data_type" => "String",
-              },
-            }
-          )
-        end
-
-        # }}}
+        point = Point.new(member.key, store[:company_key])
+        point.modify_points(params[:points].to_i)
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -459,16 +513,14 @@ module Storm
       raise Error.new(404, 40401), 'Store not found' if store.nil?
       raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
-      company = store.relations[:company].first
-      raise Error.new(404, 40403), 'Company not found' if company.nil?
-
       begin
         data = []
-        response = @O_CLIENT.get_relations(:companies, company.key, :rewards)
+        response = @O_CLIENT.search(:rewards, "company_key:#{store[:company_key]} AND active:true")
         loop do
           response.results.each do |reward|
             r = reward['value']
             r[:key] = reward['path']['key']
+            r.delete_if { |k, v| ['active', 'company_key'].include? k }
             data << r
           end
 
@@ -508,45 +560,13 @@ module Storm
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
-
-      company = store.relations[:company].first
-      raise Error.new(404, 40406), 'Company not found' if company.nil?
-
-      found = false
-      response = @O_CLIENT.get_relations(:companies, company.key, :rewards)
-      loop do
-        response.results.each do |listing|
-          if params[:reward_key] == listing['path']['key']
-            found = true
-            break
-          end
-        end
-
-        response = response.next_results
-        break if response.nil? || found
-      end
-
-      raise Error.new(404, 40408), 'Reward does not match company' unless found
+      raise Error.new(404, 40408), 'Reward does not match company' unless reward.key == store[:company_key]
 
       # }}}
       begin
-        # get the member's points for this store
-        query = "company_key:#{company.key} AND member_key:#{member.key}"
-        options = {
-          limit: 1
-        }
-        response = @O_CLIENT.search(:points, query, options)
-        unless response.total_count.nil?
-          # TODO
-          # There is a bug that allowed two sets of points notify admin
-        end
-
+        point = Point.new(member.key, store[:company_key])
         # we couldn't find points that are associated with this key/member combination
-        raise Error.new(422, 42202), "Not enough points to redeem reward" if response.results.empty?
-
-        points = Orchestrate::KeyValue.from_listing(@O_APP[:points], response.results.first, response)
-        # not enough points to redeem
-        raise Error.new(422, 42202), "Not enough points to redeem reward" unless reward[:cost] < points[:current]
+        raise Error.new(422, 42202), "Not enough points to redeem reward" if point.pkey.nil? || reward[:cost] > point.points['value']['current']
         # {{{ redeem reward
         begin
           rw_data = {
@@ -558,170 +578,148 @@ module Storm
           }
           redeem = @O_APP[:redeems].create(rw_data)
           begin
-            points.decrement('current', reward[:cost]).update()
-            # {{{ member stat generation
-            sqs = AWS::SQS.new
-            queue = sqs.queues.named('storm-generate-member-stats')
-            queue.send_message(
-              'Points modified',
-              message_attributes: {
-                "member_key" => {
-                  "string_value" => member.key,
-                  "data_type" => "String",
-                },
-                "store_key" => {
-                  "string_value" => store.key,
-                  "data_type" => "String",
-                }
-              }
-            )
-
-            # }}}
-            # {{{ events
-            queue = sqs.queues.named('storm-generate-events')
-            queue.send_message(
-              { keys: [reward.key], data: rw_data }.to_json,
-              message_attributes: {
-                "collection" => {
-                  "string_value" => 'rewards',
-                  "data_type" => "String",
-                },
-                "event_name" => {
-                  "string_value" => 'redeems',
-                  "data_type" => "String",
-                },
-              }
-            )
-
-            # }}}
-            # {{{ relations
-            relations = [{
-              from_collection: 'stores',
-              from_key: store.key,
-              from_name: 'redeems',
-              to_collection: 'redeems',
-              to_key: redeem.key
-            },{
-              from_collection: 'members',
-              from_key: member.key,
-              from_name: 'redeems',
-              to_collection: 'redeems',
-              to_key: redeem.key
-            }]
-            # queue = sqs.queues.named('storm-generate-relations')
-            # queue.send_message(
-            #   relations.to_json,
-            # )
-            Resque.enqueue(Relation, relations)
-
-            # }}}
-            # {{{ redemption email
-            begin
-              clients = []
-              query = "store_keys:#{store.key} AND permissions:\"Redemption Notification\""
-              response = @O_CLIENT.search(:clients, query)
-              loop do
-                response.results.each do |client|
-                  @O_CLIENT.patch_merge(:clients, client['path']['key'], { permissions: plan[:permissions] })
-                  clients << Orchestrate::KeyValue.from_listing(@O_APP[:clients], client, response)
-                end
-
-                response = response.next_results
-                break if response.nil?
-              end
-              
-              unless clients.empty?
-                response = @O_CLIENT.search(:checkins, query, options)
-                visits = response.total_count || response.count
-                if visits > 0
-                  # {{{ merge vars
-                  merge_vars = []
-                  visits_content = ""
-                  case visits
-                  when 0...20
-                    visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
-                  when 20...50
-                    visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
-                  when 50...100
-                    visits_content = "Congratulations - this customer has yella'd here #{visits} times. Wow."
-                  else
-                    visits_content = "Loyal? More like obsessed! This customer has yella'd here #{visits} times."
-                  end
-                  address = store['address']
-                  merge_vars << {
-                    name: "store_name",
-                    content: store['name']
-                  }
-                  merge_vars << {
-                    name: "store_addr",
-                    content: "#{address['line1']} - #{address['city']}, #{address['state']}"
-                  }
-                  query = "store_key:#{store.key} AND member_key:#{member.key}"
-                  options = {
-                    limit: 1
-                  }
-                  merge_vars << {
-                    name: "store_visits",
-                    content: visits_content
-                  }
-                  merge_vars << {
-                    name: "reward_name",
-                    content: reward['title'],
-                  }
-                  merge_vars << {
-                    name: "reward_cost",
-                    content: reward['cost'],
-                  }
-
-                  client_emails = []
-                  client_merge_vars = []
-                  clients.each do |client|
-                    redeem_time = Time.at(redeem['redeemed_at'])
-                    redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
-                    vars = [{
-                      name: "reward_time",
-                      content: redeem_time.strftime('%l:%M %p'),
-                    },{
-                      name: "reward_date",
-                      content: redeem_time.strftime('%m/%d/%y'),
-                    }]
-                    client_emails << { email: client['email'] }
-                    client_merge_vars << { rcpt: client['email'], vars: merge_vars + vars }
-                  end
-
-                  # }}}
-                  # send email
-                  template_name = "new-redeem"
-                  template_content = []
-                  message = {
-                    to: client_emails,
-                    headers: {
-                      "Reply-To" => 'merchantsupport@getyella.com'
-                    },
-                    important: true,
-                    track_opens: true,
-                    track_clicks: true,
-                    url_strip_qs: true,
-                    merge_vars: client_merge_vars,
-                    tags: ['reward-redemption'],
-                    google_analytics_domains: ['getyella.com'],
-                  }
-                  async = false
-                  result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
-                end
-              end
-            rescue Orchestrate::API::BaseError => e
-              raise Error.new(422, 42205), e.message
-            rescue Mandrill::Error => e
-              raise Error.new(422, 42206), e.message
-            end
-             
-            # }}}
+            point.modify_points(reward[:cost] * -1)
           rescue Orchestrate::API::BaseError => e
             # unable to subtract points
             @O_CLIENT.delete(:redeems, redeem.key, response.ref)
             raise Error.new(422, 42204), "Reward not redeemed"
           end
+          # {{{ events
+          queue = sqs.queues.named('storm-generate-events')
+          queue.send_message(
+            { keys: [reward.key], data: rw_data }.to_json,
+            message_attributes: {
+              "collection" => {
+                "string_value" => 'rewards',
+                "data_type" => "String",
+              },
+              "event_name" => {
+                "string_value" => 'redeems',
+                "data_type" => "String",
+              },
+            }
+          )
+
+          # }}}
+          # {{{ relations
+          relations = [{
+            from_collection: 'stores',
+            from_key: store.key,
+            from_name: 'redeems',
+            to_collection: 'redeems',
+            to_key: redeem.key
+          },{
+            from_collection: 'members',
+            from_key: member.key,
+            from_name: 'redeems',
+            to_collection: 'redeems',
+            to_key: redeem.key
+          }]
+          Resque.enqueue(Relation, relations)
+
+          # }}}
+          # {{{ redemption email
+          begin
+            clients = []
+            query = "store_keys:#{store.key} AND permissions:\"Redemption Notification\""
+            response = @O_CLIENT.search(:clients, query)
+            loop do
+              response.results.each do |client|
+                @O_CLIENT.patch_merge(:clients, client['path']['key'], { permissions: plan[:permissions] })
+                clients << Orchestrate::KeyValue.from_listing(@O_APP[:clients], client, response)
+              end
+
+              response = response.next_results
+              break if response.nil?
+            end
+            
+            unless clients.empty?
+              response = @O_CLIENT.search(:checkins, query, options)
+              visits = response.total_count || response.count
+              if visits > 0
+                # {{{ merge vars
+                merge_vars = []
+                visits_content = ""
+                case visits
+                when 0...20
+                  visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
+                when 20...50
+                  visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
+                when 50...100
+                  visits_content = "Congratulations - this customer has yella'd here #{visits} times. Wow."
+                else
+                  visits_content = "Loyal? More like obsessed! This customer has yella'd here #{visits} times."
+                end
+                address = store['address']
+                merge_vars << {
+                  name: "store_name",
+                  content: store['name']
+                }
+                merge_vars << {
+                  name: "store_addr",
+                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+                }
+                query = "store_key:#{store.key} AND member_key:#{member.key}"
+                options = {
+                  limit: 1
+                }
+                merge_vars << {
+                  name: "store_visits",
+                  content: visits_content
+                }
+                merge_vars << {
+                  name: "reward_name",
+                  content: reward['title'],
+                }
+                merge_vars << {
+                  name: "reward_cost",
+                  content: reward['cost'],
+                }
+
+                client_emails = []
+                client_merge_vars = []
+                clients.each do |client|
+                  redeem_time = Time.at(redeem['redeemed_at'])
+                  redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
+                  vars = [{
+                    name: "reward_time",
+                    content: redeem_time.strftime('%l:%M %p'),
+                  },{
+                    name: "reward_date",
+                    content: redeem_time.strftime('%m/%d/%y'),
+                  }]
+                  client_emails << { email: client['email'] }
+                  client_merge_vars << { rcpt: client['email'], vars: merge_vars + vars }
+                end
+
+                # }}}
+                # send email
+                template_name = "new-redeem"
+                template_content = []
+                message = {
+                  to: client_emails,
+                  headers: {
+                    "Reply-To" => 'merchantsupport@getyella.com'
+                  },
+                  important: true,
+                  track_opens: true,
+                  track_clicks: true,
+                  url_strip_qs: true,
+                  merge_vars: client_merge_vars,
+                  tags: ['reward-redemption'],
+                  google_analytics_domains: ['getyella.com'],
+                }
+                async = false
+                result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+              end
+            end
+          rescue Orchestrate::API::BaseError => e
+            raise Error.new(422, 42205), e.message
+          rescue Mandrill::Error => e
+            raise Error.new(422, 42206), e.message
+          end
+           
+          # }}}
         rescue Orchestrate::API::BaseError => e
           # unable to redeem reward
           raise Error.new(422, 42201), e.message
@@ -1006,55 +1004,10 @@ module Storm
         store = @O_APP[:stores][survey[:store_key]]
         raise Error.new(422, 42206), "Unable to find store associated with this survey" if store.nil?
 
-        company = store.relations[:company].first
-        raise Error.new(422, 42207), "Unable to find company associated with this survey" if company.nil?
-
         begin
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
           survey.save!
-          points_keys = Helpers.modify_points(member, company, survey[:worth])
-          # {{{ generate member stats
-          sqs = AWS::SQS.new
-          queue = sqs.queues.named('storm-generate-member-stats')
-          queue.send_message(
-            'Points modified',
-            message_attributes: {
-              "member_key" => {
-                "string_value" => member.key,
-                "data_type" => "String",
-              },
-              "store_key" => {
-                "string_value" => store.key,
-                "data_type" => "String",
-              }
-            }
-          )
-
-          # }}}
-          # {{{ generate events
-          event = {
-            points: survey[:worth],
-            member_key: member.key,
-            company_key: company.key,
-            store_key: store.key
-          }
-          queue = sqs.queues.named('storm-generate-events')
-          queue.send_message(
-            { keys: points_keys, data: event }.to_json,
-            message_attributes: {
-              "collection" => {
-                "string_value" => 'points',
-                "data_type" => "String",
-              },
-              "event_name" => {
-                "string_value" => 'earned',
-                "data_type" => "String",
-              },
-            }
-          )
-
-          # }}}
           # {{{ merchant survey queue
           queue = sqs.queues.named('storm-merchant-survey-queue')
           queue.send_message(
@@ -1068,6 +1021,8 @@ module Storm
           )
 
           # }}}
+          point = Point.new(member.key, store[:company_key])
+          point.modify_points(survey[:worth])
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42201), "Unable to save completed properly"
         end
