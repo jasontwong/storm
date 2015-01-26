@@ -14,22 +14,14 @@ namespace :stats do
     task :points , [:member] do |t, args|
       unless args[:member].nil?
         begin
-          points_available = 0
-          points_earned = 0
-          response = oclient.get_relations(:members, args[:member], :points)
-          loop do
-            response.results.each do |point|
-              points_available += point['value']['current']
-              points_earned += point['value']['total'] 
-            end
-
-            response = response.next_results
-            break if response.nil?
-          end
-
+          query = "member_key:#{args[:member]}"
+          options = {
+            aggregate: "current:stats,total:stats"
+          }
+          response = oclient.search(:points, query, options)
           oclient.patch('members', args[:member], [
-            { op: 'add', path: 'stats.points.available', value: points_available },
-            { op: 'add', path: 'stats.points.earned', value: points_earned }
+            { op: 'add', path: 'stats.points.available', value: response.aggregates[0]['statistics']['sum']},
+            { op: 'add', path: 'stats.points.earned', value: response.aggregates[1]['statistics']['sum']},
           ])
         rescue Orchestrate::API::BaseError => e
           # Log orchestrate error
