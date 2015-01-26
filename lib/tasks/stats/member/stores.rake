@@ -28,7 +28,7 @@ namespace :stats do
             break if response.nil?
           end
 
-          u_visits = keys.uniq { |k| k[:key] }.sort { |a,b| b[:created_at] <=> a[:created_at] }
+          u_visits = keys.uniq { |k| k[:key] }
           oclient.patch('members', args[:member], [
             { op: 'add', path: 'stats.stores.unique_visits', value: u_visits.length },
             { op: 'add', path: 'stats.stores.visits', value: keys.length },
