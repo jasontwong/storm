@@ -76,29 +76,6 @@ class Point
     #     }
     #   }
     # )
-    # 
-    # if params[:points].to_i > 0
-    #   event = {
-    #     points: params[:points].to_i,
-    #     member_key: member.key,
-    #     company_key: store[:company_key],
-    #     store_key: store.key
-    #   }
-    #   queue = sqs.queues.named('storm-generate-events')
-    #   queue.send_message(
-    #     { keys: points_keys, data: event }.to_json,
-    #     message_attributes: {
-    #       "collection" => {
-    #         "string_value" => 'points',
-    #         "data_type" => "String",
-    #       },
-    #       "event_name" => {
-    #         "string_value" => 'earned',
-    #         "data_type" => "String",
-    #       },
-    #     }
-    #   )
-    # end
   end
 
   # }}}
@@ -586,26 +563,16 @@ module Storm
             cost: reward[:cost],
             member_key: member.key,
             store_key: store.key,
+            company_key: store[:company_key],
             redeemed_at: Orchestrate::API::Helpers.timestamp(Time.now)
           }
           redeem = @O_APP[:redeems].create(rw_data)
           begin
             point.modify_points(reward[:cost] * -1)
           rescue Orchestrate::API::BaseError => e
-            # unable to subtract points
-            @O_CLIENT.delete(:redeems, redeem.key, response.ref)
+            redeem.destroy!
             raise Error.new(422, 42204), "Reward not redeemed"
           end
-          # {{{ events
-          events = [{
-            keys: [reward.key],
-            data: rw_data,
-            collection: 'rewards',
-            event_name: 'redeems'
-          }]
-          Resque.enqueue(Event, events)
-
-          # }}}
           # {{{ relations
           relations = [{
             from_collection: 'stores',
@@ -873,6 +840,7 @@ module Storm
           worth: SURVEY_WORTH,
           member_key: member.key,
           store_key: store.key,
+          company_key: store[:company_key],
           created_at: Orchestrate::API::Helpers.timestamp(Time.now),
         }
         member_survey = @O_APP[:member_surveys].create(data)
@@ -1077,6 +1045,7 @@ module Storm
           worth: CHECKIN_WORTH,
           member_key: member.key,
           store_key: store.key,
+          company_key: store[:company_key],
           created_at: params[:created_at] ? params[:created_at].to_i : Orchestrate::API::Helpers.timestamp(Time.now),
         }
         checkin = @O_APP[:checkins].create(data)
@@ -1084,6 +1053,13 @@ module Storm
         data['_links'] = {
           store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
         }
+        begin
+          point = Point.new(member.key, store[:company_key])
+          point.modify_points(CHECKIN_WORTH)
+        rescue Orchestrate::API::BaseError => e
+          checkin.destroy!
+          raise Error.new(422, 42202), e.message
+        end
         # {{{ relations
         relations = [{
           from_collection: 'codes',
@@ -1126,20 +1102,12 @@ module Storm
 
         # }}}
         # {{{ member visits
-        queue = sqs.queues.named('storm-member-visit')
-        queue.send_message(
-          'Store Visited',
-          message_attributes: {
-            "member_key" => {
-              "string_value" => member.key,
-              "data_type" => "String",
-            },
-            "store_key" => {
-              "string_value" => store.key,
-              "data_type" => "String",
-            }
-          }
-        )
+        stats = {
+          type: 'checkin',
+          mkey: member.key,
+          skey: store.key
+        }
+        Resque.enqueue(Stat, stats)
 
         # }}}
       rescue Orchestrate::API::BaseError => e
