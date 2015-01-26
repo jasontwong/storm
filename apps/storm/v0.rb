@@ -572,7 +572,7 @@ module Storm
       store = @O_APP[:stores][params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
-      raise Error.new(404, 40408), 'Reward does not match company' unless reward.key == store[:company_key]
+      raise Error.new(404, 40408), 'Reward does not match company' unless reward[:company_key] == store[:company_key]
 
       # }}}
       begin
@@ -597,20 +597,13 @@ module Storm
             raise Error.new(422, 42204), "Reward not redeemed"
           end
           # {{{ events
-          queue = sqs.queues.named('storm-generate-events')
-          queue.send_message(
-            { keys: [reward.key], data: rw_data }.to_json,
-            message_attributes: {
-              "collection" => {
-                "string_value" => 'rewards',
-                "data_type" => "String",
-              },
-              "event_name" => {
-                "string_value" => 'redeems',
-                "data_type" => "String",
-              },
-            }
-          )
+          events = [{
+            keys: [reward.key],
+            data: rw_data,
+            collection: 'rewards',
+            event_name: 'redeems'
+          }]
+          Resque.enqueue(Event, events)
 
           # }}}
           # {{{ relations
@@ -1084,7 +1077,7 @@ module Storm
           worth: CHECKIN_WORTH,
           member_key: member.key,
           store_key: store.key,
-          created_at: Orchestrate::API::Helpers.timestamp(Time.now),
+          created_at: params[:created_at] ? params[:created_at].to_i : Orchestrate::API::Helpers.timestamp(Time.now),
         }
         checkin = @O_APP[:checkins].create(data)
         data[:key] = checkin.key
