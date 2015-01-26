@@ -48,5 +48,5 @@ class ThreadPool
 end
 
 task "resque:setup" do
-  ENV['QUEUE'] = '*'
+  ENV['QUEUE'] ||= '*'
 end
