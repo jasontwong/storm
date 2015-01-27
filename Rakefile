@@ -2,7 +2,6 @@ require "rubygems"
 require "bundler/setup"
 require 'orchestrate'
 require 'excon'
-require 'aws-sdk'
 require 'thread'
 require 'rake/benchmark' if ENV['RACK_ENV'] == 'development'
 require_relative "lib/jobs"
