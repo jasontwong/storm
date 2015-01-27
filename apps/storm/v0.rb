@@ -2,9 +2,6 @@ require 'orchestrate'
 require 'multi_json'
 require 'excon'
 require 'securerandom'
-require 'active_support/all'
-require 'aws-sdk'
-require 'mandrill'
 
 # {{{ class Point
 class Point
@@ -129,12 +126,6 @@ module Storm
           }.to_json
         end
       end
-
-      AWS.config(
-        :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
-        :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
-      )
-      @MANDRILL = Mandrill::API.new ENV['MANDRILL_API_KEY']
     end
 
     # }}}
@@ -270,45 +261,23 @@ module Storm
 
       member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
-      # {{{ send out email
       begin
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
         member.save!
-        template_name = "forgot-pw"
-        template_content = []
-        message = {
-          to: [{
-            email: params[:email],
-            type: 'to'
-          }],
+        # send out email
+        Resque.enqueue(Email, {
+          type: 'forgot-pw',
+          to_email: member[:email],
           from_email: "hello@getyella.com",
-          headers: {
-            "Reply-To" => 'hello@getyella.com'
-          },
-          important: true,
-          track_opens: true,
-          track_clicks: true,
-          url_strip_qs: true,
-          merge_vars: [{
-            rcpt: member[:email],
-            vars: [{
-              name: "pass_reset_url",
-              content: "http://www.getyella.com/pass_reset?email=#{member[:email]}&temp_pass=#{member[:temp_pass]}",
-            }]
-          }],
-          tags: ['password-reset'],
-          google_analytics_domains: ['getyella.com'],
-        }
-        async = false
-        result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+          temp_pass: member[:temp_pass]
+        })
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42202), e.message
       rescue Mandrill::Error => e
         raise Error.new(422, 42203), e.message
       end
 
-      # }}}
       status 200
       response = { 
         success: true,
@@ -562,138 +531,48 @@ module Storm
           redeem = @O_APP[:redeems].create(rw_data)
           begin
             point.modify_points(reward[:cost] * -1)
+            # {{{ stats
+            stats = {
+              type: 'redeem',
+              mkey: member.key,
+              skey: store.key
+            }
+            Resque.enqueue(Stat, stats)
+
+            # }}}
+            # {{{ relations
+            relations = [{
+              from_collection: 'stores',
+              from_key: store.key,
+              from_name: 'redeems',
+              to_collection: 'redeems',
+              to_key: redeem.key
+            },{
+              from_collection: 'members',
+              from_key: member.key,
+              from_name: 'redeems',
+              to_collection: 'redeems',
+              to_key: redeem.key
+            }]
+            Resque.enqueue(Relation, relations)
+
+            # }}}
+            # {{{ redemption email
+            redemption = {
+              type: 'new-redeem',
+              store_key: store.key,
+              member_key: member.key,
+              reward_key: reward.key,
+              redeemed_at: rw_data[:redeemed_at],
+              from_email: "merchantsupport@getyella.com",
+            }
+            Resque.enqueue(Email, redemption)
+
+            # }}}
           rescue Orchestrate::API::BaseError => e
             redeem.destroy!
             raise Error.new(422, 42204), "Reward not redeemed"
           end
-          # {{{ stats
-          stats = {
-            type: 'redeem',
-            mkey: member.key,
-            skey: store.key
-          }
-          Resque.enqueue(Stat, stats)
-
-          # }}}
-          # {{{ relations
-          relations = [{
-            from_collection: 'stores',
-            from_key: store.key,
-            from_name: 'redeems',
-            to_collection: 'redeems',
-            to_key: redeem.key
-          },{
-            from_collection: 'members',
-            from_key: member.key,
-            from_name: 'redeems',
-            to_collection: 'redeems',
-            to_key: redeem.key
-          }]
-          Resque.enqueue(Relation, relations)
-
-          # }}}
-          # {{{ redemption email
-          begin
-            clients = []
-            query = "store_keys:#{store.key} AND permissions:\"Redemption Notification\""
-            response = @O_CLIENT.search(:clients, query)
-            loop do
-              response.results.each do |client|
-                @O_CLIENT.patch_merge(:clients, client['path']['key'], { permissions: plan[:permissions] })
-                clients << Orchestrate::KeyValue.from_listing(@O_APP[:clients], client, response)
-              end
-
-              response = response.next_results
-              break if response.nil?
-            end
-            
-            unless clients.empty?
-              response = @O_CLIENT.search(:checkins, query, options)
-              visits = response.total_count || response.count
-              if visits > 0
-                # {{{ merge vars
-                merge_vars = []
-                visits_content = ""
-                case visits
-                when 0...20
-                  visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
-                when 20...50
-                  visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
-                when 50...100
-                  visits_content = "Congratulations - this customer has yella'd here #{visits} times. Wow."
-                else
-                  visits_content = "Loyal? More like obsessed! This customer has yella'd here #{visits} times."
-                end
-                address = store['address']
-                merge_vars << {
-                  name: "store_name",
-                  content: store['name']
-                }
-                merge_vars << {
-                  name: "store_addr",
-                  content: "#{address['line1']} - #{address['city']}, #{address['state']}"
-                }
-                query = "store_key:#{store.key} AND member_key:#{member.key}"
-                options = {
-                  limit: 1
-                }
-                merge_vars << {
-                  name: "store_visits",
-                  content: visits_content
-                }
-                merge_vars << {
-                  name: "reward_name",
-                  content: reward['title'],
-                }
-                merge_vars << {
-                  name: "reward_cost",
-                  content: reward['cost'],
-                }
-
-                client_emails = []
-                client_merge_vars = []
-                clients.each do |client|
-                  redeem_time = Time.at(redeem['redeemed_at'])
-                  redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
-                  vars = [{
-                    name: "reward_time",
-                    content: redeem_time.strftime('%l:%M %p'),
-                  },{
-                    name: "reward_date",
-                    content: redeem_time.strftime('%m/%d/%y'),
-                  }]
-                  client_emails << { email: client['email'] }
-                  client_merge_vars << { rcpt: client['email'], vars: merge_vars + vars }
-                end
-
-                # }}}
-                # send email
-                template_name = "new-redeem"
-                template_content = []
-                message = {
-                  to: client_emails,
-                  headers: {
-                    "Reply-To" => 'merchantsupport@getyella.com'
-                  },
-                  important: true,
-                  track_opens: true,
-                  track_clicks: true,
-                  url_strip_qs: true,
-                  merge_vars: client_merge_vars,
-                  tags: ['reward-redemption'],
-                  google_analytics_domains: ['getyella.com'],
-                }
-                async = false
-                result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
-              end
-            end
-          rescue Orchestrate::API::BaseError => e
-            raise Error.new(422, 42205), e.message
-          rescue Mandrill::Error => e
-            raise Error.new(422, 42206), e.message
-          end
-           
-          # }}}
         rescue Orchestrate::API::BaseError => e
           # unable to redeem reward
           raise Error.new(422, 42201), e.message

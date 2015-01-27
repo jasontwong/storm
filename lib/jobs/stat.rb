@@ -21,14 +21,10 @@ class Stat
   # }}}
   # {{{ def update_stats
   def update_stats
-    begin
-      generate_member_places(@stats['mkey'], @stats['skey'])
-      generate_member_stats(@stats['mkey'])
-      generate_store_stats(@stats['skey'])
-      flush "Adding Stat #{@stats["type"]}"
-    rescue Orchestrate::API::BaseError => e
-      flush "Performing #{self} caused an exception (#{e})."
-    end
+    generate_member_places(@stats['mkey'], @stats['skey'])
+    generate_member_stats(@stats['mkey'])
+    generate_store_stats(@stats['skey'])
+    flush "Adding Stat #{@stats["type"]}"
   end
 
   # }}}

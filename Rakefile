@@ -8,11 +8,10 @@ require 'rake/benchmark' if ENV['RACK_ENV'] == 'development'
 require_relative "lib/jobs"
 require 'resque'
 require 'resque/tasks'
+require 'mandrill'
+require 'active_support/all'
 
-AWS.config(
-  :access_key_id => ENV['AWS_ACCESS_KEY_ID'],
-  :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
-)
+Time.zone = 'Central Time (US & Canada)'
 Dir.glob('lib/tasks/**/*.rake').each { |r| load r}
 
 redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]

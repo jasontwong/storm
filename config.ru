@@ -1,10 +1,9 @@
 require_relative "apps/storm"
 require 'resque/server'
 
-AUTH_PASSWORD = "ISByH8rVGh1xDQXbYjYRyt6LA" 
-if AUTH_PASSWORD
+if ENV['AUTH_PASSWORD']
   Resque::Server.use Rack::Auth::Basic do |username, password|
-    password == AUTH_PASSWORD
+    password == ENV['AUTH_PASSWORD']
   end
 end
 

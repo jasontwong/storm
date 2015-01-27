@@ -1,5 +1,6 @@
 require 'sinatra/base'
 require 'resque'
+require 'active_support/all'
 
 module Storm
   class Base < Sinatra::Base
@@ -9,6 +10,7 @@ module Storm
       uri = URI.parse(redis_url)
       Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
       Resque.redis.namespace = "resque:storm"
+      Time.zone = 'Central Time (US & Canada)'
     end
     # {{{ dev
     configure :development, :test do
