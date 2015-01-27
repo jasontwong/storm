@@ -15,7 +15,11 @@ namespace :stats do
       unless args[:member].nil?
         begin
           keys = []
-          response = oclient.get_relations(:members, args[:member], :checkins)
+          query = "member_key:#{args[:member]}"
+          options = {
+            limit: 100
+          }
+          response = oclient.search(:checkins, query, options)
           loop do
             response.results.each do |checkin|
               keys << {

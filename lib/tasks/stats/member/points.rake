@@ -18,10 +18,12 @@ namespace :stats do
           options = {
             aggregate: "current:stats,total:stats"
           }
+          available = response.aggregates.first['statistics']
+          earned = response.aggregates.last['statistics']
           response = oclient.search(:points, query, options)
           oclient.patch('members', args[:member], [
-            { op: 'add', path: 'stats.points.available', value: response.aggregates[0]['statistics']['sum']},
-            { op: 'add', path: 'stats.points.earned', value: response.aggregates[1]['statistics']['sum']},
+            { op: 'add', path: 'stats.points.available', value: available ? available['sum'] : 0},
+            { op: 'add', path: 'stats.points.earned', value: earned ? earned['sum'] : 0},
           ])
         rescue Orchestrate::API::BaseError => e
           # Log orchestrate error
