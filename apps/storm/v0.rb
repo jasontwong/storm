@@ -60,22 +60,6 @@ class Point
       value: num
     }
     @o_client.patch(:points, pkey, ops)
-    # TODO
-    # Queue up member stats and event generation
-    # queue = sqs.queues.named('storm-generate-member-stats')
-    # queue.send_message(
-    #   'Points modified',
-    #   message_attributes: {
-    #     "member_key" => {
-    #       "string_value" => member.key,
-    #       "data_type" => "String",
-    #     },
-    #     "store_key" => {
-    #       "string_value" => store.key,
-    #       "data_type" => "String",
-    #     }
-    #   }
-    # )
   end
 
   # }}}
@@ -483,6 +467,15 @@ module Storm
       begin
         point = Point.new(member.key, store[:company_key])
         point.modify_points(params[:points].to_i)
+        # {{{ stats
+        stats = {
+          type: 'points',
+          mkey: member.key,
+          skey: store.key
+        }
+        Resque.enqueue(Stat, stats)
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42203), e.message
       end
@@ -573,6 +566,15 @@ module Storm
             redeem.destroy!
             raise Error.new(422, 42204), "Reward not redeemed"
           end
+          # {{{ stats
+          stats = {
+            type: 'redeem',
+            mkey: member.key,
+            skey: store.key
+          }
+          Resque.enqueue(Stat, stats)
+
+          # }}}
           # {{{ relations
           relations = [{
             from_collection: 'stores',
@@ -993,6 +995,15 @@ module Storm
           # }}}
           point = Point.new(member.key, store[:company_key])
           point.modify_points(survey[:worth])
+          # {{{ stats
+          stats = {
+            type: 'survey',
+            mkey: member.key,
+            skey: store.key
+          }
+          Resque.enqueue(Stat, stats)
+
+          # }}}
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42201), "Unable to save completed properly"
         end
@@ -1101,7 +1112,7 @@ module Storm
         Resque.enqueue(Relation, relations)
 
         # }}}
-        # {{{ member visits
+        # {{{ stats
         stats = {
           type: 'checkin',
           mkey: member.key,

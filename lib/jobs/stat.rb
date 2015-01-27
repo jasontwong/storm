@@ -22,18 +22,21 @@ class Stat
   # {{{ def update_stats
   def update_stats
     begin
-      case @stats['type']
-      when 'checkin'
-        Rake::Task['stats:member:stores:places'].reenable
-        Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
-        Rake::Task['stats:member:stores:places'].invoke(@stats['mkey'], @stats['skey'])
-        generate_member_stats(@stats['mkey'])
-        generate_store_stats(@stats['skey'])
-      end
+      generate_member_places(@stats['mkey'], @stats['skey'])
+      generate_member_stats(@stats['mkey'])
+      generate_store_stats(@stats['skey'])
       flush "Adding Stat #{@stats["type"]}"
     rescue Orchestrate::API::BaseError => e
       flush "Performing #{self} caused an exception (#{e})."
     end
+  end
+
+  # }}}
+  # {{{ def generate_member_places(mkey, skey)
+  def generate_member_places(mkey, skey)
+    Rake::Task['stats:member:stores:places'].reenable
+    Rake::Task['stats:member:stores:places'].all_prerequisite_tasks.each &:reenable
+    Rake::Task['stats:member:stores:places'].invoke(mkey, skey)
   end
 
   # }}}
