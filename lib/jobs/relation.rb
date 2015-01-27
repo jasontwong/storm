@@ -5,6 +5,7 @@ class Relation
   extend RetriedJob
 
   @queue = :relation
+  # {{{ def initialize(relations)
   def initialize(relations)
     @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
       conn.adapter :excon
@@ -12,12 +13,16 @@ class Relation
     @relations = relations
   end
 
+  # }}}
+  # {{{ def self.perform(relations)
   def self.perform(relations)
     (new relations).update_relations
   rescue Resque::TermException
     Resque.enqueue(self, key)
   end
 
+  # }}}
+  # {{{ def update_relations
   def update_relations
     @relations.each do |data|
       begin
@@ -29,8 +34,5 @@ class Relation
     end
   end
 
-  def flush(str)
-    puts str
-    $stdout.flush
-  end
+  # }}}
 end
