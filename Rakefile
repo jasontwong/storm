@@ -13,11 +13,6 @@ require 'active_support/all'
 Time.zone = 'Central Time (US & Canada)'
 Dir.glob('lib/tasks/**/*.rake').each { |r| load r}
 
-redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
-uri = URI.parse(redis_url)
-Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-Resque.redis.namespace = "resque:storm"
-
 class ThreadPool
   def initialize(size)
     @size = size
@@ -46,5 +41,10 @@ class ThreadPool
 end
 
 task "resque:setup" do
+  redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
+  uri = URI.parse(redis_url)
+  Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+  Resque.redis.namespace = "resque:storm"
+
   ENV['QUEUE'] ||= '*'
 end
