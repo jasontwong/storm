@@ -327,7 +327,9 @@ module Storm
       # {{{ update attributes
       unless params[:attributes].blank?
         begin
-          attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
+          attributes = nil
+          attributes = params[:attributes] if params[:attributes].is_a? Hash
+          attributes = JSON.parse(params[:attributes]) if attributes.nil?
           member.replace('attributes', member[:attributes].merge(attributes)).update
           member.reload
         rescue Orchestrate::API::BaseError => e
@@ -808,11 +810,9 @@ module Storm
       # {{{ updates answers
       unless params[:answers].blank?
         begin
-          if params[:answers].is_a? String
-            answers = JSON.parse(params[:answers], symbolize_names: true)
-          else
-            answers = params[:answers]
-          end
+          answers = nil
+          answers = params[:answers] if params[:answers].is_a? Hash
+          answers = JSON.parse(params[:answers]) if answers.nil?
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
             answer
