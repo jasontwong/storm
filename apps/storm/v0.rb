@@ -310,13 +310,14 @@ module Storm
       # {{{ update email
       unless params[:email].blank?
         email = params[:email].downcase.strip
-        raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(:email)
+        raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(email)
 
         response = @O_CLIENT.search(:members, "email:#{email} AND NOT key:#{member.key}")
         raise Error.new(422, 42206), 'Email already in use' unless response.results.empty?
 
         begin
           member.replace('email', email).update
+          member.reload
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42202), msg
         end
@@ -327,7 +328,7 @@ module Storm
       unless params[:attributes].blank?
         begin
           attributes = JSON.parse(params[:attributes]) if params[:attributes].is_a? String
-          member.replace('attributes', attributes.merge!(member[:attributes])).update
+          member.replace('attributes', member[:attributes].merge(attributes)).update
           member.reload
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42203), "Unable to save attributes properly"
