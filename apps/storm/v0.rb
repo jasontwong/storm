@@ -269,7 +269,7 @@ module Storm
         Resque.enqueue(Email, {
           type: 'forgot-pw',
           to_email: member[:email],
-          from_email: "hello@getyella.com",
+          from_email: "support@getyella.com",
           temp_pass: member[:temp_pass]
         })
       rescue Orchestrate::API::BaseError => e

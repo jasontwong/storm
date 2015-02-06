@@ -141,8 +141,9 @@ class Email
           template_content = []
           message = {
             to: client_emails,
+            from_email: @email['from_email'],
             headers: {
-              "Reply-To" => 'merchantsupport@getyella.com'
+              "Reply-To" => @email['from_email']
             },
             important: true,
             track_opens: true,
