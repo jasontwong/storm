@@ -602,7 +602,7 @@ module Storm
       params[:distance] = '1mi' if params[:distance].blank?
       params[:offset] = 0 if params[:offset].blank? || !params[:offset].numeric?
       params[:limit] = 20 if params[:limit].blank? || !params[:limit].numeric?
-      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}} AND active:true"
+      query = "location:NEAR:{lat:#{params[:latitude]} lon:#{params[:longitude]} dist:#{params[:distance]}}"
       options = {
         sort: 'location:distance:asc',
         offset: params[:offset],
