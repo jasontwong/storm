@@ -716,11 +716,10 @@ module Storm
 
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
-        type = store.relations[:type].first
-        raise Error.new(404, 40404), "Store type not found" if type.nil?
+        survey = store.relations[:survey].first
 
         data = {
-          answers: type[:questions],
+          answers: survey.nil? ? [] : survey[:questions],
           worth: SURVEY_WORTH,
           member_key: member.key,
           store_key: store.key,
@@ -837,13 +836,24 @@ module Storm
       end
 
       # }}}
-      # {{{ update nps_score
-      if !params[:nps_score].blank? && params[:nps_score].numeric?
+      # {{{ update first_time
+      if !params[:first_time].blank? && (params[:first_time] == 'true' || params[:first_time] == true || (params[:first_time].numeric? && params[:first_time].to_i == 1))
         begin
-          survey[:nps_score] = params[:nps_score].to_i
+          survey[:first_time] = true
           survey.save!
         rescue Orchestrate::API::BaseError => e
-          raise Error.new(422, 42204), "Unable to save nps_score properly"
+          raise Error.new(422, 42204), "Unable to save first_time properly"
+        end
+      end
+
+      # }}}
+      # {{{ update visit_rating
+      if !params[:visit_rating].blank? && params[:visit_rating].numeric? && [0, 1].include? params[:visit_rating].to_i
+        begin
+          survey[:visit_rating] = params[:visit_rating].to_i
+          survey.save!
+        rescue Orchestrate::API::BaseError => e
+          raise Error.new(422, 42205), "Unable to save visit_rating properly"
         end
       end
 
