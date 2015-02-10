@@ -848,7 +848,7 @@ module Storm
 
       # }}}
       # {{{ update visit_rating
-      if !params[:visit_rating].blank? && params[:visit_rating].numeric? && [0, 1].include? params[:visit_rating].to_i
+      if !params[:visit_rating].blank? && params[:visit_rating].numeric? && [0, 1].include?(params[:visit_rating].to_i)
         begin
           survey[:visit_rating] = params[:visit_rating].to_i
           survey.save!
