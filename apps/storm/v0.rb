@@ -185,7 +185,7 @@ module Storm
     # {{{ post '/members/register', provides: :json do
     post '/members/register', provides: :json do
       # clean and validate email
-      raise Error.new(400, 40001), 'Missing required parameter: email' unless params[:email].blank?
+      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
 
       member_data = {
         email: params[:email].downcase.strip,
@@ -274,8 +274,6 @@ module Storm
         })
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42202), e.message
-      rescue Mandrill::Error => e
-        raise Error.new(422, 42203), e.message
       end
 
       status 200
