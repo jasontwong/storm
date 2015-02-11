@@ -868,19 +868,11 @@ module Storm
           survey[:completed] = true
           survey[:completed_at] = Orchestrate::API::Helpers.timestamp(Time.now)
           survey.save!
-          # {{{ merchant survey queue
-          # queue = sqs.queues.named('storm-merchant-survey-queue')
-          # queue.send_message(
-          #   'Survey completed',
-          #   message_attributes: {
-          #     "member_survey_key" => {
-          #       "string_value" => survey.key,
-          #       "data_type" => "String",
-          #     },
-          #   }
-          # )
+          @O_APP[:queues].create({
+            type: 'feedback',
+            survey_key: survey.key
+          })
 
-          # }}}
           point = Point.new(member.key, store[:company_key])
           point.modify_points(survey[:worth])
           # {{{ stats
