@@ -1,14 +1,5 @@
 namespace :stats do
   namespace :member do
-    # {{{ vars
-    oapp = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
-    end
-    oclient = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
-    end
-
-    # }}}
     # {{{ desc "Member: Stores"
     desc "Member: Stores"
     task :stores, [:member] do |t, args|
@@ -19,7 +10,7 @@ namespace :stats do
           options = {
             limit: 100
           }
-          response = oclient.search(:checkins, query, options)
+          response = @O_CLIENT.search(:checkins, query, options)
           loop do
             response.results.each do |checkin|
               keys << {
@@ -33,7 +24,7 @@ namespace :stats do
           end
 
           u_visits = keys.uniq { |k| k[:key] }
-          oclient.patch('members', args[:member], [
+          @O_CLIENT.patch('members', args[:member], [
             { op: 'add', path: 'stats.stores.unique_visits', value: u_visits.length },
             { op: 'add', path: 'stats.stores.visits', value: keys.length },
           ])
@@ -53,7 +44,7 @@ namespace :stats do
           begin
             keys = []
             query = "member_key:#{args[:member]}"
-            m_places = oapp[:member_places][args[:member]]
+            m_places = @O_APP[:member_places][args[:member]]
             unless m_places.nil? || m_places[:last_updated_at].nil?
               query += " AND created_at:[#{m_places[:last_updated_at]} TO *]"
             end
@@ -67,7 +58,7 @@ namespace :stats do
               options[:limit] = 1
             end
 
-            response = oclient.search(:checkins, query, options)
+            response = @O_CLIENT.search(:checkins, query, options)
             loop do
               response.results.each do |checkin|
                 keys << {
@@ -94,12 +85,12 @@ namespace :stats do
                 data = companies[company_key]
               else
                 query = "company_key:#{company_key} AND member_key:#{args[:member]}"
-                response = oclient.search(:points, query, { limit: 1 })
+                response = @O_CLIENT.search(:points, query, { limit: 1 })
                 unless response.results.empty?
                   points = response.results.first
                   data['points'] = points['value']['current']
                   query = "company_key:#{company_key} AND cost:[0 TO #{data['points']}]"
-                  response = oclient.search(:rewards, query)
+                  response = @O_CLIENT.search(:rewards, query)
                   data['rewards'] = response.total_count || response.count
                 end
 
@@ -114,7 +105,7 @@ namespace :stats do
 
             if m_places.nil?
               visited = places.sort{ |a,b| b['last_visited_at'] <=> a['last_visited_at'] }
-              m_places = oapp[:member_places].create(args[:member], {
+              m_places = @O_APP[:member_places].create(args[:member], {
                 visited: visited,
                 last_updated_at: visited.first['last_visited_at']
               })

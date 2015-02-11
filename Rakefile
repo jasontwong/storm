@@ -40,11 +40,15 @@ class ThreadPool
   end
 end
 
-task "resque:setup" do
-  redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
-  uri = URI.parse(redis_url)
-  Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-  Resque.redis.namespace = "resque:storm"
+@O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
+  conn.adapter :excon
+end
+@O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
+  conn.adapter :excon
+end
 
+task "resque:setup" do
+  Resque.redis = Redis.new(url: ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"])
+  Resque.redis.namespace = "resque:storm"
   ENV['QUEUE'] ||= '*'
 end
