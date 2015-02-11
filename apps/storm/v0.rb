@@ -870,7 +870,8 @@ module Storm
           survey.save!
           @O_APP[:queues].create({
             type: 'feedback',
-            survey_key: survey.key
+            survey_key: survey.key,
+            created_at: Orchestrate::API::Helpers.timestamp(Time.now)
           })
 
           point = Point.new(member.key, store[:company_key])
