@@ -86,7 +86,9 @@ class Email
           merge_vars = []
           visits_content = ""
           case visits
-          when 0...20
+          when 1
+            visits_content = "After #{visits} visit to your business, this customer has redeemed a reward"
+          when 1...20
             visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
           when 20...50
             visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
@@ -123,7 +125,7 @@ class Email
           client_merge_vars = []
           clients.each do |client|
             redeem_time = Time.at(@email['redeemed_at'])
-            redeem_time = redeem_time.in_time_zone(client['time_zone']) unless client['time_zone'].nil?
+            redeem_time = redeem_time.in_time_zone(client['value']['time_zone']) unless client['value']['time_zone'].nil?
             vars = [{
               name: "reward_time",
               content: redeem_time.strftime('%l:%M %p'),
@@ -131,8 +133,8 @@ class Email
               name: "reward_date",
               content: redeem_time.strftime('%m/%d/%y'),
             }]
-            client_emails << { email: client['email'] }
-            client_merge_vars << { rcpt: client['email'], vars: merge_vars + vars }
+            client_emails << { email: client['value']['email'] }
+            client_merge_vars << { rcpt: client['value']['email'], vars: merge_vars + vars }
           end
 
           # }}}
