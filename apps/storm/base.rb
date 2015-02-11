@@ -6,7 +6,8 @@ module Storm
   class Base < Sinatra::Base
     # {{{ options
     configure do
-      Resque.redis = Redis.new(url: ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"])
+      redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
+      Resque.redis = Redis.new(url: redis_url)
       Resque.redis.namespace = "resque:storm"
       Time.zone = 'Central Time (US & Canada)'
     end

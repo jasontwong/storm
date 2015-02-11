@@ -48,7 +48,8 @@ end
 end
 
 task "resque:setup" do
-  Resque.redis = Redis.new(url: ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"])
+  redis_url = ENV["REDISCLOUD_URL"] || ENV["OPENREDIS_URL"] || ENV["REDISGREEN_URL"] || ENV["REDISTOGO_URL"]
+  Resque.redis = Redis.new(url: redis_url)
   Resque.redis.namespace = "resque:storm"
   ENV['QUEUE'] ||= '*'
 end

@@ -80,13 +80,13 @@ class Point
     }
     relations = [{
       from_collection: 'members',
-      from_key: member_key,
+      from_key: @mkey,
       from_name: 'points',
       to_collection: 'points',
       to_key: @pkey
     },{
       from_collection: 'companies',
-      from_key: company_key,
+      from_key: @ckey,
       from_name: 'points',
       to_collection: 'points',
       to_key: @pkey
@@ -715,7 +715,6 @@ module Storm
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
         survey = store.relations[:survey].first
-
         data = {
           answers: survey.nil? ? [] : survey[:questions],
           worth: SURVEY_WORTH,
@@ -808,7 +807,7 @@ module Storm
       unless params[:answers].blank?
         begin
           answers = nil
-          answers = params[:answers] if params[:answers].is_a? Hash
+          answers = params[:answers] if params[:answers].is_a? Array
           answers = JSON.parse(params[:answers]) if answers.nil?
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'

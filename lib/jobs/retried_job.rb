@@ -7,11 +7,4 @@ module RetriedJob
   end
   
   # }}}
-  # {{{ def flush(str)
-  def flush(str)
-    puts str
-    $stdout.flush
-  end
-  
-  # }}}
 end

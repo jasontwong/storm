@@ -75,7 +75,7 @@ class Email
         response = response.next_results
         break if response.nil?
       end
-      
+
       unless clients.empty?
         query = "store_key:#{@email['store_key']} AND member_key:#{@email['member_key']}"
         options[:limit] = 1
@@ -163,5 +163,12 @@ class Email
     flush "Sending #{@email["type"]}"
   end
 
+  # }}}
+  # {{{ def flush(str)
+  def flush(str)
+    puts str
+    $stdout.flush
+  end
+  
   # }}}
 end

@@ -9,9 +9,9 @@ namespace :stats do
           options = {
             aggregate: "current:stats,total:stats"
           }
+          response = @O_CLIENT.search(:points, query, options)
           available = response.aggregates.first['statistics']
           earned = response.aggregates.last['statistics']
-          response = @O_CLIENT.search(:points, query, options)
           @O_CLIENT.patch('members', args[:member], [
             { op: 'add', path: 'stats.points.available', value: available ? available['sum'] : 0},
             { op: 'add', path: 'stats.points.earned', value: earned ? earned['sum'] : 0},
