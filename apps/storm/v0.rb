@@ -92,6 +92,7 @@ class Point
       to_key: @pkey
     }]
     Resque.enqueue(Relation, relations)
+    @pkey
   end
 
   # }}}
