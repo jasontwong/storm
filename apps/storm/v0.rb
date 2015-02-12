@@ -718,7 +718,7 @@ module Storm
         survey = store.relations[:survey].first
         data = {
           answers: survey.nil? ? [] : survey[:questions],
-          worth: SURVEY_WORTH,
+          worth: survey.nil? ? 0 : SURVEY_WORTH,
           member_key: member.key,
           store_key: store.key,
           company_key: store[:company_key],
@@ -804,7 +804,7 @@ module Storm
 
       # TODO
       # Figure out a better way to handle answers, large payload
-      # {{{ updates answers
+      # {{{ update answers
       unless params[:answers].blank?
         begin
           answers = nil

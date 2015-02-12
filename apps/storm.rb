@@ -14,5 +14,5 @@ module Storm
   SURVEY_EXP_DAYS = 7
   DEV_KEY = 'apikey'
   SURVEY_WORTH = 5
-  CHECKIN_WORTH = 1
+  CHECKIN_WORTH = 5
 end
