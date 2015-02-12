@@ -147,6 +147,7 @@ class Email
             headers: {
               "Reply-To" => @email['from_email']
             },
+            preserve_recipients: false,
             important: true,
             track_opens: true,
             track_clicks: true,
