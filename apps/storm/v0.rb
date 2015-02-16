@@ -1011,5 +1011,42 @@ module Storm
     end
 
     # }}}
+    # codes
+    # {{{ post '/codes/verify', provides: :json do
+    post '/codes/verify', provides: :json do
+      # check for required parameters
+      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+
+      begin
+        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        options = {
+          limit: 1,
+        }
+        response = @O_CLIENT.search(:codes, query, options)
+        raise Error.new(404, 40400), "Beacon not found" if response.count == 0
+        unless response.total_count.nil?
+          # TODO
+          # There's more than one code with that major/minor. Broken.
+        end
+
+        code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
+        store = code.relations[:store].first
+        raise Error.new(404, 40401), "Store not found" if store.nil?
+        raise Error.new(404, 40402), "Store found but not active" unless store[:active]
+        
+        data = {
+          success: true,
+          store_key: store.key
+        }
+      rescue Orchestrate::API::BaseError => e
+        raise Error.new(422, 42201), e.message
+      end
+      
+      status 200
+      body data.to_json
+    end
+
+    # }}}
   end
 end
