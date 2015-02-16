@@ -127,38 +127,42 @@ module Storm
           }.to_json
         end
       end
+
+      if request.post? || request.patch? || request.put?
+        @post_params = request.POST.symbolize_keys
+      end
     end
 
     # }}}
     # members
     # {{{ post '/members/login', provides: :json do
     post '/members/login', provides: :json do
-      if !params[:fb_id].blank?
+      if !@post_params[:fb_id].blank?
         # FB login
-        raise Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+        raise Error.new(400, 40002), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
-        response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
+        response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]}")
         raise Error.new(404, 40400), 'Facebook ID not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
-      elsif !params[:member_id].blank?
+      elsif !@post_params[:member_id].blank?
         # Login from old version of app
-        raise Error.new(400, 40003), 'Member ID is not a number' if params[:member_id].numeric?
+        raise Error.new(400, 40003), 'Member ID is not a number' if @post_params[:member_id].numeric?
 
-        response = @O_CLIENT.search(:members, "old_id:#{params[:member_id]}")
+        response = @O_CLIENT.search(:members, "old_id:#{@post_params[:member_id]}")
         raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
-      elsif !params[:email].blank? && !params[:password].blank?
+      elsif !@post_params[:email].blank? && !@post_params[:password].blank?
         # Email/Pass login
-        response = @O_CLIENT.search(:members, "email:#{params[:email]}")
+        response = @O_CLIENT.search(:members, "email:#{@post_params[:email]}")
         raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
         password = Digest::SHA256.new
-        password.update params[:password] + member[:salt]
+        password.update @post_params[:password] + member[:salt]
         old_pass = Digest::SHA256.new
-        old_pass.update params[:password]
+        old_pass.update @post_params[:password]
         dhash = Digest::SHA256.new
         dhash.update old_pass.hexdigest + member[:salt]
         if member[:password] == dhash.hexdigest
@@ -186,10 +190,10 @@ module Storm
     # {{{ post '/members/register', provides: :json do
     post '/members/register', provides: :json do
       # clean and validate email
-      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+      raise Error.new(400, 40001), 'Missing required parameter: email' if @post_params[:email].blank?
 
       member_data = {
-        email: params[:email].downcase.strip,
+        email: @post_params[:email].downcase.strip,
         salt: SecureRandom.hex,
         active: true,
         stats: { 
@@ -205,36 +209,36 @@ module Storm
       raise Error.new(422, 42202), 'Email already exists' unless response.results.empty?
 
       # check for type of login
-      unless params[:fb_id].blank?
-        raise Error.new(400, 40002), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+      unless @post_params[:fb_id].blank?
+        raise Error.new(400, 40002), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
-        response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]}")
+        response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]}")
         raise Error.new(422, 42205), 'Facebook ID already in use' unless response.results.empty?
 
-        params[:password] = SecureRandom.hex
-        member_data[:fb_id] = params[:fb_id].to_i
+        @post_params[:password] = SecureRandom.hex
+        member_data[:fb_id] = @post_params[:fb_id].to_i
       else
         # check for password strength
-        raise Error.new(422, 42204), 'Password is not valid' unless !params[:password].blank? && params[:password].length >= 6
+        raise Error.new(422, 42204), 'Password is not valid' unless !@post_params[:password].blank? && @post_params[:password].length >= 6
       end
 
       # validate attributes key
-      unless params[:attributes].blank?
-        unless params[:attributes].is_a? Hash
+      unless @post_params[:attributes].blank?
+        unless @post_params[:attributes].is_a? Hash
           begin
-            params[:attributes] = JSON.parse(params[:attributes], symbolize_names: true)
+            @post_params[:attributes] = JSON.parse(@post_params[:attributes], symbolize_names: true)
           rescue JSON::ParserError => e
-            params[:attributes] = {}
+            @post_params[:attributes] = {}
           end
         end
       else
-        params[:attributes] = {}
+        @post_params[:attributes] = {}
       end
 
       begin
-        member_data[:attributes] = params[:attributes]
+        member_data[:attributes] = @post_params[:attributes]
         password = Digest::SHA256.new
-        password.update params[:password] + member_data[:salt]
+        password.update @post_params[:password] + member_data[:salt]
         member_data[:password] = password.hexdigest
         member = @O_APP[:members].create(member_data)
       rescue Orchestrate::API::BaseError => e
@@ -252,9 +256,9 @@ module Storm
     # {{{ post '/members/forgot_pass', provides: :json do
     post '/members/forgot_pass', provides: :json do
       # clean and validate email
-      raise Error.new(400, 40001), 'Missing required parameter: email' if params[:email].blank?
+      raise Error.new(400, 40001), 'Missing required parameter: email' if @post_params[:email].blank?
 
-      email = params[:email].downcase.strip
+      email = @post_params[:email].downcase.strip
       raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(email)
 
       response = @O_CLIENT.search(:members, "email:#{email}")
@@ -307,8 +311,8 @@ module Storm
       raise Error.new(404, 40401), "Member not found" if member.nil?
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
       # {{{ update email
-      unless params[:email].blank?
-        email = params[:email].downcase.strip
+      unless @post_params[:email].blank?
+        email = @post_params[:email].downcase.strip
         raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(email)
 
         response = @O_CLIENT.search(:members, "email:#{email} AND NOT key:#{member.key}")
@@ -324,11 +328,11 @@ module Storm
 
       # }}}
       # {{{ update attributes
-      unless params[:attributes].blank?
+      unless @post_params[:attributes].blank?
         begin
           attributes = nil
-          attributes = params[:attributes] if params[:attributes].is_a? Hash
-          attributes = JSON.parse(params[:attributes]) if attributes.nil?
+          attributes = @post_params[:attributes] if @post_params[:attributes].is_a? Hash
+          attributes = JSON.parse(@post_params[:attributes]) if attributes.nil?
           member.replace('attributes', member[:attributes].merge(attributes)).update
           member.reload
         rescue Orchestrate::API::BaseError => e
@@ -340,14 +344,14 @@ module Storm
 
       # }}}
       # {{{ update fb_id
-      unless params[:fb_id].blank?
-        raise Error.new(400, 40001), 'Facebook ID is not a number' unless params[:fb_id].numeric?
+      unless @post_params[:fb_id].blank?
+        raise Error.new(400, 40001), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
-        response = @O_CLIENT.search(:members, "fb_id:#{params[:fb_id]} AND NOT key:#{member.key}")
+        response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]} AND NOT key:#{member.key}")
         raise Error.new(422, 42205), 'Facebook ID already in use' unless response.results.empty?
 
         begin
-          member.replace('fb_id', params[:fb_id].to_i).update
+          member.replace('fb_id', @post_params[:fb_id].to_i).update
           member.reload
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42204), "Unable to save Facebook ID properly"
@@ -356,11 +360,11 @@ module Storm
 
       # }}}
       # {{{ update password
-      unless params[:password].blank?
-        raise Error.new(422, 42205), 'Password is not valid' unless params[:password].length >= 6
+      unless @post_params[:password].blank?
+        raise Error.new(422, 42205), 'Password is not valid' unless @post_params[:password].length >= 6
         begin
           password = Digest::SHA256.new
-          password.update params[:password] + member[:salt]
+          password.update @post_params[:password] + member[:salt]
           member.replace('password', password.hexdigest).update
           member.reload
         rescue Orchestrate::API::BaseError => e
@@ -422,22 +426,22 @@ module Storm
     # {{{ patch '/points', provides: :json do
     patch '/points', provides: :json do
       # check for required parameters
-      raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
-      raise Error.new(400, 40002), 'Missing required parameter: member_key' if params[:member_key].blank?
-      raise Error.new(400, 40003), 'Missing required parameter: points' if params[:points].blank? || !params[:points].numeric?
+      raise Error.new(400, 40001), 'Missing required parameter: store_key' if @post_params[:store_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      raise Error.new(400, 40003), 'Missing required parameter: points' if @post_params[:points].blank? || !@post_params[:points].numeric?
 
       # validate params
-      member = @O_APP[:members][params[:member_key]]
+      member = @O_APP[:members][@post_params[:member_key]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40403), 'Member found but not active' unless member[:active]
 
-      store = @O_APP[:stores][params[:store_key]]
+      store = @O_APP[:stores][@post_params[:store_key]]
       raise Error.new(404, 40402), 'Store not found' if store.nil?
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
       begin
         point = Point.new(member.key, store[:company_key])
-        point.modify_points(params[:points].to_i)
+        point.modify_points(@post_params[:points].to_i)
         # {{{ stats
         stats = {
           type: 'points',
@@ -498,19 +502,19 @@ module Storm
     # {{{ post '/rewards', provides: :json do
     post '/rewards', provides: :json do
       # {{{ validate parameters
-      raise Error.new(400, 40001), 'Missing required parameter: member_key' if params[:member_key].blank?
-      raise Error.new(400, 40002), 'Missing required parameter: reward_key' if params[:reward_key].blank?
-      raise Error.new(400, 40003), 'Missing required parameter: store_key' if params[:store_key].blank?
+      raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: reward_key' if @post_params[:reward_key].blank?
+      raise Error.new(400, 40003), 'Missing required parameter: store_key' if @post_params[:store_key].blank?
 
-      member = @O_APP[:members][params[:member_key]]
+      member = @O_APP[:members][@post_params[:member_key]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40404), 'Member found but not active' unless member[:active]
 
-      reward = @O_APP[:rewards][params[:reward_key]]
+      reward = @O_APP[:rewards][@post_params[:reward_key]]
       raise Error.new(404, 40402), 'Reward not found' if reward.nil?
       raise Error.new(404, 40407), 'Reward found but not active' unless reward[:active]
 
-      store = @O_APP[:stores][params[:store_key]]
+      store = @O_APP[:stores][@post_params[:store_key]]
       raise Error.new(404, 40403), 'Store not found' if store.nil?
       raise Error.new(404, 40405), 'Store found but not active' unless store[:active]
       raise Error.new(404, 40408), 'Reward does not match company' unless reward[:company_key] == store[:company_key]
@@ -691,17 +695,17 @@ module Storm
     # {{{ post '/surveys', provides: :json do
     post '/surveys', provides: :json do
       # check for required parameters
-      raise Error.new(400, 40001), 'Missing required parameter: member_key' if params[:member_key].blank?
-      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
-      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+      raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       # validate params
-      member = @O_APP[:members][params[:member_key]]
+      member = @O_APP[:members][@post_params[:member_key]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       begin
-        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        query = "major:#{@post_params[:major]} AND minor:#{@post_params[:minor]}"
         options = {
           limit: 1,
         }
@@ -805,11 +809,11 @@ module Storm
       # TODO
       # Figure out a better way to handle answers, large payload
       # {{{ update answers
-      unless params[:answers].blank?
+      unless @post_params[:answers].blank?
         begin
           answers = nil
-          answers = params[:answers] if params[:answers].is_a? Array
-          answers = JSON.parse(params[:answers]) if answers.nil?
+          answers = @post_params[:answers] if @post_params[:answers].is_a? Array
+          answers = JSON.parse(@post_params[:answers]) if answers.nil?
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
             answer
@@ -824,9 +828,9 @@ module Storm
 
       # }}}
       # {{{ update comments
-      unless params[:comments].blank?
+      unless @post_params[:comments].blank?
         begin
-          survey[:comments] = params[:comments]
+          survey[:comments] = @post_params[:comments]
           survey.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42203), "Unable to save comments properly"
@@ -835,7 +839,7 @@ module Storm
 
       # }}}
       # {{{ update first_time
-      if !params[:first_time].blank? && (params[:first_time] == 'true' || params[:first_time] == true || (params[:first_time].numeric? && params[:first_time].to_i == 1))
+      if !@post_params[:first_time].blank? && (@post_params[:first_time] == 'true' || @post_params[:first_time] == true || (@post_params[:first_time].numeric? && @post_params[:first_time].to_i == 1))
         begin
           survey[:first_time] = true
           survey.save!
@@ -846,9 +850,9 @@ module Storm
 
       # }}}
       # {{{ update visit_rating
-      if !params[:visit_rating].blank? && params[:visit_rating].numeric? && [0, 1].include?(params[:visit_rating].to_i)
+      if !@post_params[:visit_rating].blank? && @post_params[:visit_rating].numeric? && [0, 1].include?(@post_params[:visit_rating].to_i)
         begin
-          survey[:visit_rating] = params[:visit_rating].to_i
+          survey[:visit_rating] = @post_params[:visit_rating].to_i
           survey.save!
         rescue Orchestrate::API::BaseError => e
           raise Error.new(422, 42205), "Unable to save visit_rating properly"
@@ -857,7 +861,7 @@ module Storm
 
       # }}}
       # {{{ update completed
-      if !params[:completed].blank? && (params[:completed] == 'true' || params[:completed] == true || (params[:completed].numeric? && params[:completed].to_i == 1))
+      if !@post_params[:completed].blank? && (@post_params[:completed] == 'true' || @post_params[:completed] == true || (@post_params[:completed].numeric? && @post_params[:completed].to_i == 1))
         member = @O_APP[:members][survey[:member_key]]
         raise Error.new(422, 42205), "Unable to find member associated with this survey" if member.nil?
 
@@ -899,17 +903,17 @@ module Storm
     # {{{ post '/checkins', provides: :json do
     post '/checkins', provides: :json do
       # check for required parameters
-      raise Error.new(400, 40001), 'Missing required parameter: member_key' if params[:member_key].blank?
-      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
-      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+      raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       # validate params
-      member = @O_APP[:members][params[:member_key]]
+      member = @O_APP[:members][@post_params[:member_key]]
       raise Error.new(404, 40401), 'Member not found' if member.nil?
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       begin
-        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        query = "major:#{@post_params[:major]} AND minor:#{@post_params[:minor]}"
         options = {
           limit: 1,
         }
@@ -926,9 +930,9 @@ module Storm
         raise Error.new(404, 40403), "Store not found" if store.nil?
         raise Error.new(404, 40404), "Store found but not active" unless store[:active]
         # {{{ update battery levels
-        unless params[:battery].blank?
+        unless @post_params[:battery].blank?
           batt_lvl = @O_APP[:battery_levels].create({
-            level: params[:battery].to_i,
+            level: @post_params[:battery].to_i,
             store_key: store.key,
             read_at: Orchestrate::API::Helpers.timestamp(Time.now),
           })
@@ -941,7 +945,7 @@ module Storm
           member_key: member.key,
           store_key: store.key,
           company_key: store[:company_key],
-          created_at: params[:created_at] ? params[:created_at].to_i : Orchestrate::API::Helpers.timestamp(Time.now),
+          created_at: @post_params[:created_at] ? @post_params[:created_at].to_i : Orchestrate::API::Helpers.timestamp(Time.now),
         }
         checkin = @O_APP[:checkins].create(data)
         data[:key] = checkin.key
@@ -1018,11 +1022,11 @@ module Storm
     # {{{ post '/codes/verify', provides: :json do
     post '/codes/verify', provides: :json do
       # check for required parameters
-      raise Error.new(400, 40002), 'Missing required parameter: major' if params[:major].blank? || !params[:major].numeric?
-      raise Error.new(400, 40003), 'Missing required parameter: minor' if params[:minor].blank? || !params[:minor].numeric?
+      raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       begin
-        query = "major:#{params[:major]} AND minor:#{params[:minor]}"
+        query = "major:#{@post_params[:major]} AND minor:#{@post_params[:minor]}"
         options = {
           limit: 1,
         }
