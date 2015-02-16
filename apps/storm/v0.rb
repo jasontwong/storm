@@ -914,7 +914,8 @@ module Storm
           limit: 1,
         }
         response = @O_CLIENT.search(:codes, query, options)
-        raise Error.new(404, 40401), "Beacon not found" if response.count == 0
+        raise Error.new(404, 40400), "Beacon not found" if response.count == 0
+
         unless response.total_count.nil?
           # TODO
           # There's more than one code with that major/minor. Broken.
@@ -922,6 +923,8 @@ module Storm
 
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
+        raise Error.new(404, 40403), "Store not found" if store.nil?
+        raise Error.new(404, 40404), "Store found but not active" unless store[:active]
         # {{{ update battery levels
         unless params[:battery].blank?
           batt_lvl = @O_APP[:battery_levels].create({
@@ -1039,6 +1042,75 @@ module Storm
           success: true,
           store_key: store.key
         }
+        data = {
+          worth: CHECKIN_WORTH,
+          member_key: member.key,
+          store_key: store.key,
+          company_key: store[:company_key],
+          created_at: params[:created_at] ? params[:created_at].to_i : Orchestrate::API::Helpers.timestamp(Time.now),
+        }
+        checkin = @O_APP[:checkins].create(data)
+        data[:key] = checkin.key
+        data['_links'] = {
+          store: "/#{self.class.name.demodulize.downcase}/stores/#{data[:store_key]}",
+        }
+        begin
+          point = Point.new(member.key, store[:company_key])
+          point.modify_points(CHECKIN_WORTH)
+        rescue Orchestrate::API::BaseError => e
+          checkin.destroy!
+          raise Error.new(422, 42202), e.message
+        end
+        # {{{ relations
+        relations = [{
+          from_collection: 'codes',
+          from_key: code.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'members',
+          from_key: member.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'stores',
+          from_key: store.key,
+          from_name: 'checkins',
+          to_collection: 'checkins',
+          to_key: data[:key]
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'member',
+          to_collection: 'members',
+          to_key: member.key
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'store',
+          to_collection: 'stores',
+          to_key: store.key
+        },{
+          from_collection: 'checkins',
+          from_key: data[:key],
+          from_name: 'code',
+          to_collection: 'codes',
+          to_key: code.key
+        }]
+        Resque.enqueue(Relation, relations)
+
+        # }}}
+        # {{{ stats
+        stats = {
+          type: 'checkin',
+          mkey: member.key,
+          skey: store.key
+        }
+        Resque.enqueue(Stat, stats)
+
+        # }}}
       rescue Orchestrate::API::BaseError => e
         raise Error.new(422, 42201), e.message
       end
