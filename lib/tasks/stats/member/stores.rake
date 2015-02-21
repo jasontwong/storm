@@ -107,7 +107,7 @@ namespace :stats do
               visited = places.sort{ |a,b| b['last_visited_at'] <=> a['last_visited_at'] }
               m_places = @O_APP[:member_places].create(args[:member], {
                 visited: visited,
-                last_updated_at: visited.first['last_visited_at']
+                last_updated_at: visited.first.nil? Orchestrate::API::Helpers.timestamp(Time.now) : visited.first['last_visited_at']
               })
             elsif !places.empty?
               visited = (m_places['visited'] + places).group_by{|h| h['store_key']}.map{|k,v| v.reduce(:merge)}.sort{|a,b| b['last_visited_at'] <=> a['last_visited_at']}
