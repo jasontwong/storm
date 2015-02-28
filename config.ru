@@ -1,4 +1,5 @@
 require_relative "apps/storm"
+require_relative "apps/legacy"
 require 'resque/server'
 
 if ENV['AUTH_PASSWORD']
@@ -7,5 +8,6 @@ if ENV['AUTH_PASSWORD']
   end
 end
 
+map('/') { run Legacy }
 map('/v0') { run Storm::V0 }
 map('/resque') { run Resque::Server.new }
