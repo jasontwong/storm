@@ -147,7 +147,7 @@ module Storm
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !@post_params[:member_id].blank?
         # Login from old version of app
-        raise Error.new(400, 40003), 'Member ID is not a number' if @post_params[:member_id].numeric?
+        raise Error.new(400, 40003), 'Member ID is not a number' unless @post_params[:member_id].numeric?
 
         response = @O_CLIENT.search(:members, "old_id:#{@post_params[:member_id]}")
         raise Error.new(404, 40401), 'Member not found' if response.results.empty?
