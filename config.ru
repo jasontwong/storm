@@ -1,4 +1,11 @@
-# This file is used by Rack-based servers to start the application.
+require_relative "apps/storm"
+require 'resque/server'
 
-require ::File.expand_path('../config/environment',  __FILE__)
-run DataApi::Application
+if ENV['AUTH_PASSWORD']
+  Resque::Server.use Rack::Auth::Basic do |username, password|
+    password == ENV['AUTH_PASSWORD']
+  end
+end
+
+map('/v0') { run Storm::V0 }
+map('/resque') { run Resque::Server.new }
