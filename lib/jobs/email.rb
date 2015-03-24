@@ -124,7 +124,7 @@ class Email
           client_emails = []
           client_merge_vars = []
           clients.each do |client|
-            redeem_time = Time.at(@email['redeemed_at'])
+            redeem_time = Time.at(@email['redeemed_at'].to_f / 1000)
             redeem_time = redeem_time.in_time_zone(client['value']['time_zone']) unless client['value']['time_zone'].nil?
             vars = [{
               name: "reward_time",
