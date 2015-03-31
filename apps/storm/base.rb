@@ -20,6 +20,7 @@ module Storm
     # }}}
     # {{{ prod
     configure :production do
+      require 'newrelic_rpm'
       enable :dump_errors
       set :bind, '0.0.0.0'
       set :port, 80
