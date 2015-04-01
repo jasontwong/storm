@@ -333,7 +333,7 @@ module Storm
         begin
           attributes = nil
           attributes = @post_params[:attributes] if @post_params[:attributes].is_a? Hash
-          attributes = JSON.parse(@post_params[:attributes]) if attributes.nil?
+          attributes = JSON.parse(@post_params[:attributes], symbolize_names: true) if attributes.nil?
           member.replace('attributes', member[:attributes].merge(attributes)).update
           member.reload
         rescue Orchestrate::API::BaseError => e
@@ -814,7 +814,7 @@ module Storm
         begin
           answers = nil
           answers = @post_params[:answers] if @post_params[:answers].is_a? Array
-          answers = JSON.parse(@post_params[:answers]) if answers.nil?
+          answers = JSON.parse(@post_params[:answers], symbolize_names: true) if answers.nil?
           survey[:answers] = answers.collect do |answer|
             answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
             answer
