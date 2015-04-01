@@ -816,7 +816,7 @@ module Storm
           answers = @post_params[:answers] if @post_params[:answers].is_a? Array
           answers = JSON.parse(@post_params[:answers]) if answers.nil?
           survey[:answers] = answers.collect do |answer|
-            answer[:answer] = answer[:answer].to_f unless answer[:type] == 'switch'
+            answer["answer"] = answer["answer"].to_f unless answer["type"] == 'switch'
             answer
           end
           survey.save!
