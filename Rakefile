@@ -1,7 +1,8 @@
 require "rubygems"
 require "bundler/setup"
 require 'orchestrate'
-require 'excon'
+require 'typhoeus'
+require 'typhoeus/adapters/faraday'
 require 'thread'
 require 'rake/benchmark' if ENV['RACK_ENV'] == 'development'
 require_relative "lib/jobs"
@@ -41,10 +42,10 @@ class ThreadPool
 end
 
 @O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-  conn.adapter :excon
+  conn.adapter :typhoeus
 end
 @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-  conn.adapter :excon
+  conn.adapter :typhoeus
 end
 
 task "resque:setup" do

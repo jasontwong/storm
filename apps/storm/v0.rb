@@ -1,6 +1,5 @@
 require 'orchestrate'
 require 'multi_json'
-require 'excon'
 require 'typhoeus'
 require 'typhoeus/adapters/faraday'
 require 'securerandom'
@@ -15,10 +14,10 @@ class Point
     @mkey = mkey
     @ckey = ckey
     @o_app = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
     @o_client = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
     query = "company_key:#{ckey} AND member_key:#{mkey}"
     options = {

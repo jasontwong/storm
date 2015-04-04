@@ -1,5 +1,4 @@
 require 'orchestrate'
-require 'excon'
 
 module Storm
   module Helpers
