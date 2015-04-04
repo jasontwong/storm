@@ -8,7 +8,7 @@ class Event
   # {{{ def initialize(events)
   def initialize(events)
     @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
     @events = events
   end

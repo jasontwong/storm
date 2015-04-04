@@ -8,7 +8,7 @@ class Relation
   # {{{ def initialize(relations)
   def initialize(relations)
     @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
     @relations = relations
   end

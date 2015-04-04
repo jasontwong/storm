@@ -8,11 +8,11 @@ class Email
   # {{{ def initialize(email)
   def initialize(email)
     @O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
 
     @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-      conn.adapter :excon
+      conn.adapter :typhoeus
     end
 
     @MANDRILL = Mandrill::API.new ENV['MANDRILL_API_KEY']
