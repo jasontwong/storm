@@ -74,5 +74,5 @@ DEPENDENCIES
   rake-benchmark
   resque (~> 1.25)
   sinatra (~> 1.4)
-  typhoeus (~> 0.6)
+  typhoeus (~> 0.7)
   unicorn (~> 4.8)

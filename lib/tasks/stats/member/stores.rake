@@ -89,6 +89,10 @@ namespace :stats do
                 unless response.results.empty?
                   points = response.results.first
                   data['points'] = points['value']['current']
+                  if !args[:store].nil? && !m_places.nil?
+                    m_places.each { |p| p['points'] = data['points'] if p['company_key'] == company_key }
+                  end
+
                   query = "company_key:#{company_key} AND cost:[0 TO #{data['points']}]"
                   response = @O_CLIENT.search(:rewards, query)
                   data['rewards'] = response.total_count || response.count
