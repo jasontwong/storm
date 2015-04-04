@@ -1,6 +1,7 @@
 require 'orchestrate'
 require 'multi_json'
 require 'excon'
+require 'typhoeus'
 require 'securerandom'
 
 # {{{ class Point
@@ -107,11 +108,11 @@ module Storm
       halt 426 if !request.env['HTTP_X_IOS_SDK_VERSION'].nil? && request.env['HTTP_X_IOS_SDK_VERSION'].to_f < 2.0
       halt 426 if !request.env['HTTP_X_ANDROID_SDK_VERSION'].nil? && request.env['HTTP_X_ANDROID_SDK_VERSION'].to_f < 2.0
       @O_APP = Orchestrate::Application.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-        conn.adapter :excon
+        conn.adapter :typhoeus
       end
 
       @O_CLIENT = Orchestrate::Client.new(ENV['ORCHESTRATE_API_KEY']) do |conn|
-        conn.adapter :excon
+        conn.adapter :typhoeus
       end
 
       allow = false
