@@ -2,6 +2,7 @@ require 'orchestrate'
 require 'multi_json'
 require 'excon'
 require 'typhoeus'
+require 'typhoeus/adapters/faraday'
 require 'securerandom'
 
 # {{{ class Point
