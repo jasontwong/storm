@@ -472,9 +472,20 @@ module Storm
       raise Error.new(404, 40401), 'Store not found' if store.nil?
       raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
+      query = "company_key:#{store[:company_key]} AND active:true"
+      unless params[:member_key].blank?
+        member = @O_APP[:members][params[:member_key]]
+        raise Error.new(404, 40401), 'Member not found' if member.nil?
+        raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
+
+        point = Point.new(member.key, store[:company_key])
+        # we couldn't find points that are associated with this key/member combination
+        query += point.pkey.nil? ? " AND cost:[-100 TO -50]" : " AND cost:[0 TO #{point.points['value']['current']}]"
+      end
+
       begin
         data = []
-        response = @O_CLIENT.search(:rewards, "company_key:#{store[:company_key]} AND active:true")
+        response = @O_CLIENT.search(:rewards, query)
         loop do
           response.results.each do |reward|
             r = reward['value']
