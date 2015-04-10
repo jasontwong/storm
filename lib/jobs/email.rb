@@ -84,19 +84,6 @@ class Email
         if visits > 0
           # {{{ merge vars
           merge_vars = []
-          visits_content = ""
-          case visits
-          when 1
-            visits_content = "After #{visits} visit to your business, this customer has redeemed a reward"
-          when 1...20
-            visits_content = "After #{visits} visits to your business, this customer has redeemed a reward"
-          when 20...50
-            visits_content = "This customer has yella'd here #{visits} times. That's #{visits} whole visits to your business"
-          when 50...100
-            visits_content = "Congratulations - this customer has yella'd here #{visits} times. Wow."
-          else
-            visits_content = "Loyal? More like obsessed! This customer has yella'd here #{visits} times."
-          end
           store = @O_APP[:stores][@email['store_key']]
           address = store['address']
           merge_vars << {
@@ -105,11 +92,11 @@ class Email
           }
           merge_vars << {
             name: "store_addr",
-            content: "#{address['line1']} - #{address['city']}, #{address['state']}"
+            content: store['full_address']
           }
           merge_vars << {
             name: "store_visits",
-            content: visits_content
+            content: visits
           }
           reward = @O_APP[:rewards][@email['reward_key']]
           merge_vars << {
