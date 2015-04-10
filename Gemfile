@@ -10,7 +10,7 @@ gem 'mandrill-api', '~> 1.0'
 gem 'rake', '~> 10.4'
 gem 'resque', '~> 1.25'
 gem 'newrelic_rpm', '~> 3.11'
-gem 'typhoeus', '~> 0.6'
+gem 'typhoeus', '~> 0.7'
 
 group :development, :test do
   gem 'rake-benchmark'
