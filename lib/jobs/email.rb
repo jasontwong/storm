@@ -151,8 +151,7 @@ class Email
     # }}}
     # {{{ when 'checkin'
     when 'checkin'
-      chk = @O_APP[:checkins][@email['checkin_key']]
-      company = @O_APP[:companies][chk[:company_key]]
+      company = @O_APP[:companies][@email[:company_key]]
       response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
       rewards = []
       loop do
