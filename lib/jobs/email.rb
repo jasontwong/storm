@@ -149,7 +149,55 @@ class Email
       end
 
     # }}}
+    # {{{ when 'checkin'
+    when 'checkin'
+      chk = @O_APP[:checkins][@email['checkin_key']]
+      member = @O_APP[:members][chk[:member_key]]
+      company = @O_APP[:companies][chk[:company_key]]
+      response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
+      rewards = []
+      loop do
+        response.results.each do |listing|
+          rewards << listing['value']
+        end
+
+        response = response.next_results
+        break if response.nil?
+      end
+      rewards_html = '<tr><td colspan="2"><span style="font-weight: 300;font-size: 36px;color: #E85142;line-height: 44px;">%s</span></td></tr>' % company[:name]
+      rewards_html += File.read("tpls/spacer.tpl.html") % 56
+      rewards_html += display_rewards(rewards)
+      rewards_html += File.read("tpls/spacer.tpl.html") % 82
+      merge_vars = [{
+        name: "company_name",
+        content: company[:name]
+      },{
+        name: "company_logo",
+        content: company[:logo]
+      }]
+      template_name = "checkin"
+      template_content = [{
+        name: "rewards",
+        content: rewards_html
+      }]
+      message = {
+        to: [{
+          email: member[:email]
+        }],
+        preserve_recipients: false,
+        important: true,
+        track_opens: true,
+        track_clicks: true,
+        url_strip_qs: true,
+        global_merge_vars: merge_vars,
+        tags: ['survey-emails'],
+        google_analytics_domains: ['getyella.com'],
+      }
+      async = false
+      result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
     end
+
+    # }}}
     flush "Sending #{@email["type"]}"
   end
 
@@ -160,5 +208,19 @@ class Email
     $stdout.flush
   end
   
+  # }}}
+  # {{{ def display_rewards(rewards)
+  def display_rewards(rewards)
+    html = ""
+    use_spacer = false
+    rewards.each do |rw|
+      html += File.read("tpls/spacer.tpl.html") % 44 if use_spacer
+      html += File.read("tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
+      use_spacer = true
+    end
+
+    html
+  end
+    
   # }}}
 end
