@@ -152,7 +152,6 @@ class Email
     # {{{ when 'checkin'
     when 'checkin'
       chk = @O_APP[:checkins][@email['checkin_key']]
-      member = @O_APP[:members][chk[:member_key]]
       company = @O_APP[:companies][chk[:company_key]]
       response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
       rewards = []
@@ -182,7 +181,7 @@ class Email
       }]
       message = {
         to: [{
-          email: member[:email]
+          email: @email[:member_email]
         }],
         preserve_recipients: false,
         important: true,
