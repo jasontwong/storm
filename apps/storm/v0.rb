@@ -976,6 +976,7 @@ module Storm
         Resque.enqueue(Email, {
           type: 'checkin',
           checkin_key: checkin.key,
+          member_key: member.key,
           member_email: member[:email],
         })
 

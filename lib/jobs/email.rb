@@ -173,6 +173,9 @@ class Email
       },{
         name: "company_logo",
         content: company[:logo]
+      },{
+        name: "member_key",
+        content: @email[:member_key]
       }]
       template_name = "checkin"
       template_content = [{
