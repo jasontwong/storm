@@ -151,7 +151,7 @@ class Email
     # }}}
     # {{{ when 'checkin'
     when 'checkin'
-      company = @O_APP[:companies][@email[:company_key]]
+      company = @O_APP[:companies][@email['company_key']]
       response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
       rewards = []
       loop do
@@ -162,10 +162,11 @@ class Email
         response = response.next_results
         break if response.nil?
       end
+
       rewards_html = '<tr><td colspan="2"><span style="font-weight: 300;font-size: 36px;color: #E85142;line-height: 44px;">%s</span></td></tr>' % company[:name]
-      rewards_html += File.read("tpls/spacer.tpl.html") % 56
+      rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 56
       rewards_html += display_rewards(rewards)
-      rewards_html += File.read("tpls/spacer.tpl.html") % 82
+      rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 82
       merge_vars = [{
         name: "company_name",
         content: company[:name]
@@ -174,7 +175,7 @@ class Email
         content: company[:logo]
       },{
         name: "member_key",
-        content: @email[:member_key]
+        content: @email['member_key']
       }]
       template_name = "checkin"
       template_content = [{
@@ -183,7 +184,7 @@ class Email
       }]
       message = {
         to: [{
-          email: @email[:member_email]
+          email: @email['member_email']
         }],
         preserve_recipients: false,
         important: true,
@@ -215,8 +216,8 @@ class Email
     html = ""
     use_spacer = false
     rewards.each do |rw|
-      html += File.read("tpls/spacer.tpl.html") % 44 if use_spacer
-      html += File.read("tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
+      html += File.read("lib/jobs/tpls/spacer.tpl.html") % 44 if use_spacer
+      html += File.read("lib/jobs/tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
       use_spacer = true
     end
 
