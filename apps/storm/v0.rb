@@ -972,6 +972,15 @@ module Storm
           checkin.destroy!
           raise Error.new(422, 42202), e.message
         end
+        # {{{ checkin email
+        Resque.enqueue(Email, {
+          type: 'checkin',
+          company_key: store[:company_key],
+          member_key: member.key,
+          member_email: member[:email],
+        })
+
+        # }}}
         # {{{ relations
         relations = [{
           from_collection: 'codes',
