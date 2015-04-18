@@ -588,6 +588,15 @@ module Storm
             Resque.enqueue(Email, redemption)
 
             # }}}
+            # {{{ reward redeem email
+            redemption = {
+              type: 'reward-redeem',
+              reward_key: reward.key,
+              member_email: member[:email],
+            }
+            Resque.enqueue(Email, redemption)
+
+            # }}}
           rescue Orchestrate::API::BaseError => e
             redeem.destroy!
             raise Error.new(422, 42204), "Reward not redeemed"

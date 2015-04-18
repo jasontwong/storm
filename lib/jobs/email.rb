@@ -192,14 +192,65 @@ class Email
         track_clicks: true,
         url_strip_qs: true,
         global_merge_vars: merge_vars,
-        tags: ['survey-emails'],
+        tags: ['checkin-email'],
         google_analytics_domains: ['getyella.com'],
       }
       async = false
       result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
-    end
 
     # }}}
+    # {{{ when 'reward-redeem'
+    when 'reward-redeem'
+      redeem = @O_APP[:redeems][@email['redeem_key']]
+      response = @O_CLIENT.search(:points, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}")
+      points = response.results.first
+      response = @O_CLIENT.search(:checkins, "member_key:#{redeem[:member_key]} AND store_key:#{redeem[:store_key]}", { limit: 1 })
+      num_visits = response.total_count
+      company = @O_APP[:companies][redeem[:company_key]]
+      response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
+      merge_vars = [{
+        name: "company_name",
+        content: company[:name]
+      },{
+        name: "company_logo",
+        content: company[:logo]
+      },{
+        name: "reward_cost",
+        content: redeem[:cost]
+      },{
+        name: "reward_name",
+        content: redeem[:title]
+      },{
+        name: "member_points",
+        content: "#{points['value']['current']}"
+      },{
+        name: "member_visits",
+        content: num_visits
+      },{
+        name: "tweet_text",
+        content: "Just got a #{redeem[:title]}"
+      }]
+      template_name = "reward-redeem"
+      template_content = []
+      message = {
+        to: [{
+          email: @email['member_email']
+        }],
+        preserve_recipients: false,
+        important: true,
+        track_opens: true,
+        track_clicks: true,
+        url_strip_qs: true,
+        global_merge_vars: merge_vars,
+        tags: ['reward-redeem'],
+        google_analytics_domains: ['getyella.com'],
+      }
+      async = false
+      result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+
+    # }}}
+    end
+
     flush "Sending #{@email["type"]}"
   end
 
