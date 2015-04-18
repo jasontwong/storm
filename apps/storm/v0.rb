@@ -591,7 +591,7 @@ module Storm
             # {{{ reward redeem email
             redemption = {
               type: 'reward-redeem',
-              reward_key: reward.key,
+              redeem_key: redeem.key,
               member_email: member[:email],
             }
             Resque.enqueue(Email, redemption)
