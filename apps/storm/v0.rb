@@ -629,7 +629,7 @@ module Storm
             redemption = {
               type: 'reward-redeem',
               redeem_key: redeem.key,
-              member_email: member[:email],
+              member_key: member.key
             }
             Resque.enqueue(Email, redemption)
 
