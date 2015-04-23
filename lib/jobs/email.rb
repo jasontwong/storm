@@ -149,7 +149,114 @@ class Email
       end
 
     # }}}
+    # {{{ when 'checkin'
+    when 'checkin'
+      member = @O_APP[:members][@email['member_key']]
+      if member[:notifications] && member[:notifications].include? ('checkin')
+        company = @O_APP[:companies][@email['company_key']]
+        response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
+        rewards = []
+        loop do
+          response.results.each do |listing|
+            rewards << listing['value']
+          end
+
+          response = response.next_results
+          break if response.nil?
+        end
+
+        rewards_html = '<tr><td colspan="2"><span style="font-weight: 300;font-size: 36px;color: #E85142;line-height: 44px;">%s</span></td></tr>' % company[:name]
+        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 56
+        rewards_html += display_rewards(rewards)
+        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 82
+        merge_vars = [{
+          name: "company_name",
+          content: company[:name]
+        },{
+          name: "company_logo",
+          content: company[:logo]
+        },{
+          name: "member_key",
+          content: @email['member_key']
+        }]
+        template_name = "checkin"
+        template_content = [{
+          name: "rewards",
+          content: rewards_html
+        }]
+        message = {
+          to: [{
+            email: @email['member_email']
+          }],
+          preserve_recipients: false,
+          important: true,
+          track_opens: true,
+          track_clicks: true,
+          url_strip_qs: true,
+          global_merge_vars: merge_vars,
+          tags: ['checkin-email'],
+          google_analytics_domains: ['getyella.com'],
+        }
+        async = false
+        result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+      end
+
+    # }}}
+    # {{{ when 'reward-redeem'
+    when 'reward-redeem'
+      member = @O_APP[:members][@email['member_key']]
+      if member[:notifications] && member[:notifications].include? ('redeem')
+        redeem = @O_APP[:redeems][@email['redeem_key']]
+        response = @O_CLIENT.search(:points, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}")
+        points = response.results.first
+        response = @O_CLIENT.search(:checkins, "member_key:#{redeem[:member_key]} AND store_key:#{redeem[:store_key]}", { limit: 1 })
+        num_visits = response.total_count
+        company = @O_APP[:companies][redeem[:company_key]]
+        response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
+        merge_vars = [{
+          name: "company_name",
+          content: company[:name]
+        },{
+          name: "company_logo",
+          content: company[:logo]
+        },{
+          name: "reward_cost",
+          content: redeem[:cost]
+        },{
+          name: "reward_name",
+          content: redeem[:title]
+        },{
+          name: "member_points",
+          content: "#{points['value']['current']}"
+        },{
+          name: "member_visits",
+          content: num_visits
+        },{
+          name: "tweet_text",
+          content: "Just got a #{redeem[:title]}"
+        }]
+        template_name = "reward-redeem"
+        template_content = []
+        message = {
+          to: [{
+            email: member[:email]
+          }],
+          preserve_recipients: false,
+          important: true,
+          track_opens: true,
+          track_clicks: true,
+          url_strip_qs: true,
+          global_merge_vars: merge_vars,
+          tags: ['reward-redeem'],
+          google_analytics_domains: ['getyella.com'],
+        }
+        async = false
+        result = @MANDRILL.messages.send_template(template_name, template_content, message, async)
+      end
+
+    # }}}
     end
+
     flush "Sending #{@email["type"]}"
   end
 
@@ -160,5 +267,19 @@ class Email
     $stdout.flush
   end
   
+  # }}}
+  # {{{ def display_rewards(rewards)
+  def display_rewards(rewards)
+    html = ""
+    use_spacer = false
+    rewards.each do |rw|
+      html += File.read("lib/jobs/tpls/spacer.tpl.html") % 44 if use_spacer
+      html += File.read("lib/jobs/tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
+      use_spacer = true
+    end
+
+    html
+  end
+    
   # }}}
 end

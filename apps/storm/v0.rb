@@ -141,6 +141,7 @@ module Storm
     post '/members/login', provides: :json do
       if !@post_params[:fb_id].blank?
         # FB login
+        ::NewRelic::Agent.add_custom_parameters({ fb_id: @post_params[:fb_id] })
         raise Error.new(400, 40002), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
         response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]}")
@@ -149,6 +150,7 @@ module Storm
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !@post_params[:member_id].blank?
         # Login from old version of app
+        ::NewRelic::Agent.add_custom_parameters({ member_id: @post_params[:member_id] })
         raise Error.new(400, 40003), 'Member ID is not a number' unless @post_params[:member_id].numeric?
 
         response = @O_CLIENT.search(:members, "old_id:#{@post_params[:member_id]}")
@@ -157,6 +159,7 @@ module Storm
         member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
       elsif !@post_params[:email].blank? && !@post_params[:password].blank?
         # Email/Pass login
+        ::NewRelic::Agent.add_custom_parameters({ email: @post_params[:email] })
         response = @O_CLIENT.search(:members, "email:#{@post_params[:email]}")
         raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
@@ -178,6 +181,7 @@ module Storm
         raise Error.new(400, 40001), 'Missing parameters'
       end
       
+      ::NewRelic::Agent.add_custom_parameters({ member_key: member.key })
       raise Error.new(404, 40402), 'Member found but inactive' unless member[:active]
 
       @O_CLIENT.post_event(:members, member.key, :login, { ip: request.ip })
@@ -192,6 +196,7 @@ module Storm
     # {{{ post '/members/register', provides: :json do
     post '/members/register', provides: :json do
       # clean and validate email
+      ::NewRelic::Agent.add_custom_parameters({ email: @post_params[:email] })
       raise Error.new(400, 40001), 'Missing required parameter: email' if @post_params[:email].blank?
 
       member_data = {
@@ -212,6 +217,7 @@ module Storm
 
       # check for type of login
       unless @post_params[:fb_id].blank?
+        ::NewRelic::Agent.add_custom_parameters({ fb_id: @post_params[:fb_id] })
         raise Error.new(400, 40002), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
         response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]}")
@@ -226,6 +232,7 @@ module Storm
 
       # validate attributes key
       unless @post_params[:attributes].blank?
+        ::NewRelic::Agent.add_custom_parameters({ attributes: @post_params[:attributes] })
         unless @post_params[:attributes].is_a? Hash
           begin
             @post_params[:attributes] = JSON.parse(@post_params[:attributes], symbolize_names: true)
@@ -258,6 +265,7 @@ module Storm
     # {{{ post '/members/forgot_pass', provides: :json do
     post '/members/forgot_pass', provides: :json do
       # clean and validate email
+      ::NewRelic::Agent.add_custom_parameters({ email: @post_params[:email] })
       raise Error.new(400, 40001), 'Missing required parameter: email' if @post_params[:email].blank?
 
       email = @post_params[:email].downcase.strip
@@ -267,7 +275,9 @@ module Storm
       raise Error.new(404, 40401), 'Member not found' if response.results.empty?
 
       member = Orchestrate::KeyValue.from_listing(@O_APP[:members], response.results.first, response)
+      ::NewRelic::Agent.add_custom_parameters({ member_key: member.key })
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
+
       begin
         member[:temp_pass] = SecureRandom.hex
         member[:temp_expiry] = Orchestrate::API::Helpers.timestamp(Time.now + 1.day)
@@ -295,7 +305,9 @@ module Storm
     # {{{ get '/members/:key', provides: :json do
     get '/members/:key', provides: :json do
       member = @O_APP[:members][params[:key]]
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       raise Error.new(404, 40401), "Member not found" if member.nil?
+      ::NewRelic::Agent.add_custom_parameters({ member_key: member.key })
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       data = member.value
@@ -310,11 +322,14 @@ module Storm
     patch '/members/:key', provides: :json do
       # validate params
       member = @O_APP[:members][params[:key]]
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       raise Error.new(404, 40401), "Member not found" if member.nil?
+      ::NewRelic::Agent.add_custom_parameters({ member_key: member.key })
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
       # {{{ update email
       unless @post_params[:email].blank?
         email = @post_params[:email].downcase.strip
+        ::NewRelic::Agent.add_custom_parameters({ email: @post_params[:email] })
         raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(email)
 
         response = @O_CLIENT.search(:members, "email:#{email} AND NOT key:#{member.key}")
@@ -338,8 +353,10 @@ module Storm
           member.replace('attributes', member[:attributes].merge(attributes)).update
           member.reload
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ attributes: @post_params[:attributes] })
           raise Error.new(422, 42203), "Unable to save attributes properly"
         rescue JSON::ParserError => e
+          ::NewRelic::Agent.add_custom_parameters({ attributes: @post_params[:attributes] })
           raise Error.new(400, 40002), "Unable to parse attributes properly"
         end
       end
@@ -347,6 +364,7 @@ module Storm
       # }}}
       # {{{ update fb_id
       unless @post_params[:fb_id].blank?
+        ::NewRelic::Agent.add_custom_parameters({ fb_id: @post_params[:fb_id] })
         raise Error.new(400, 40001), 'Facebook ID is not a number' unless @post_params[:fb_id].numeric?
 
         response = @O_CLIENT.search(:members, "fb_id:#{@post_params[:fb_id]} AND NOT key:#{member.key}")
@@ -364,12 +382,14 @@ module Storm
       # {{{ update password
       unless @post_params[:password].blank?
         raise Error.new(422, 42205), 'Password is not valid' unless @post_params[:password].length >= 6
+
         begin
           password = Digest::SHA256.new
           password.update @post_params[:password] + member[:salt]
           member.replace('password', password.hexdigest).update
           member.reload
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ password: @post_params[:password] })
           raise Error.new(422, 42206), "Unable to save password properly"
         end
       end
@@ -383,7 +403,9 @@ module Storm
     get '/members/:key/places', provides: :json do
       # validate params
       member = @O_APP[:members][params[:key]]
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       raise Error.new(404, 40401), "Member not found" if member.nil?
+      ::NewRelic::Agent.add_custom_parameters({ member_key: member.key })
       raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
 
       data = []
@@ -398,7 +420,9 @@ module Storm
     # {{{ get '/points', provides: :json do
     get '/points', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ store_key: params[:store_key] })
       raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ member_key: params[:member_key] })
       raise Error.new(400, 40002), 'Missing required parameter: member_key' if params[:member_key].blank?
 
       # validate params
@@ -411,7 +435,9 @@ module Storm
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
       begin
+        ::NewRelic::Agent.add_custom_parameters({ company_key: store[:company_key] })
         point = Point.new(member.key, store[:company_key])
+        # TODO Remove 404 and return 0 points instead
         # we couldn't find points that are associated with this key/member combination
         raise Error.new(404, 40406), "Member does not have any points at this company" if point.pkey.nil?
       rescue Orchestrate::API::BaseError => e
@@ -428,8 +454,11 @@ module Storm
     # {{{ patch '/points', provides: :json do
     patch '/points', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ store_key: @post_params[:store_key] })
       raise Error.new(400, 40001), 'Missing required parameter: store_key' if @post_params[:store_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ member_key: @post_params[:member_key] })
       raise Error.new(400, 40002), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ points: @post_params[:points] })
       raise Error.new(400, 40003), 'Missing required parameter: points' if @post_params[:points].blank? || !@post_params[:points].numeric?
 
       # validate params
@@ -442,6 +471,7 @@ module Storm
       raise Error.new(404, 40404), 'Store found but not active' unless store[:active]
 
       begin
+        ::NewRelic::Agent.add_custom_parameters({ company_key: store[:company_key] })
         point = Point.new(member.key, store[:company_key])
         point.modify_points(@post_params[:points].to_i)
         # {{{ stats
@@ -465,6 +495,7 @@ module Storm
     # {{{ get '/rewards', provides: :json do
     get '/rewards', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ store_key: params[:store_key] })
       raise Error.new(400, 40001), 'Missing required parameter: store_key' if params[:store_key].blank?
 
       # validate params
@@ -472,8 +503,10 @@ module Storm
       raise Error.new(404, 40401), 'Store not found' if store.nil?
       raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
+      ::NewRelic::Agent.add_custom_parameters({ company_key: store[:company_key] })
       query = "company_key:#{store[:company_key]} AND active:true"
       unless params[:member_key].blank?
+        ::NewRelic::Agent.add_custom_parameters({ member_key: params[:member_key] })
         member = @O_APP[:members][params[:member_key]]
         raise Error.new(404, 40401), 'Member not found' if member.nil?
         raise Error.new(404, 40402), 'Member found but not active' unless member[:active]
@@ -515,8 +548,11 @@ module Storm
     # {{{ post '/rewards', provides: :json do
     post '/rewards', provides: :json do
       # {{{ validate parameters
+      ::NewRelic::Agent.add_custom_parameters({ member_key: @post_params[:member_key] })
       raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ reward_key: @post_params[:reward_key] })
       raise Error.new(400, 40002), 'Missing required parameter: reward_key' if @post_params[:reward_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ store_key: @post_params[:store_key] })
       raise Error.new(400, 40003), 'Missing required parameter: store_key' if @post_params[:store_key].blank?
 
       member = @O_APP[:members][@post_params[:member_key]]
@@ -534,6 +570,7 @@ module Storm
 
       # }}}
       begin
+        ::NewRelic::Agent.add_custom_parameters({ company_key: store[:company_key] })
         point = Point.new(member.key, store[:company_key])
         # we couldn't find points that are associated with this key/member combination
         raise Error.new(422, 42202), "Not enough points to redeem reward" if point.pkey.nil? || reward[:cost] > point.points['value']['current']
@@ -588,6 +625,15 @@ module Storm
             Resque.enqueue(Email, redemption)
 
             # }}}
+            # {{{ reward redeem email
+            redemption = {
+              type: 'reward-redeem',
+              redeem_key: redeem.key,
+              member_key: member.key
+            }
+            Resque.enqueue(Email, redemption)
+
+            # }}}
           rescue Orchestrate::API::BaseError => e
             redeem.destroy!
             raise Error.new(422, 42204), "Reward not redeemed"
@@ -612,7 +658,9 @@ module Storm
     # {{{ get '/stores', provides: :json do
     get '/stores', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ latitude: params[:latitude] })
       raise Error.new(400, 40001), 'Missing required parameter: latitude' if params[:latitude].blank? || !params[:latitude].numeric?
+      ::NewRelic::Agent.add_custom_parameters({ longitude: params[:longitude] })
       raise Error.new(400, 40002), 'Missing required parameter: longitude' if params[:longitude].blank? || !params[:longitude].numeric?
       
       params[:distance] = '1mi' if params[:distance].blank?
@@ -624,6 +672,8 @@ module Storm
         offset: params[:offset],
         limit: params[:limit]
       }
+      ::NewRelic::Agent.add_custom_parameters({ query: query, options: options })
+      # TODO Catch orchestrate errors
       response = @O_CLIENT.search(:stores, query, options)
 
       data = {
@@ -649,7 +699,9 @@ module Storm
     get '/stores/:key', provides: :json do
       # validate params
       store = @O_APP[:stores][params[:key]]
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       raise Error.new(404, 40401), "Store not found" if store.nil?
+      ::NewRelic::Agent.add_custom_parameters({ store_key: store.key })
       raise Error.new(404, 40402), 'Store found but not active' unless store[:active]
 
       data = store.value
@@ -663,6 +715,7 @@ module Storm
     # {{{ get '/surveys', provides: :json do
     get '/surveys', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ member_key: params[:member_key] })
       raise Error.new(400, 40001), 'Missing required parameter: member_key' if params[:member_key].blank?
 
       # validate params
@@ -682,6 +735,7 @@ module Storm
           offset: params[:offset],
           sort: 'created_at:desc'
         }
+        ::NewRelic::Agent.add_custom_parameters({ query: query, options: options })
         response = @O_CLIENT.search(:member_surveys, query, options)
         data = {
           count: response.count,
@@ -708,8 +762,11 @@ module Storm
     # {{{ post '/surveys', provides: :json do
     post '/surveys', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ member_key: @post_params[:member_key] })
       raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ major: @post_params[:major] })
       raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      ::NewRelic::Agent.add_custom_parameters({ minor: @post_params[:minor] })
       raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       # validate params
@@ -722,6 +779,7 @@ module Storm
         options = {
           limit: 1,
         }
+        ::NewRelic::Agent.add_custom_parameters({ query: query, options: options })
         response = @O_CLIENT.search(:codes, query, options)
         raise Error.new(404, 40403), "Beacon not found" if response.count == 0
 
@@ -799,6 +857,7 @@ module Storm
     # {{{ get '/surveys/:key', provides: :json do
     get '/surveys/:key', provides: :json do
       # validate params
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       survey = @O_APP[:member_surveys][params[:key]]
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
 
@@ -816,6 +875,7 @@ module Storm
     patch '/surveys/:key', provides: :json do
       # validate params
       survey = @O_APP[:member_surveys][params[:key]]
+      ::NewRelic::Agent.add_custom_parameters({ key: params[:key] })
       raise Error.new(404, 40401), "Survey not found" if survey.nil?
       raise Error.new(422, 42205), "Survey is already completed" if !survey[:completed].blank? && survey[:completed] == true
 
@@ -831,10 +891,13 @@ module Storm
             answer["answer"] = answer["answer"].to_f unless answer["type"] == 'switch'
             answer
           end
+
           survey.save!
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ answers: @post_params[:answers] })
           raise Error.new(422, 42202), "Unable to save answers properly"
         rescue JSON::ParserError => e
+          ::NewRelic::Agent.add_custom_parameters({ answers: @post_params[:answers] })
           raise Error.new(400, 40001), "Unable to parse answers properly"
         end
       end
@@ -846,6 +909,7 @@ module Storm
           survey[:comments] = @post_params[:comments]
           survey.save!
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ comments: @post_params[:comments] })
           raise Error.new(422, 42203), "Unable to save comments properly"
         end
       end
@@ -857,6 +921,7 @@ module Storm
           survey[:first_time] = true
           survey.save!
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ first_time: @post_params[:first_time] })
           raise Error.new(422, 42204), "Unable to save first_time properly"
         end
       end
@@ -868,6 +933,7 @@ module Storm
           survey[:visit_rating] = @post_params[:visit_rating].to_i
           survey.save!
         rescue Orchestrate::API::BaseError => e
+          ::NewRelic::Agent.add_custom_parameters({ visit_rating: @post_params[:visit_rating] })
           raise Error.new(422, 42205), "Unable to save visit_rating properly"
         end
       end
@@ -875,10 +941,13 @@ module Storm
       # }}}
       # {{{ update completed
       if !@post_params[:completed].blank? && (@post_params[:completed] == 'true' || @post_params[:completed] == true || (@post_params[:completed].numeric? && @post_params[:completed].to_i == 1))
+        ::NewRelic::Agent.add_custom_parameters({ completed: @post_params[:completed] })
         member = @O_APP[:members][survey[:member_key]]
+        ::NewRelic::Agent.add_custom_parameters({ member_key: survey[:member_key] })
         raise Error.new(422, 42205), "Unable to find member associated with this survey" if member.nil?
 
         store = @O_APP[:stores][survey[:store_key]]
+        ::NewRelic::Agent.add_custom_parameters({ store_key: survey[:store_key] })
         raise Error.new(422, 42206), "Unable to find store associated with this survey" if store.nil?
 
         begin
@@ -916,8 +985,11 @@ module Storm
     # {{{ post '/checkins', provides: :json do
     post '/checkins', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ member_key: @post_params[:member_key] })
       raise Error.new(400, 40001), 'Missing required parameter: member_key' if @post_params[:member_key].blank?
+      ::NewRelic::Agent.add_custom_parameters({ major: @post_params[:major] })
       raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      ::NewRelic::Agent.add_custom_parameters({ minor: @post_params[:minor] })
       raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       # validate params
@@ -930,6 +1002,7 @@ module Storm
         options = {
           limit: 1,
         }
+        ::NewRelic::Agent.add_custom_parameters({ query: query, options: options })
         response = @O_CLIENT.search(:codes, query, options)
         raise Error.new(404, 40400), "Beacon not found" if response.count == 0
 
@@ -944,6 +1017,7 @@ module Storm
         raise Error.new(404, 40404), "Store found but not active" unless store[:active]
         # {{{ update battery levels
         unless @post_params[:battery].blank?
+          ::NewRelic::Agent.add_custom_parameters({ battery_levels: @post_params[:battery_levels] })
           batt_lvl = @O_APP[:battery_levels].create({
             level: @post_params[:battery].to_i,
             store_key: store.key,
@@ -972,6 +1046,15 @@ module Storm
           checkin.destroy!
           raise Error.new(422, 42202), e.message
         end
+        # {{{ checkin email
+        Resque.enqueue(Email, {
+          type: 'checkin',
+          company_key: store[:company_key],
+          member_key: member.key,
+          member_email: member[:email],
+        })
+
+        # }}}
         # {{{ relations
         relations = [{
           from_collection: 'codes',
@@ -1035,7 +1118,9 @@ module Storm
     # {{{ post '/codes/verify', provides: :json do
     post '/codes/verify', provides: :json do
       # check for required parameters
+      ::NewRelic::Agent.add_custom_parameters({ major: @post_params[:major] })
       raise Error.new(400, 40002), 'Missing required parameter: major' if @post_params[:major].blank? || !@post_params[:major].numeric?
+      ::NewRelic::Agent.add_custom_parameters({ minor: @post_params[:minor] })
       raise Error.new(400, 40003), 'Missing required parameter: minor' if @post_params[:minor].blank? || !@post_params[:minor].numeric?
 
       begin
@@ -1043,6 +1128,7 @@ module Storm
         options = {
           limit: 1,
         }
+        ::NewRelic::Agent.add_custom_parameters({ query: query, options: options })
         response = @O_CLIENT.search(:codes, query, options)
         raise Error.new(404, 40400), "Beacon not found" if response.count == 0
         unless response.total_count.nil?
@@ -1053,6 +1139,7 @@ module Storm
         code = Orchestrate::KeyValue.from_listing(@O_APP[:codes], response.results.first, response)
         store = code.relations[:store].first
         raise Error.new(404, 40401), "Store not found" if store.nil?
+        ::NewRelic::Agent.add_custom_parameters({ store_key: store.key })
         raise Error.new(404, 40402), "Store found but not active" unless store[:active]
         
         data = {
