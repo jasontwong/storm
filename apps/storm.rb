@@ -1,5 +1,6 @@
 require "rubygems"
 require "bundler/setup"
+require "newrelic_rpm"
 require_relative "../lib/core_ext"
 require_relative "../lib/jobs"
 require_relative "storm/helpers"
