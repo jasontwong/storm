@@ -152,7 +152,7 @@ class Email
     # {{{ when 'checkin'
     when 'checkin'
       member = @O_APP[:members][@email['member_key']]
-      if member[:notifications] && member[:notifications].include? ('checkin')
+      if member[:notifications] && member[:notifications].include?('checkin')
         company = @O_APP[:companies][@email['company_key']]
         response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
         rewards = []
@@ -205,7 +205,7 @@ class Email
     # {{{ when 'reward-redeem'
     when 'reward-redeem'
       member = @O_APP[:members][@email['member_key']]
-      if member[:notifications] && member[:notifications].include? ('redeem')
+      if member[:notifications] && member[:notifications].include?('redeem')
         redeem = @O_APP[:redeems][@email['redeem_key']]
         response = @O_CLIENT.search(:points, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}")
         points = response.results.first
