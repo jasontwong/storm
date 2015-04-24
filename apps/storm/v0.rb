@@ -208,7 +208,11 @@ module Storm
           rewards: {},
           stores: {},
           surveys: {}
-        }
+        },
+        notifications: [
+          'redeem',
+          'checkin'
+        ]
       }
       raise Error.new(422, 42201), 'Email is not valid' unless VALID_EMAIL_REGEX.match(member_data[:email])
 
