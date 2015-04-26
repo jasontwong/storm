@@ -77,7 +77,7 @@ class Email
       end
 
       unless clients.empty?
-        query = "store_key:#{@email['store_key']} AND member_key:#{@email['member_key']}"
+        query = "company_key:#{@email['company_key']} AND member_key:#{@email['member_key']}"
         options[:limit] = 1
         response = @O_CLIENT.search(:checkins, query, options)
         visits = response.total_count || response.count
@@ -209,7 +209,7 @@ class Email
         redeem = @O_APP[:redeems][@email['redeem_key']]
         response = @O_CLIENT.search(:points, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}")
         points = response.results.first
-        response = @O_CLIENT.search(:checkins, "member_key:#{redeem[:member_key]} AND store_key:#{redeem[:store_key]}", { limit: 1 })
+        response = @O_CLIENT.search(:checkins, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}", { limit: 1 })
         num_visits = response.total_count
         company = @O_APP[:companies][redeem[:company_key]]
         response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })

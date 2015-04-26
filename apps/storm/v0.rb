@@ -620,6 +620,7 @@ module Storm
             # {{{ redemption email
             redemption = {
               type: 'new-redeem',
+              company_key: store[:company_key],
               store_key: store.key,
               member_key: member.key,
               reward_key: reward.key,
