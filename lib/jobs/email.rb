@@ -234,7 +234,7 @@ class Email
           content: num_visits
         },{
           name: "tweet_text",
-          content: URI.encode("I just got a free reward at #{store[:dislpay_name]} using @getyella")
+          content: URI.encode("I just got a free reward at #{store[:display_name]} using @getyella")
         }]
         template_name = "reward-redeem"
         template_content = []
