@@ -207,6 +207,7 @@ class Email
       member = @O_APP[:members][@email['member_key']]
       if member[:notifications] && member[:notifications].include?('redeem')
         redeem = @O_APP[:redeems][@email['redeem_key']]
+        store = @O_APP[:stores][redeem[:store_key]]
         response = @O_CLIENT.search(:points, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}")
         points = response.results.first
         response = @O_CLIENT.search(:checkins, "member_key:#{redeem[:member_key]} AND company_key:#{redeem[:company_key]}", { limit: 1 })
@@ -233,7 +234,7 @@ class Email
           content: num_visits
         },{
           name: "tweet_text",
-          content: "Just got a #{redeem[:title]}"
+          content: URI.encode("I just got a free reward at #{store[:dislpay_name]} using @getyella")
         }]
         template_name = "reward-redeem"
         template_content = []
