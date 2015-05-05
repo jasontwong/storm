@@ -160,6 +160,15 @@ class Email
           name: "store_name",
           content: store[:display_name]
         },{
+          name: "store_addr",
+          content: store[:address]['line1']
+        },{
+          name: "store_lat",
+          content: store[:location]['latitude']
+        },{
+          name: "store_lon",
+          content: store[:location]['longitude']
+        },{
           name: "company_logo",
           content: company[:logo]
         },{
