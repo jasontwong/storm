@@ -155,6 +155,7 @@ class Email
       if member[:notifications] && member[:notifications].include?('checkin')
         store = @O_APP[:stores][@email['store_key']]
         company = @O_APP[:companies][@email['company_key']]
+        worth = @email['worth']
         merge_vars = [{
           name: "store_name",
           content: store[:display_name]
@@ -163,7 +164,10 @@ class Email
           content: company[:logo]
         },{
           name: "tweet_text",
-          content: "I got 5 points for checking into (#{store[:display_name]}) by using @getyella"
+          content: "I got #{worth} points for checking into (#{store[:display_name]}) by using @getyella"
+        },{
+          name: "num_points",
+          content: worth,
         },{
           name: "member_key",
           content: @email['member_key']
