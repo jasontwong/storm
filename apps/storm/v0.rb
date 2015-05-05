@@ -1051,7 +1051,7 @@ module Storm
           checkin.destroy!
           raise Error.new(422, 42202), e.message
         end
-        {{{ checkin email
+        # {{{ checkin email
         Resque.enqueue(Email, {
           type: 'checkin',
           worth: CHECKIN_WORTH,
