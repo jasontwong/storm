@@ -153,18 +153,8 @@ class Email
     when 'checkin'
       member = @O_APP[:members][@email['member_key']]
       if member[:notifications] && member[:notifications].include?('checkin')
+        store = @O_APP[:stores][@email['store_key']]
         company = @O_APP[:companies][@email['company_key']]
-        response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
-        rewards = []
-        loop do
-          response.results.each do |listing|
-            rewards << listing['value']
-          end
-
-          response = response.next_results
-          break if response.nil?
-        end
-
         merge_vars = [{
           name: "store_name",
           content: store[:display_name]
@@ -184,6 +174,15 @@ class Email
           to: [{
             email: @email['member_email']
           }],
+          subject: [
+            'Yippee! Points',
+            'Points on top of Points',
+            'Points goin’ up',
+            'You checked in!',
+            'You’ve got points',
+            'Points Galore',
+            'Rackin Up Points',
+          ].sample,
           preserve_recipients: false,
           important: true,
           track_opens: true,
