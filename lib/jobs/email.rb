@@ -165,25 +165,21 @@ class Email
           break if response.nil?
         end
 
-        rewards_html = '<tr><td colspan="2"><span style="font-weight: 300;font-size: 36px;color: #E85142;line-height: 44px;">%s</span></td></tr>' % company[:name]
-        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 56
-        rewards_html += display_rewards(rewards)
-        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 82
         merge_vars = [{
-          name: "company_name",
-          content: company[:name]
+          name: "store_name",
+          content: store[:display_name]
         },{
           name: "company_logo",
           content: company[:logo]
+        },{
+          name: "tweet_text",
+          content: "I got 5 points for checking into (#{store[:display_name]}) by using @getyella"
         },{
           name: "member_key",
           content: @email['member_key']
         }]
         template_name = "checkin"
-        template_content = [{
-          name: "rewards",
-          content: rewards_html
-        }]
+        template_content = []
         message = {
           to: [{
             email: @email['member_email']
@@ -268,19 +264,5 @@ class Email
     $stdout.flush
   end
   
-  # }}}
-  # {{{ def display_rewards(rewards)
-  def display_rewards(rewards)
-    html = ""
-    use_spacer = false
-    rewards.each do |rw|
-      html += File.read("lib/jobs/tpls/spacer.tpl.html") % 44 if use_spacer
-      html += File.read("lib/jobs/tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
-      use_spacer = true
-    end
-
-    html
-  end
-    
   # }}}
 end
