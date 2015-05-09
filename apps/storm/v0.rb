@@ -1055,6 +1055,7 @@ module Storm
         Resque.enqueue(Email, {
           type: 'checkin',
           worth: CHECKIN_WORTH,
+          created_time: data[:created_at],
           store_key: store.key,
           company_key: store[:company_key],
           member_key: member.key,

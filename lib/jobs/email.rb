@@ -161,7 +161,7 @@ class Email
           content: store[:display_name]
         },{
           name: "store_addr",
-          content: store[:address]['line1']
+          content: store[:full_address]
         },{
           name: "store_lat",
           content: store[:location]['latitude']
@@ -173,10 +173,13 @@ class Email
           content: company[:logo]
         },{
           name: "tweet_text",
-          content: "I got #{worth} points for checking into (#{store[:display_name]}) by using @getyella"
+          content: "I got #{worth} points for checking into #{store[:display_name]} by using @getyella"
         },{
           name: "num_points",
           content: worth,
+        },{
+          name: "checkin_time",
+          content: Time.at(@email['created_time'].to_f / 1000).strftime('%l:%M %p'),
         },{
           name: "member_key",
           content: @email['member_key']
