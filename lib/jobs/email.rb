@@ -153,41 +153,52 @@ class Email
     when 'checkin'
       member = @O_APP[:members][@email['member_key']]
       if member[:notifications] && member[:notifications].include?('checkin')
+        store = @O_APP[:stores][@email['store_key']]
         company = @O_APP[:companies][@email['company_key']]
-        response = @O_CLIENT.search(:rewards, "company_key:#{company.key}", { limit: 100, sort: "cost:asc" })
-        rewards = []
-        loop do
-          response.results.each do |listing|
-            rewards << listing['value']
-          end
-
-          response = response.next_results
-          break if response.nil?
-        end
-
-        rewards_html = '<tr><td colspan="2"><span style="font-weight: 300;font-size: 36px;color: #E85142;line-height: 44px;">%s</span></td></tr>' % company[:name]
-        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 56
-        rewards_html += display_rewards(rewards)
-        rewards_html += File.read("lib/jobs/tpls/spacer.tpl.html") % 82
+        worth = @email['worth']
         merge_vars = [{
-          name: "company_name",
-          content: company[:name]
+          name: "store_name",
+          content: store[:display_name]
+        },{
+          name: "store_addr",
+          content: store[:full_address]
+        },{
+          name: "store_lat",
+          content: store[:location]['latitude']
+        },{
+          name: "store_lon",
+          content: store[:location]['longitude']
         },{
           name: "company_logo",
           content: company[:logo]
+        },{
+          name: "tweet_text",
+          content: "I got #{worth} points for checking into #{store[:display_name]} by using @getyella"
+        },{
+          name: "num_points",
+          content: worth,
+        },{
+          name: "checkin_time",
+          content: Time.at(@email['created_time'].to_f / 1000).strftime('%l:%M %p'),
         },{
           name: "member_key",
           content: @email['member_key']
         }]
         template_name = "checkin"
-        template_content = [{
-          name: "rewards",
-          content: rewards_html
-        }]
+        template_content = []
         message = {
           to: [{
             email: @email['member_email']
           }],
+          subject: [
+            'Yippee! Points',
+            'Points on top of Points',
+            'Points goin’ up',
+            'You checked in!',
+            'You’ve got points',
+            'Points Galore',
+            'Rackin Up Points',
+          ].sample,
           preserve_recipients: false,
           important: true,
           track_opens: true,
@@ -268,19 +279,5 @@ class Email
     $stdout.flush
   end
   
-  # }}}
-  # {{{ def display_rewards(rewards)
-  def display_rewards(rewards)
-    html = ""
-    use_spacer = false
-    rewards.each do |rw|
-      html += File.read("lib/jobs/tpls/spacer.tpl.html") % 44 if use_spacer
-      html += File.read("lib/jobs/tpls/reward.tpl.html") % [rw['cost'].to_i, rw['title']]
-      use_spacer = true
-    end
-
-    html
-  end
-    
   # }}}
 end

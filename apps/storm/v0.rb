@@ -1052,12 +1052,15 @@ module Storm
           raise Error.new(422, 42202), e.message
         end
         # {{{ checkin email
-        # Resque.enqueue(Email, {
-        #   type: 'checkin',
-        #   company_key: store[:company_key],
-        #   member_key: member.key,
-        #   member_email: member[:email],
-        # })
+        Resque.enqueue(Email, {
+          type: 'checkin',
+          worth: CHECKIN_WORTH,
+          created_time: data[:created_at],
+          store_key: store.key,
+          company_key: store[:company_key],
+          member_key: member.key,
+          member_email: member[:email],
+        })
 
         # }}}
         # {{{ relations
