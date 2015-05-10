@@ -179,7 +179,7 @@ class Email
           content: worth,
         },{
           name: "checkin_time",
-          content: Time.at(@email['created_time'].to_f / 1000).strftime('%l:%M %p'),
+          content: Time.zone.at(@email['created_time'].to_f / 1000).strftime('%l:%M %p'),
         },{
           name: "member_key",
           content: @email['member_key']
